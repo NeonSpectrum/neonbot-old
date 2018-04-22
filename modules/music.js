@@ -33,6 +33,12 @@ module.exports = (bot, message) => {
           .then(msg => msg.delete(5000))
         info = await ytdl.getInfo(searchList[args - 1].url)
         searchList = []
+        server.queue.push({
+          title: info.title,
+          url: info.video_url,
+          requested: message.author,
+          info: info
+        })
       } else {
         if (args[0].match(/^.*(youtu.be\/|list=)([^#\&\?]*).*/g)) {
           try {
@@ -173,7 +179,7 @@ var previnfo;
 
 async function play(message, connection) {
   var server = servers[message.guild.id]
-
+  console.log(currentQueue)
   if (!server.queue[currentQueue]) {
     currentQueue = 0
     if (!config.music.repeat) {
