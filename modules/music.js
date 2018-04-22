@@ -29,7 +29,7 @@ module.exports = (bot, message) => {
         if (searchList.length == 0) return;
         listofqueuemessageid.delete()
         listofqueuemessageid = ""
-        message.channel.send(embed(searchList[args - 1].title).setTitle(`You have selected ${args}. `))
+        message.channel.send(embed(searchList[args - 1].title).setTitle(`You have selected #${args}. `))
           .then(msg => msg.delete(5000))
         info = await ytdl.getInfo(searchList[args - 1].url)
         searchList = []
@@ -100,8 +100,6 @@ module.exports = (bot, message) => {
         .then((connection) => {
           play(message, connection)
         })
-      else
-        play(message, connection)
     },
     stop: () => {
       if (server && server.queue) server.queue = []
@@ -181,7 +179,6 @@ var previnfo;
 
 async function play(message, connection) {
   var server = servers[message.guild.id]
-  console.log(currentQueue)
   if (!server.queue[currentQueue]) {
     currentQueue = 0
     if (!config.music.repeat) {
@@ -211,7 +208,7 @@ async function play(message, connection) {
 
   previnfo = server.queue[currentQueue].info
   server.dispatcher.on("end", (stop) => {
-    if (stop) return
+    if (stop === true) return
     currentQueue++
     play(message, connection)
   })

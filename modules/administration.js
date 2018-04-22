@@ -33,7 +33,6 @@ module.exports = (bot, message) => {
       )
     },
     ban: (args) => {
-      message.delete()
       if (!message.member.hasPermission("BAN_MEMBERS")) return errors.noPerms(message, "BAN_MEMBERS")
 
       var bUser = message.guild.member(message.mentions.users.first() || message.guild.members.get(args[0]))
@@ -62,11 +61,10 @@ module.exports = (bot, message) => {
       )
     },
     clear: (args) => {
-      if (args > 100) return message.reply("Parameters must not be greater than 100.")
+      if (args > 100) return message.reply("Parameters must not be greater than 100.f")
       if (!message.member.hasPermission("MANAGE_MESSAGES")) return errors.noPerms(message, "MANAGE_MESSAGES")
       if (!args[0]) args[0] = 1
 
-      message.delete();
       message.channel.bulkDelete(args[0])
         .then(() => {
           message.channel.send(embed()

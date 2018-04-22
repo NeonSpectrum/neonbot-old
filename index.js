@@ -32,8 +32,7 @@ bot.on('message', message => {
   var utils = util_module(bot, message)
 
   var messageArray = message.content.split(" ")
-  var cmd = messageArray[0].substring(config.prefix.length)
-    .toLowerCase()
+  var cmd = messageArray[0].substring(config.prefix.length).toLowerCase()
   var args = messageArray.slice(1)
 
   switch (getModule(cmd)) {

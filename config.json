@@ -4,10 +4,10 @@
   "googleapi": "AIzaSyAdU9-yp6efQJtHGsYuGEgLd7xMqJujFh8",
   "music": {
     "volume": 20,
-    "repeat": false,
+    "repeat": true,
     "autoplay": true
   },
   "bot": {
-    "deleteoncmd": true
+    "deleteoncmd": false
   }
 }

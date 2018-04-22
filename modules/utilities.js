@@ -17,7 +17,6 @@ module.exports = (bot, message) => {
     },
     speak: (args) => {
       if (!message.member.hasPermission("MANAGE_MESSAGES")) return errors.noPerms(message, "MANAGE_MESSAGES")
-      message.delete()
         .catch(console.error)
       message.channel.send(args.join(" "), {
         tts: true
@@ -39,7 +38,6 @@ module.exports = (bot, message) => {
     },
     say: (args) => {
       if (!message.member.hasPermission("MANAGE_MESSAGES")) return errors.noPerms(message, "MANAGE_MESSAGES")
-      message.delete()
         .catch(console.error)
       message.channel.send(args.join(" "))
     },
