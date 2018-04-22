@@ -1,6 +1,5 @@
 var fs = require('fs')
 var glob = require('glob')
-
 var config = require('./config.json')
 var Discord = require("discord.js")
 var bot = new Discord.Client()
