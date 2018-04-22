@@ -12,6 +12,9 @@ module.exports = (bot, message) => {
         message.reply("Cannot find command")
       }
     },
+    ping: () => {
+      message.reply('Pong! Your ping is `' + `${Date.now() - message.createdTimestamp}` + ' ms`');
+    }
     addrole: (args) => {
       if (!message.member.hasPermission("MANAGE_ROLES")) return errors.noPerms(message, "MANAGE_ROLES")
 
