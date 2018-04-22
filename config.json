@@ -3,7 +3,11 @@
   "prefix": ";",
   "googleapi": "AIzaSyAdU9-yp6efQJtHGsYuGEgLd7xMqJujFh8",
   "music": {
-    "volume": 30,
-    "repeat": true
+    "volume": 20,
+    "repeat": false,
+    "autoplay": true
+  },
+  "bot": {
+    "deleteoncmd": true
   }
 }

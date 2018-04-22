@@ -1,13 +1,18 @@
 var fs = require('fs')
+var moment = require('moment');
 var Discord = require('discord.js')
 var ytdl = require('ytdl-core')
 var Youtube = require('simple-youtube-api')
 var config = require('../config.json')
 var yt = new Youtube(config.googleapi)
+var $ = require('../handler/functions')
+var embed = $.embed
+var log = $.log
 var servers = []
 var currentQueue = 0;
 var searchList = [];
 var server = null;
+var listofqueuemessageid = "";
 
 module.exports = (bot, message) => {
   if (message !== undefined) server = servers[message.guild.id]
@@ -18,40 +23,72 @@ module.exports = (bot, message) => {
       if (!servers[message.guild.id]) servers[message.guild.id] = {
         queue: []
       }
+      server = servers[message.guild.id]
       var info;
       if (Number.isInteger(+args)) {
         if (searchList.length == 0) return;
-        message.channel.send("You have selected " + searchList[args - 1].title)
+        listofqueuemessageid.delete()
+        listofqueuemessageid = ""
+        message.channel.send(embed(searchList[args - 1].title).setTitle(`You have selected ${args}. `))
+          .then(msg => msg.delete(5000))
         info = await ytdl.getInfo(searchList[args - 1].url)
         searchList = []
       } else {
-        try {
-          info = await ytdl.getInfo(args[0])
-        } catch (err) {
+        if (args[0].match(/^.*(youtu.be\/|list=)([^#\&\?]*).*/g)) {
           try {
-            var videos = await yt.searchVideos(args.join(" "));
-          } catch (err1) {
-            // return message.reply("Cannot find any videos")
-            return console.log(err)
+            playlist = await yt.getPlaylist(args[0])
+            videos = await playlist.getVideos()
+          } catch (err) {
+            message.channel.send(embed(`Invalid Playlist URL`))
+            return
           }
-          var embed = new Discord.RichEmbed()
-            .setDescription(`${config.prefix}play <1-5>`)
-            .setColor("#15f153")
-          searchList = []
-          for (var i = 0, j = 1; i < videos.length; i++, j++) {
-            embed.addField(`${j}. ${videos[i].title}`, videos[i].url)
-            searchList.push({
-              "title": videos[i].title,
-              "url": videos[i].url
-            })
+
+          var msg = await message.channel.send(embed(`Adding ${videos.length} to the queue`));
+          var error = 0;
+
+          for (var i = 0; i < videos.length; i++) {
+            try {
+              var info = await ytdl.getInfo(videos[i].id)
+              server.queue.push({
+                title: info.title,
+                url: info.video_url,
+                requested: message.author,
+                info: info
+              })
+            } catch (err) {
+              error++
+            }
           }
-          return message.channel.send(embed)
+          msg.edit(embed(`Done! Loaded ${videos.length} songs.` + (error > 0 ? ` ${error} failed to load.` : "")))
+        } else {
+          try {
+            info = await ytdl.getInfo(args[0])
+          } catch (err) {
+            try {
+              var videos = await yt.searchVideos(args.join(" "));
+            } catch (err1) {
+              return message.reply("Cannot find any videos")
+            }
+            var temp = embed(`${config.prefix}play <1-5>`)
+            searchList = []
+            for (var i = 0, j = 1; i < videos.length; i++, j++) {
+              temp.addField(`${j}. ${videos[i].title}`, videos[i].url)
+              searchList.push({
+                title: videos[i].title,
+                url: videos[i].url
+              })
+            }
+            listofqueuemessageid = await message.channel.send(temp)
+            return listofqueuemessageid
+          }
+          server.queue.push({
+            title: info.title,
+            url: info.video_url,
+            requested: message.author,
+            info: info
+          })
         }
       }
-      servers[message.guild.id].queue.push({
-        title: info.title,
-        url: info.video_url
-      })
       if (!message.guild.voiceConnection)
         message.member.voiceChannel.join()
         .then((connection) => {
@@ -59,69 +96,115 @@ module.exports = (bot, message) => {
         })
     },
     stop: () => {
-      server.queue = {}
+      if (server && server.queue) server.queue = []
+      if (server.dispatcher) server.dispatcher.end(true)
       if (message.guild.voiceConnection) message.guild.voiceConnection.disconnect()
+      message.channel.send(embed("Player stopped!"))
+      $.log("Player stopped!");
     },
     skip: () => {
       if (server.dispatcher) server.dispatcher.end()
     },
     list: () => {
-      var embed = new Discord.RichEmbed()
-        .setDescription(`Queue List`)
-        .setColor("#15f153")
-      if (server === undefined) {
-        message.channel.send("Empty Queue List")
+      if (server === undefined || server.queue.length === 0) {
+        message.channel.send(embed("The playlist is empty"))
       } else {
+        var temp = embed("Queue List")
         for (var i = 0, j = 1; i < server.queue.length; i++, j++) {
-          embed.addField(`${j}. ${server.queue[currentQueue].title}`, server.queue[currentQueue].url)
+          temp.addField(`${j}. ${server.queue[i].title}`, server.queue[i].url)
         }
-        message.channel.send(embed)
+        message.channel.send(temp)
       }
     },
     volume: (args) => {
       if (Number.isInteger(+args)) {
         config.music.volume = +args
-        server.dispatcher.setVolume(args / 100)
-        updateConfig()
+        if (server && server.dispatcher) server.dispatcher.setVolume(args / 100)
+        message.channel.send(embed(`Volume is now set to ${args}%`))
+        $.updateconfig()
       }
     },
     repeat: () => {
       config.music.repeat = !config.music.repeat
-      message.channel.send("Repeat is now " + (config.music.repeat ? "enabled" : "disabled") + ".")
-      updateConfig()
+      message.channel.send(embed("Repeat is now " + (config.music.repeat ? "enabled" : "disabled") + "."))
+      $.updateconfig()
     },
     pause: () => {
       server.dispatcher.pause()
-      message.channel.send(`Player paused \`${config.prefix}resume\` to unpause.`)
+      message.channel.send(embed(`Player paused ${config.prefix}resume to unpause.`))
+      $.log("Player paused!");
     },
     resume: () => {
       server.dispatcher.resume()
-      message.channel.send(`Player resumed \`${config.prefix}pause\` to pause.`)
+      message.channel.send(embed(`Player resumed ${config.prefix}pause to pause.`))
+      $.log("Player resumed!");
+    },
+    autoplay: () => {
+      server.dispatcher.resume()
+      config.music.autoplay = !config.music.autoplay
+      message.channel.send(embed("Autoplay is now " + (config.music.autoplay ? "enabled" : "disabled") + "."))
+      $.updateconfig()
+      $.log("Autoplay " + (config.music.autoplay ? "enabled" : "disabled") + ".");
+    },
+    nowplaying: () => {
+      var temp;
+      if (server && server.queue[currentQueue]) {
+        var requested = server.queue[currentQueue].requested
+        var info = server.queue[currentQueue].info
+        temp = embed()
+          .setTitle("Title")
+          .setDescription(server.queue[currentQueue].title)
+          .setThumbnail(info.thumbnail_url)
+          .addField("Time", `${moment.utc(server.dispatcher.time).format("mm:ss")} - ${moment.utc(info.length_seconds*1000).format("mm:ss")}`)
+          .addField("Description", info.description)
+        if (requested.username && requested.avatar)
+          temp.setFooter(requested.username, `https://cdn.discordapp.com/avatars/${requested.id}/${requested.avatar}.png?size=32`)
+        else
+          temp.setFooter(requested)
+      } else {
+        temp = embed("Nothing playing")
+      }
+      message.channel.send(temp)
     }
   }
 }
 
-function play(message, connection) {
+var previnfo;
+
+async function play(message, connection) {
   var server = servers[message.guild.id]
-  if (!server.queue[currentQueue] && config.music.repeat) {
+
+  if (!server.queue[currentQueue]) {
     currentQueue = 0
-  } else if (!server.queue[currentQueue]) {
-    message.guild.voiceConnection.disconnect()
-    return
+    if (!config.music.repeat) {
+      server.queue = []
+      if (config.music.autoplay) {
+        previnfo = await ytdl.getInfo(previnfo.related_videos[0].id)
+        server.queue.push({
+          title: previnfo.title,
+          url: previnfo.video_url,
+          requested: "Autoplay",
+          info: previnfo
+        })
+      } else {
+        message.guild.voiceConnection.disconnect()
+        return
+      }
+    }
   }
+
   server.dispatcher = connection.playStream(ytdl(server.queue[currentQueue].url, {
     filter: "audioonly"
   }))
   server.dispatcher.setVolume(config.music.volume / 100)
-  message.channel.send("Now playing " + server.queue[currentQueue].title)
-  server.dispatcher.on("end", () => {
+
+  message.channel.send(embed(server.queue[currentQueue].title).setTitle("Now Playing #" + (currentQueue + 1)))
+  $.log("Now playing " + server.queue[currentQueue].title)
+
+  previnfo = server.queue[currentQueue].info
+  server.dispatcher.on("end", (stop) => {
+    if (stop) return
     currentQueue++
     play(message, connection)
-  })
-}
-
-function updateConfig() {
-  fs.writeFile("./config.json", JSON.stringify(config, null, 2), (err) => {
-    if (err) console.log(err)
   })
 }
