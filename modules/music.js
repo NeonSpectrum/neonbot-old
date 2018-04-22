@@ -100,6 +100,8 @@ module.exports = (bot, message) => {
         .then((connection) => {
           play(message, connection)
         })
+      else
+        play(message, connection)
     },
     stop: () => {
       if (server && server.queue) server.queue = []
