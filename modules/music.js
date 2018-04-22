@@ -7,9 +7,10 @@ var yt = new Youtube(config.googleapi)
 var servers = []
 var currentQueue = 0;
 var searchList = [];
+var server = null;
 
 module.exports = (bot, message) => {
-  var server = message !== undefined ? servers[message.guild.id] : null;
+  if (message !== undefined) server = servers[message.guild.id]
   return {
     play: async (args) => {
       if (!message.member.voiceChannel) return message.reply("You must be in a voice channel!")
