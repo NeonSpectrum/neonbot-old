@@ -8,6 +8,11 @@ var bot = new Discord.Client()
 var util_module = require('./modules/utilities')
 var music_module = require('./modules/music')
 
+var modules = {
+  "music": Object.keys(music_module()),
+  "util": Object.keys(util_module())
+}
+
 bot.on('ready', () => {
   console.log(`Logged in as ${bot.user.tag}!`)
   bot.user.setActivity("Baby Rina <3", {
@@ -21,66 +26,18 @@ bot.on('message', message => {
   if (!message.content.startsWith(config.prefix)) return
 
   var music = music_module(bot, message)
-  var util = util_module(bot, message)
+  var utils = util_module(bot, message)
 
   var messageArray = message.content.split(" ")
   var cmd = messageArray[0].substring(config.prefix.length)
   var args = messageArray.slice(1)
 
-  switch (cmd) {
-    case 'help':
-      util.help(args)
+  switch (getModule(cmd)) {
+    case 'music':
+      music[cmd](args)
       break
-    case "addrole":
-      util.addrole(args)
-      break
-    case "ban":
-      util.ban(args)
-      break
-    case "botinfo":
-      util.botinfo()
-      break
-    case "clear":
-      util.clear(args)
-      break
-    case "kick":
-      util.kick(args)
-      break
-    case "prefix":
-      util.prefix(args)
-      break
-    case "removerole":
-      util.removerole(args)
-      break
-    case "say":
-      util.say(args)
-      break
-    case "serverinfo":
-      util.serverinfo()
-      break
-    case 'play':
-      music.play(args)
-      break
-    case 'stop':
-      music.stop()
-      break
-    case 'skip':
-      music.skip()
-      break
-    case 'list':
-      music.list()
-      break
-    case 'volume':
-      music.volume(args)
-      break
-    case 'repeat':
-      music.repeat()
-      break
-    case 'pause':
-      music.pause()
-      break
-    case 'resume':
-      music.resume()
+    case "util":
+      utils[cmd](args)
       break
     default:
       message.reply("Unknown Command")
@@ -89,3 +46,14 @@ bot.on('message', message => {
 })
 
 bot.login(config.token)
+
+function getModule(command) {
+  var modulekeys = Object.keys(modules)
+  for (var i = 0; i < modulekeys.length; i++) {
+    var commandkeys = modules[Object.keys(modules)[i]]
+    for (var j = 0; j < commandkeys.length; j++) {
+      if (command === commandkeys[j])
+        return Object.keys(modules)[i]
+    }
+  }
+}

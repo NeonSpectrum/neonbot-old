@@ -9,7 +9,7 @@ var currentQueue = 0;
 var searchList = [];
 
 module.exports = (bot, message) => {
-  var server = servers[message.guild.id]
+  var server = message !== undefined ? servers[message.guild.id] : null;
   return {
     play: async (args) => {
       if (!message.member.voiceChannel) return message.reply("You must be in a voice channel!")
@@ -29,22 +29,22 @@ module.exports = (bot, message) => {
         } catch (err) {
           try {
             var videos = await yt.searchVideos(args.join(" "));
-            var embed = new Discord.RichEmbed()
-              .setDescription(`${config.prefix}play <1-5>`)
-              .setColor("#15f153")
-            searchList = []
-            for (var i = 0, j = 1; i < videos.length; i++, j++) {
-              embed.addField(`${j}. ${videos[i].title}`, videos[i].url)
-              searchList.push({
-                "title": videos[i].title,
-                "url": videos[i].url
-              })
-            }
-            return message.channel.send(embed)
           } catch (err1) {
             // return message.reply("Cannot find any videos")
             return console.log(err)
           }
+          var embed = new Discord.RichEmbed()
+            .setDescription(`${config.prefix}play <1-5>`)
+            .setColor("#15f153")
+          searchList = []
+          for (var i = 0, j = 1; i < videos.length; i++, j++) {
+            embed.addField(`${j}. ${videos[i].title}`, videos[i].url)
+            searchList.push({
+              "title": videos[i].title,
+              "url": videos[i].url
+            })
+          }
+          return message.channel.send(embed)
         }
       }
       servers[message.guild.id].queue.push({
