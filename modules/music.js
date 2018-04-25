@@ -136,17 +136,28 @@ module.exports = (bot, message) => {
       $.updateconfig()
     },
     pause: () => {
-      server.dispatcher.pause()
-      message.channel.send(embed(`Player paused ${config.prefix}resume to unpause.`))
-      $.log("Player paused!");
+      if (server && server.dispatcher) {
+        server.dispatcher.pause()
+        if (message.channel) {
+          message.channel.send(embed(`Player paused ${config.prefix}resume to unpause.`))
+        } else {
+          message.send(embed(`Player has automatically paused because there are no users connected.`))
+        }
+        $.log("Player paused!");
+      }
     },
     resume: () => {
-      server.dispatcher.resume()
-      message.channel.send(embed(`Player resumed ${config.prefix}pause to pause.`))
-      $.log("Player resumed!");
+      if (server && server.dispatcher) {
+        server.dispatcher.resume()
+        if (message.channel) {
+          message.channel.send(embed(`Player resumed ${config.prefix}pause to pause.`))
+        } else {
+          message.send(embed(`Player has automatically resumed.`))
+        }
+        $.log("Player resumed!");
+      }
     },
     autoplay: () => {
-      server.dispatcher.resume()
       config.music.autoplay = !config.music.autoplay
       message.channel.send(embed("Autoplay is now " + (config.music.autoplay ? "enabled" : "disabled") + "."))
       $.updateconfig()

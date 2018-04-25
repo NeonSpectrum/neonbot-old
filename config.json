@@ -8,6 +8,8 @@
     "autoplay": true
   },
   "bot": {
-    "deleteoncmd": false
+    "deleteoncmd": false,
+    "logchannel": "415887571063799808",
+    "voicetts": false
   }
 }

@@ -17,8 +17,8 @@ var modules = {
 
 bot.on('ready', () => {
   $.log(`Logged in as ${bot.user.tag}!`)
-  bot.user.setActivity("Baby Rina <3", {
-    type: "WATCHING"
+  bot.user.setActivity("my heartbeat", {
+    type: "LISTENING"
   })
 })
 
@@ -35,6 +35,10 @@ bot.on('message', message => {
   var cmd = messageArray[0].substring(config.prefix.length).toLowerCase()
   var args = messageArray.slice(1)
 
+  if (config.bot.deleteoncmd) {
+    message.delete()
+  }
+
   switch (getModule(cmd)) {
     case 'admin':
       admin[cmd](args)
@@ -46,8 +50,25 @@ bot.on('message', message => {
       utils[cmd](args)
       break
   }
-  if (config.bot.deleteoncmd) {
-    message.delete()
+})
+
+bot.on('voiceStateUpdate', (oldMember, newMember) => {
+  if (newMember.user.bot) return
+
+  var music = music_module(bot, bot.channels.get(config.bot.logchannel))
+
+  if (newMember.voiceChannelID == null) {
+    if (config.bot.voicetts)
+      bot.channels.get(config.bot.logchannel).send(newMember.user.username + " has disconnected", {
+        tts: true
+      }).then(msg => msg.delete(5000))
+    if (newMember.guild.channels.get(oldMember.voiceChannelID).members.filter(s => s.user.id != bot.user.id).size == 0) music.pause()
+  } else if (newMember.voiceChannelID) {
+    if (config.bot.voicetts)
+      bot.channels.get(config.bot.logchannel).send(newMember.user.username + " has connected", {
+        tts: true
+      }).then(msg => msg.delete(5000))
+    if (newMember.guild.channels.get(newMember.voiceChannelID).members.filter(s => s.user.id != bot.user.id).size > 0) music.resume()
   }
 })
 

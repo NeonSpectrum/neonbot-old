@@ -64,14 +64,9 @@ module.exports = (bot, message) => {
       if (args > 100) return message.reply("Parameters must not be greater than 100.f")
       if (!message.member.hasPermission("MANAGE_MESSAGES")) return errors.noPerms(message, "MANAGE_MESSAGES")
       if (!args[0]) args[0] = 1
+      if (message.deletable) message.delete()
 
       message.channel.bulkDelete(args[0])
-        .then(() => {
-          message.channel.send(embed()
-              .setDescription(`Cleared ${args[0]} messages.`)
-            )
-            .then(msg => msg.delete(5000))
-        })
     },
     kick: (args) => {
       if (!message.member.hasPermission("KICK_MEMBERS")) return errors.noPerms(message, "KICK_MEMBERS")
