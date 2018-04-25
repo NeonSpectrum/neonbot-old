@@ -5,7 +5,7 @@
   "ownerid": "260397381856526337",
   "music": {
     "volume": 20,
-    "repeat": true,
+    "repeat": false,
     "autoplay": true
   },
   "bot": {

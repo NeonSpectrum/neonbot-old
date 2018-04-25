@@ -1,5 +1,5 @@
 var fs = require('fs')
-var moment = require('moment');
+var moment = require('moment')
 var Discord = require('discord.js')
 var ytdl = require('ytdl-core')
 var Youtube = require('simple-youtube-api')
@@ -9,10 +9,11 @@ var $ = require('../handler/functions')
 var embed = $.embed
 var log = $.log
 var servers = []
-var currentQueue = 0;
-var searchList = [];
-var server = null;
-var listofqueuemessageid = "";
+var currentQueue = 0
+var searchList = []
+var server = null
+var listofqueuemessageid = ""
+var autoplayid = []
 
 module.exports = (bot, message) => {
   if (message !== undefined) server = servers[message.guild.id]
@@ -24,9 +25,9 @@ module.exports = (bot, message) => {
         queue: []
       }
       server = servers[message.guild.id]
-      var info;
+      var info
       if (Number.isInteger(+args)) {
-        if (searchList.length == 0) return;
+        if (searchList.length == 0) return
         listofqueuemessageid.delete()
         listofqueuemessageid = ""
         message.channel.send(embed(searchList[args - 1].title).setTitle(`You have selected #${args}. `))
@@ -49,8 +50,8 @@ module.exports = (bot, message) => {
             return
           }
 
-          var msg = await message.channel.send(embed(`Adding ${videos.length} to the queue`));
-          var error = 0;
+          var msg = await message.channel.send(embed(`Adding ${videos.length} to the queue`))
+          var error = 0
 
           for (var i = 0; i < videos.length; i++) {
             try {
@@ -71,7 +72,7 @@ module.exports = (bot, message) => {
             info = await ytdl.getInfo(args[0])
           } catch (err) {
             try {
-              var videos = await yt.searchVideos(args.join(" "));
+              var videos = await yt.searchVideos(args.join(" "))
             } catch (err1) {
               return message.reply("Cannot find any videos")
             }
@@ -105,8 +106,9 @@ module.exports = (bot, message) => {
       if (server && server.queue) server.queue = []
       if (server.dispatcher) server.dispatcher.end(true)
       if (message.guild.voiceConnection) message.guild.voiceConnection.disconnect()
+      autoplayid = []
       message.channel.send(embed("Player stopped!"))
-      $.log("Player stopped!");
+      $.log("Player stopped!")
     },
     skip: () => {
       if (server.dispatcher) server.dispatcher.end()
@@ -143,7 +145,7 @@ module.exports = (bot, message) => {
         } else {
           message.send(embed(`Player has automatically paused because there are no users connected.`))
         }
-        $.log("Player paused!");
+        $.log("Player paused!")
       }
     },
     resume: () => {
@@ -154,17 +156,18 @@ module.exports = (bot, message) => {
         } else {
           message.send(embed(`Player has automatically resumed.`))
         }
-        $.log("Player resumed!");
+        $.log("Player resumed!")
       }
     },
     autoplay: () => {
+      autoplayid = []
       config.music.autoplay = !config.music.autoplay
       message.channel.send(embed("Autoplay is now " + (config.music.autoplay ? "enabled" : "disabled") + "."))
       $.updateconfig()
-      $.log("Autoplay " + (config.music.autoplay ? "enabled" : "disabled") + ".");
+      $.log("Autoplay " + (config.music.autoplay ? "enabled" : "disabled") + ".")
     },
     nowplaying: () => {
-      var temp;
+      var temp
       if (server && server.queue[currentQueue]) {
         var requested = server.queue[currentQueue].requested
         var info = server.queue[currentQueue].info
@@ -186,7 +189,7 @@ module.exports = (bot, message) => {
   }
 }
 
-var previnfo;
+var previnfo
 
 async function play(message, connection) {
   var server = servers[message.guild.id]
@@ -194,8 +197,14 @@ async function play(message, connection) {
     currentQueue = 0
     if (!config.music.repeat) {
       server.queue = []
+      console.log(previnfo.related_videos)
       if (config.music.autoplay) {
-        previnfo = await ytdl.getInfo(previnfo.related_videos[0].id)
+        for (var i = 0; i < previnfo.related_videos.length; i++) {
+          if (!$.isInArray(autoplayid, previnfo.related_videos[i].id)) {
+            previnfo = await ytdl.getInfo(previnfo.related_videos[i].id)
+            autoplayid.push(previnfo.related_videos[i].id)
+          }
+        }
         server.queue.push({
           title: previnfo.title,
           url: previnfo.video_url,
