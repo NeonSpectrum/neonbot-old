@@ -202,6 +202,7 @@ async function play(message, connection) {
           if (!$.isInArray(autoplayid, previnfo.related_videos[i].id)) {
             previnfo = await ytdl.getInfo(previnfo.related_videos[i].id)
             autoplayid.push(previnfo.related_videos[i].id)
+            break
           }
         }
         server.queue.push({
