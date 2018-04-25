@@ -17,8 +17,8 @@ var modules = {
 
 bot.on('ready', () => {
   $.log(`Logged in as ${bot.user.tag}!`)
-  bot.user.setActivity("my heartbeat", {
-    type: "LISTENING"
+  bot.user.setActivity(config.bot.game.name, {
+    type: config.bot.game.type.toUpperCase()
   })
 })
 
@@ -31,7 +31,7 @@ bot.on('message', message => {
   var music = music_module(bot, message)
   var utils = util_module(bot, message)
 
-  var messageArray = message.content.split(" ")
+  var messageArray = message.content.trim().split(" ")
   var cmd = messageArray[0].substring(config.prefix.length).toLowerCase()
   var args = messageArray.slice(1)
 

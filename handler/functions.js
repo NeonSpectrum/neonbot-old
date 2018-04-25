@@ -20,3 +20,7 @@ module.exports.updateconfig = (message) => {
     if (err) log(err)
   })
 }
+
+module.exports.isOwner = (id) => {
+  return id == config.ownerid
+}

@@ -128,6 +128,19 @@ module.exports = (bot, message) => {
         .setTitle("Removed Role")
         .setDescription(`<@${rMember.id}>, We removed ${gRole.name} from them.`)
       )
+    },
+    setgame: (args) => {
+      if (!$.isOwner(message.member.id)) return
+      if (!(args[0].toUpperCase() == "PLAYING" || args[0].toUpperCase() == "LISTENING" || args[0].toUpperCase() == "WATCHING"))
+        return message.reply("Invalid Parameters. Not a valid game type. (PLAYING, WATCHING, LISTENING)")
+      console.log(args.slice(1).join(" "))
+      config.bot.game.type = args[0].toUpperCase()
+      config.bot.game.name = args.slice(1).join(" ")
+
+      $.updateconfig()
+      bot.user.setActivity(args.slice(1).join(" "), {
+        type: args[0].toUpperCase()
+      })
     }
   }
 }
