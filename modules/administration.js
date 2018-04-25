@@ -133,7 +133,7 @@ module.exports = (bot, message) => {
       if (!$.isOwner(message.member.id)) return
       if (!(args[0].toUpperCase() == "PLAYING" || args[0].toUpperCase() == "LISTENING" || args[0].toUpperCase() == "WATCHING"))
         return message.reply("Invalid Parameters. Not a valid game type. (PLAYING, WATCHING, LISTENING)")
-      console.log(args.slice(1).join(" "))
+
       config.bot.game.type = args[0].toUpperCase()
       config.bot.game.name = args.slice(1).join(" ")
 
