@@ -75,13 +75,11 @@ module.exports = (bot, message) => {
 
       if (!kUser) return errors.cantfindUser(message.channel)
 
-      var kReason = args.join(" ")
-        .slice(22)
+      var kReason = args.join(" ").slice(22)
 
       if (kUser.hasPermission("MANAGE_MESSAGES")) return errors.equalPerms(message, kUser, "MANAGE_MESSAGES")
 
-      message.guild.member(kUser)
-        .kick(kReason)
+      message.guild.member(kUser).kick(kReason)
 
       message.channel.send(embed()
         .setDescription("~Kick~")
@@ -141,6 +139,16 @@ module.exports = (bot, message) => {
       bot.user.setActivity(args.slice(1).join(" "), {
         type: args[0].toUpperCase()
       })
+    },
+    setavatar: (args) => {
+      if (!$.isOwner(message.member.id)) return
+      if (!args[0].match(/[-a-zA-Z0-9@:%_\+.~#?&//=]{2,256}\.[a-z]{2,4}\b(\/[-a-zA-Z0-9@:%_\+.~#?&//=]*)?/gi)) return message.reply("Invalid URL.")
+
+      bot.user.setAvatar(args[0])
+        .then(() => {
+          $.log("Avatar changed.")
+          message.channel.send(embed(args[0]).setTitle("Avatar changed to"))
+        })
     }
   }
 }
