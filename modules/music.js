@@ -197,7 +197,6 @@ async function play(message, connection) {
     currentQueue = 0
     if (!config.music.repeat) {
       server.queue = []
-      console.log(previnfo.related_videos)
       if (config.music.autoplay) {
         for (var i = 0; i < previnfo.related_videos.length; i++) {
           if (!$.isInArray(autoplayid, previnfo.related_videos[i].id)) {
