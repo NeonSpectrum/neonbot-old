@@ -31,3 +31,11 @@ module.exports.isInArray = (arr, value) => {
   }
   return false
 }
+
+module.exports.addIfNotExists = (arr, value) => {
+  for (var i = 0; i < arr.length; i++) {
+    if (arr[i] == value) return arr
+  }
+  arr.push(value)
+  return arr
+}

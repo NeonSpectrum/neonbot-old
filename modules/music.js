@@ -193,31 +193,38 @@ var previnfo
 
 async function play(message, connection) {
   var server = servers[message.guild.id]
-  if (!server.queue[currentQueue]) {
-    currentQueue = 0
-    if (!config.music.repeat) {
-      server.queue = []
-      if (config.music.autoplay) {
-        for (var i = 0; i < previnfo.related_videos.length; i++) {
-          if (!$.isInArray(autoplayid, previnfo.related_videos[i].id)) {
-            previnfo = await ytdl.getInfo(previnfo.related_videos[i].id)
-            autoplayid.push(previnfo.related_videos[i].id)
-            break
+  try {
+    if (!server.queue[currentQueue]) {
+      currentQueue = 0
+      if (!config.music.repeat) {
+        server.queue = []
+        if (config.music.autoplay) {
+          autoplayid = $.addIfNotExists(autoplayid, previnfo.video_id)
+          for (var i = 0; i < previnfo.related_videos.length; i++) {
+            var id = previnfo.related_videos[i].id || previnfo.related_videos[i].video_id
+            if (!$.isInArray(autoplayid, id)) {
+              autoplayid.push(id)
+              previnfo = await ytdl.getInfo(id)
+              break
+            }
           }
+          server.queue.push({
+            id: previnfo.video_id,
+            title: previnfo.title,
+            url: previnfo.video_url,
+            requested: "Autoplay",
+            info: previnfo
+          })
+        } else {
+          message.guild.voiceConnection.disconnect()
+          return
         }
-        server.queue.push({
-          title: previnfo.title,
-          url: previnfo.video_url,
-          requested: "Autoplay",
-          info: previnfo
-        })
-      } else {
-        message.guild.voiceConnection.disconnect()
-        return
       }
     }
-  }
 
+  } catch (err) {
+    console.log(err)
+  }
   server.dispatcher = connection.playStream(ytdl(server.queue[currentQueue].url, {
     filter: "audioonly"
   }))
@@ -227,6 +234,7 @@ async function play(message, connection) {
   $.log("Now playing " + server.queue[currentQueue].title)
 
   previnfo = server.queue[currentQueue].info
+
   server.dispatcher.on("end", (stop) => {
     if (stop === true) return
     currentQueue++
