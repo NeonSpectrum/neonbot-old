@@ -138,7 +138,7 @@ module.exports = (bot, message) => {
       $.updateconfig()
     },
     pause: () => {
-      if (server && server.dispatcher) {
+      if (server && server.dispatcher && !server.dispatcher.paused) {
         server.dispatcher.pause()
         if (message.channel) {
           message.channel.send(embed(`Player paused ${config.prefix}resume to unpause.`))
@@ -149,7 +149,7 @@ module.exports = (bot, message) => {
       }
     },
     resume: () => {
-      if (server && server.dispatcher) {
+      if (server && server.dispatcher && server.dispatcher.paused) {
         server.dispatcher.resume()
         if (message.channel) {
           message.channel.send(embed(`Player resumed ${config.prefix}pause to pause.`))
