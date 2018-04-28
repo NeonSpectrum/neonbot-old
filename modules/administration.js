@@ -165,7 +165,7 @@ module.exports = (bot, message) => {
     },
     deleteoncmd: () => {
       config.bot.deleteoncmd = !config.bot.deleteoncmd
-      message.channel.send(embed("Delete On Cmd is now " + (config.music.repeat ? "enabled" : "disabled") + "."))
+      message.channel.send(embed("Delete On Cmd is now " + (config.bot.deleteoncmd ? "enabled" : "disabled") + "."))
       $.updateconfig()
     },
     voicetts: () => {
