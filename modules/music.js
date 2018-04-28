@@ -16,8 +16,6 @@ var $ = require('../handler/functions')
 var embed = $.embed
 var servers = []
 var currentQueue = 0
-var songSearchList = []
-var lyricSearchList = []
 var autoplayid = []
 var server = null
 var reaction_numbers = ["\u0030\u20E3", "\u0031\u20E3", "\u0032\u20E3", "\u0033\u20E3", "\u0034\u20E3", "\u0035\u20E3", "\u0036\u20E3", "\u0037\u20E3", "\u0038\u20E3", "\u0039\u20E3"]
@@ -93,7 +91,7 @@ module.exports = (bot, message) => {
           return message.reply("Cannot find any videos")
         }
         var temp = embed(`${config.prefix}play <1-5>`)
-        songSearchList = []
+        var songSearchList = []
         for (var i = 0, j = 1; i < videos.length; i++, j++) {
           temp.addField(`${j}. ${videos[i].title}`, videos[i].url)
           songSearchList.push({
@@ -102,8 +100,8 @@ module.exports = (bot, message) => {
             requested: message.author
           })
         }
-        listofqueuemessageid = await message.channel.send(temp)
-        var collector = listofqueuemessageid.createReactionCollector((reaction, user) => user.id === message.author.id, {
+        var msg = await message.channel.send(temp)
+        var collector = msg.createReactionCollector((reaction, user) => user.id === message.author.id, {
           time: 60 * 1000
         });
         collector.on('collect', async react => {
@@ -117,7 +115,6 @@ module.exports = (bot, message) => {
             requested: message.author
           })
           server.queue[index - 1].info = await ytdl.getInfo(songSearchList[i - 1].url)
-          songSearchList = []
           if (!message.guild.voiceConnection)
             message.member.voiceChannel.join()
             .then((connection) => {
@@ -125,7 +122,7 @@ module.exports = (bot, message) => {
             })
         })
         for (var i = 1; i <= 5; i++) {
-          await listofqueuemessageid.react(reaction_numbers[i])
+          await msg.react(reaction_numbers[i])
         }
       }
     },
@@ -238,51 +235,57 @@ module.exports = (bot, message) => {
       if (message.guild.voiceConnection) message.guild.voiceConnection.disconnect()
     },
     lyrics: args => {
-      if (Number.isInteger(+args[0])) {
-        if (lyricSearchList.length > 0) {
-          request(lyricSearchList[args - 1].url, (err, res, body) => {
-            lyricSearchList = []
-            var $ = cheerio.load(body)
-            var string = $("div.col-xs-12.col-lg-8.text-center div").eq(6).text()
-            var strings = []
-            do {
-              var part = string.substring(0, 2001)
-              part = part.substring(0, part.lastIndexOf(part.lastIndexOf("\n\n") >= 0 ? "\n\n" : "\n") + 1)
-              strings.push(part)
-              string = string.replace(part, "")
-            } while (string.length > 0)
-            for (var i = 0; i < strings.length; i++) {
-              var temp = embed(strings[i])
-              if (i == 0) temp.setTitle($("div.lyricsh h2 b").text())
-              message.channel.send(temp)
-            }
-          })
-        }
-      } else {
-        var keyword = args.join(" ")
-        request("https://search.azlyrics.com/search.php?q=" + keyword.replace(/\s/g, "+"), (err, res, body) => {
-          var $ = cheerio.load(body)
-          var count = 1
-          $("td.visitedlyr a").each(function() {
-            if (count <= 5 && $(this).attr("href").indexOf("/lyrics/") > -1) {
-              lyricSearchList.push({
-                title: $(this).text(),
-                url: $(this).attr("href")
-              })
-              count++
-            }
-          })
-          if (lyricSearchList.length > 0) {
-            var temp = embed().setTitle(`${config.prefix}lyrics <1-5>`)
-            for (var i = 0; i < lyricSearchList.length; i++) {
-              temp.addField(`${i + 1}. ${lyricSearchList[i].title}`, lyricSearchList[i].url)
-            }
-            message.channel.send(temp)
-          } else {
-            message.channel.send(embed("No lyrics found."))
+      var keyword = args.join(" ")
+      request("https://search.azlyrics.com/search.php?q=" + keyword.replace(/\s/g, "+"), async (err, res, body) => {
+        var $ = cheerio.load(body)
+        var count = 1
+        var lyricSearchList = []
+        $("td.visitedlyr a").each(function() {
+          if (count <= 5 && $(this).attr("href").indexOf("/lyrics/") > -1) {
+            lyricSearchList.push({
+              title: $(this).text(),
+              url: $(this).attr("href")
+            })
+            count++
           }
         })
-      }
+        if (lyricSearchList.length > 0) {
+          var temp = embed().setTitle(`${config.prefix}lyrics <1-5>`)
+          for (var i = 0; i < lyricSearchList.length; i++) {
+            temp.addField(`${i + 1}. ${lyricSearchList[i].title}`, lyricSearchList[i].url)
+          }
+          var msg = await message.channel.send(temp)
+          var collector = msg.createReactionCollector((reaction, user) => user.id === message.author.id, {
+            time: 60 * 1000
+          });
+          collector.on('collect', async react => {
+            react.message.delete()
+            var i = reaction_numbers.indexOf(react._emoji.name)
+            request(lyricSearchList[i - 1].url, (err, res, body) => {
+              lyricSearchList = []
+              var $ = cheerio.load(body)
+              var string = $("div.col-xs-12.col-lg-8.text-center div").eq(6).text()
+              var strings = []
+              do {
+                var part = string.substring(0, 2001)
+                part = part.substring(0, part.lastIndexOf(part.lastIndexOf("\n\n") >= 0 ? "\n\n" : "\n") + 1)
+                strings.push(part)
+                string = string.replace(part, "")
+              } while (string.length > 0)
+              for (var i = 0; i < strings.length; i++) {
+                var temp = embed(strings[i])
+                if (i == 0) temp.setTitle($("div.lyricsh h2 b").text())
+                message.channel.send(temp)
+              }
+            })
+          })
+          for (var i = 1; i <= 5; i++) {
+            await msg.react(reaction_numbers[i])
+          }
+        } else {
+          message.channel.send(embed("No lyrics found."))
+        }
+      })
     }
   }
 }
