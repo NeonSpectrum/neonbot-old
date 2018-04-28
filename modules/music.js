@@ -14,14 +14,12 @@ var yt = new Youtube(config.googleapi)
 
 var $ = require('../handler/functions')
 var embed = $.embed
-var log = $.log
 var servers = []
 var currentQueue = 0
 var songSearchList = []
 var lyricSearchList = []
-var server = null
-var listofqueuemessageid = ""
 var autoplayid = []
+var server = null
 var reaction_numbers = ["\u0030\u20E3", "\u0031\u20E3", "\u0032\u20E3", "\u0033\u20E3", "\u0034\u20E3", "\u0035\u20E3", "\u0036\u20E3", "\u0037\u20E3", "\u0038\u20E3", "\u0039\u20E3"]
 
 module.exports = (bot, message) => {
@@ -110,15 +108,15 @@ module.exports = (bot, message) => {
         });
         collector.on('collect', async react => {
           react.message.delete()
-          var index = reaction_numbers.indexOf(react._emoji.name)
-          message.channel.send(embed(songSearchList[index - 1].title).setTitle(`You have selected #${index}. `))
+          var i = reaction_numbers.indexOf(react._emoji.name)
+          message.channel.send(embed(songSearchList[i - 1].title).setTitle(`You have selected #${i}. `))
             .then(msg => msg.delete(5000))
           var index = server.queue.push({
-            title: songSearchList[index - 1].title,
-            url: songSearchList[index - 1].url,
+            title: songSearchList[i - 1].title,
+            url: songSearchList[i - 1].url,
             requested: message.author
           })
-          server.queue[index - 1].info = await ytdl.getInfo(songSearchList[index - 1].url)
+          server.queue[index - 1].info = await ytdl.getInfo(songSearchList[i - 1].url)
           songSearchList = []
           if (!message.guild.voiceConnection)
             message.member.voiceChannel.join()
