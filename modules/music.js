@@ -1,4 +1,4 @@
-var fs = require('fs')
+﻿var fs = require('fs')
 var moment = require('moment')
 var Discord = require('discord.js')
 var {
@@ -22,6 +22,7 @@ var lyricSearchList = []
 var server = null
 var listofqueuemessageid = ""
 var autoplayid = []
+var reaction_numbers = ["\u0030\u20E3", "\u0031\u20E3", "\u0032\u20E3", "\u0033\u20E3", "\u0034\u20E3", "\u0035\u20E3", "\u0036\u20E3", "\u0037\u20E3", "\u0038\u20E3", "\u0039\u20E3"]
 
 module.exports = (bot, message) => {
   if (message !== undefined) {
@@ -33,7 +34,7 @@ module.exports = (bot, message) => {
     server = servers[message.guild.id]
   }
   return {
-    play: async (args) => {
+    play: async args => {
       if (!message.member.voiceChannel) return message.reply("You must be in a voice channel!")
       if (!args[0]) return message.reply("Please provide a keyword or link.")
 
@@ -47,6 +48,11 @@ module.exports = (bot, message) => {
           requested: message.author,
           info: info
         })
+        if (!message.guild.voiceConnection)
+          message.member.voiceChannel.join()
+          .then(connection => {
+            play(message, connection)
+          })
       } else if (args[0].match(/^.*(youtu.be\/|list=)([^#\&\?]*).*/g)) {
         try {
           playlist = await yt.getPlaylist(args[0])
@@ -73,7 +79,7 @@ module.exports = (bot, message) => {
 
             if (i == 0 && !message.guild.voiceConnection) {
               message.member.voiceChannel.join()
-                .then((connection) => {
+                .then(connection => {
                   play(message, connection)
                 })
             }
@@ -82,20 +88,6 @@ module.exports = (bot, message) => {
           }
         }
         return msg.edit(embed(`Done! Loaded ${videos.length} songs.` + (error > 0 ? ` ${error} failed to load.` : "")))
-      } else if (Number.isInteger(+args[0])) {
-        if (songSearchList.length != 0) {
-          listofqueuemessageid.delete()
-          listofqueuemessageid = ""
-          message.channel.send(embed(songSearchList[args - 1].title).setTitle(`You have selected #${args}. `))
-            .then(msg => msg.delete(5000))
-          var index = server.queue.push({
-            title: songSearchList[args - 1].title,
-            url: songSearchList[args - 1].url,
-            requested: message.author
-          })
-          server.queue[index - 1].info = await ytdl.getInfo(songSearchList[args - 1].url)
-          songSearchList = []
-        }
       } else {
         try {
           var videos = await yt.searchVideos(args.join(" "))
@@ -113,14 +105,31 @@ module.exports = (bot, message) => {
           })
         }
         listofqueuemessageid = await message.channel.send(temp)
-        return
-      }
-
-      if (!message.guild.voiceConnection)
-        message.member.voiceChannel.join()
-        .then((connection) => {
-          play(message, connection)
+        var collector = listofqueuemessageid.createReactionCollector((reaction, user) => user.id === message.author.id, {
+          time: 60 * 1000
+        });
+        collector.on('collect', async react => {
+          react.message.delete()
+          var index = reaction_numbers.indexOf(react._emoji.name)
+          message.channel.send(embed(songSearchList[index - 1].title).setTitle(`You have selected #${index}. `))
+            .then(msg => msg.delete(5000))
+          var index = server.queue.push({
+            title: songSearchList[index - 1].title,
+            url: songSearchList[index - 1].url,
+            requested: message.author
+          })
+          server.queue[index - 1].info = await ytdl.getInfo(songSearchList[index - 1].url)
+          songSearchList = []
+          if (!message.guild.voiceConnection)
+            message.member.voiceChannel.join()
+            .then((connection) => {
+              play(message, connection)
+            })
         })
+        for (var i = 1; i <= 5; i++) {
+          await listofqueuemessageid.react(reaction_numbers[i])
+        }
+      }
     },
     stop: () => {
       if (server && server.queue) server.queue = []
@@ -155,12 +164,12 @@ module.exports = (bot, message) => {
             .setChannel(message.channel)
             .showPageIndicator(true)
             .setTitle('Playlist')
-            .setColor("#15f153")
+            .setColor("#59ABE3")
             .build();
         }
       }
     },
-    volume: (args) => {
+    volume: args => {
       if (Number.isInteger(+args[0])) {
         config.music.volume = +args
         if (server && server.dispatcher) server.dispatcher.setVolume(args / 100)
@@ -170,7 +179,7 @@ module.exports = (bot, message) => {
         message.channel.send(embed(`Volume is set to ${config.music.volume}%`))
       }
     },
-    repeat: (args) => {
+    repeat: args => {
       if (args[0] && args[0].toLowerCase() != "off" && args[0].toLowerCase() != "single" && args[0].toLowerCase() != "all") {
         message.channel.send(embed("Invalid parameters. (off | single | all)"))
       } else if (!args[0]) {
@@ -221,10 +230,7 @@ module.exports = (bot, message) => {
           .setThumbnail(info.thumbnail_url)
           .addField("Time", `${moment.utc(server.dispatcher.time).format("mm:ss")} - ${moment.utc(info.length_seconds*1000).format("mm:ss")}`)
           .addField("Description", (info.description.length > 500 ? info.description.substring(0, 500) + "..." : info.description))
-        if (requested.username && requested.avatar)
-          temp.setFooter(requested.username, `https://cdn.discordapp.com/avatars/${requested.id}/${requested.avatar}.png?size=32`)
-        else
-          temp.setFooter(requested)
+          .setFooter(requested.username, `https://cdn.discordapp.com/avatars/${requested.id}/${requested.avatar}.png?size=32`)
       } else {
         temp = embed("Nothing playing")
       }
@@ -233,7 +239,7 @@ module.exports = (bot, message) => {
     leave: () => {
       if (message.guild.voiceConnection) message.guild.voiceConnection.disconnect()
     },
-    lyrics: (args) => {
+    lyrics: args => {
       if (Number.isInteger(+args[0])) {
         if (lyricSearchList.length > 0) {
           request(lyricSearchList[args - 1].url, (err, res, body) => {
@@ -304,7 +310,7 @@ async function play(message, connection) {
           id: previnfo.video_id,
           title: previnfo.title,
           url: previnfo.video_url,
-          requested: "Autoplay",
+          requested: bot.user,
           info: previnfo
         })
       } else {
@@ -315,16 +321,22 @@ async function play(message, connection) {
   }
 
   server.dispatcher = connection.playStream(ytdl(server.queue[currentQueue].url, {
-    quality: "highestaudio",
-    highWaterMark: 1024 * 1024 * 10,
+    quality: "highestaudio"
   }))
   server.dispatcher.setVolume(config.music.volume / 100)
-  message.channel.send(embed(server.queue[currentQueue].title).setTitle("Now Playing #" + (currentQueue + 1)))
+  var requested = server.queue[currentQueue].requested
+  var footer = [requested.username, moment.utc(server.queue[currentQueue].info.length_seconds * 1000).format("mm:ss"), `Volume: ${config.music.volume}`, `Repeat: ${config.music.repeat}`, `Autoplay: ${config.music.autoplay ? "on" : "off"}`]
+  message.channel.send(embed()
+    .setAuthor("Now Playing #" + (currentQueue + 1), "https://i.imgur.com/SBMH84I.png")
+    .setFooter(footer.join(" | "), `https://cdn.discordapp.com/avatars/${requested.id}/${requested.avatar}.png?size=32`)
+    .setTitle(server.queue[currentQueue].title)
+    .setURL(server.queue[currentQueue].url)
+  )
   $.log("Now playing " + server.queue[currentQueue].title)
 
   previnfo = server.queue[currentQueue].info
 
-  server.dispatcher.on("end", (mode) => {
+  server.dispatcher.on("end", mode => {
     if (mode === "stop") return
     else if (config.music.repeat != "single" || mode === "skip") currentQueue += 1
     play(message, connection)

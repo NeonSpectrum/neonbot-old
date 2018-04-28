@@ -9,7 +9,7 @@ module.exports.log = (message) => {
 }
 
 module.exports.embed = (message) => {
-  var e = new Discord.RichEmbed().setColor("#15f153")
+  var e = new Discord.RichEmbed().setColor("#59ABE3")
   if (message !== undefined)
     e.setDescription(message)
   return e

@@ -33,7 +33,7 @@ bot.on('ready', () => {
   }
 
   displayAscii()
-  $.log(`Logged in as ${bot.user.tag}!`)
+  $.log(`Logged in as ${bot.user.tag}`)
   bot.user.setActivity(config.bot.game.name, {
     type: config.bot.game.type.toUpperCase()
   })
