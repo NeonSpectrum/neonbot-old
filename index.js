@@ -2,7 +2,25 @@ var fs = require('fs')
 var colors = require('colors/safe');
 var Discord = require("discord.js")
 var bot = new Discord.Client()
-var config = require('./config.json')
+
+var config = fs.existsSync('./config.json') ? require('./config.json') : null;
+
+if (!fs.existsSync('./config.json')) {
+  require('./setup.js')(() => {
+    config = require('./config.json')
+    bot.login(config.token)
+  })
+} else {
+  if (!(config.token && config.prefix && config.googleapi && config.ownerid)) {
+    require('./setup.js')(() => {
+      config = require('./config.json')
+      bot.login(config.token)
+    })
+  } else {
+    bot.login(config.token)
+  }
+}
+
 var $ = require('./handler/functions')
 
 var admin_module = require('./modules/administration')
@@ -16,6 +34,7 @@ var modules = {
 }
 
 bot.on('ready', () => {
+  displayAscii()
   $.log(`Logged in as ${bot.user.tag}!`)
   bot.user.setActivity(config.bot.game.name, {
     type: config.bot.game.type.toUpperCase()
@@ -72,8 +91,6 @@ bot.on('voiceStateUpdate', (oldMember, newMember) => {
   }
 })
 
-bot.login(config.token)
-
 function getModule(command) {
   var modulekeys = Object.keys(modules)
   for (var i = 0; i < modulekeys.length; i++) {
@@ -85,7 +102,8 @@ function getModule(command) {
   }
 }
 
-console.log(colors.rainbow(`
+function displayAscii() {
+  console.log(colors.rainbow(`
  _______  _______  _______  ___      __   __  _______  _______  __    _  ______   _______   
 |       ||       ||       ||   |    |  | |  ||       ||   _   ||  |  | ||      | |   _   |  
 |    ___||____   ||    ___||   |    |  |_|  ||    _  ||  |_|  ||   |_| ||  _    ||  |_|  |  
@@ -94,3 +112,4 @@ console.log(colors.rainbow(`
 |   |_| || |_____ |   |___ |       |  |   |  |   |    |   _   || | |   ||       ||   _   |  
 |_______||_______||_______||_______|  |___|  |___|    |__| |__||_|  |__||______| |__| |__|  
 `))
+}

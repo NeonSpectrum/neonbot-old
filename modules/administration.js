@@ -1,3 +1,4 @@
+var fs = require('fs')
 var Discord = require("discord.js")
 var errors = require("../handler/errors.js")
 var config = require('../config.json')
@@ -149,6 +150,29 @@ module.exports = (bot, message) => {
           $.log("Avatar changed.")
           message.channel.send(embed(args[0]).setTitle("Avatar changed to"))
         })
-    }
+    },
+    resetbot: () => {
+      if (!$.isOwner(message.member.id)) return
+      if (fs.existsSync('./config.json')) {
+        fs.unlink('./config.json', function() {
+          message.channel.send(embed("The bot has been resetted. Please run again in the terminal."))
+          $.log("Configuration has been resetted. Force Closed.")
+          setTimeout(() => {
+            process.exit(0)
+          }, 1000)
+        })
+      }
+    },
+    deleteoncmd: () => {
+      config.bot.deleteoncmd = !config.bot.deleteoncmd
+      message.channel.send(embed("Delete On Cmd is now " + (config.music.repeat ? "enabled" : "disabled") + "."))
+      $.updateconfig()
+    },
+    voicetts: () => {
+      config.bot.voicetts = !config.bot.voicetts
+      config.bot.logchannel = config.bot.voicetts ? message.channel.id : ""
+      message.channel.send(embed("Voice TTS is now " + (config.bot.voicetts ? "enabled" : "disabled") + "."))
+      $.updateconfig()
+    },
   }
 }
