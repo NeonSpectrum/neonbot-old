@@ -147,7 +147,7 @@ module.exports = (bot, message) => {
           embeds.push(embed(temp.join("\n")))
         }
         if (Math.ceil(server.queue.length / 10) == 1) {
-          message.channel.send(embeds[0])
+          message.channel.send(embeds[0].setTitle("Playlist"))
         } else {
           new EmbedsMode()
             .setArray(embeds)
@@ -314,14 +314,12 @@ async function play(message, connection) {
     }
   }
 
-  var option = server.queue[currentQueue].info.live_playback == 1 ? {
-    quality: 95
-  } : {
-    filter: "audioonly"
-  }
-  server.dispatcher = connection.playStream(ytdl(server.queue[currentQueue].url, option))
-
-  server.dispatcher.setVolume(config.music.volume / 100)
+  server.dispatcher = connection.playStream(ytdl(server.queue[currentQueue].url, {
+    quality: "highestaudio",
+    highWaterMark: 1024 * 1024 * 10,
+  }, {
+    volume: config.music.volume / 100
+  }))
 
   message.channel.send(embed(server.queue[currentQueue].title).setTitle("Now Playing #" + (currentQueue + 1)))
   $.log("Now playing " + server.queue[currentQueue].title)
