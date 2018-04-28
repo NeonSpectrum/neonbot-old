@@ -173,5 +173,10 @@ module.exports = (bot, message) => {
       message.channel.send(embed("Voice TTS is now " + (config.bot.voicetts ? "enabled" : "disabled") + "."))
       $.updateconfig()
     },
+    logchannel: () => {
+      config.bot.logchannel = message.channel.id
+      message.channel.send(embed("This channel is now the log channel."))
+      $.updateconfig()
+    }
   }
 }
