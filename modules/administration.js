@@ -65,7 +65,7 @@ module.exports = (bot, message) => {
       if (args > 100) return message.reply("Parameters must not be greater than 100.")
       if (!message.member.hasPermission("MANAGE_MESSAGES")) return errors.noPerms(message, "MANAGE_MESSAGES")
       if (!args[0]) args[0] = 1
-      if (message.deletable) message.delete()
+      if (!config.bot.deleteoncmd) message.delete()
 
       message.channel.bulkDelete(args[0])
     },

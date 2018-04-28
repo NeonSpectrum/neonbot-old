@@ -52,7 +52,7 @@ bot.on('message', message => {
   var cmd = messageArray[0].substring(config.prefix.length).toLowerCase()
   var args = messageArray.slice(1)
 
-  if (config.bot.deleteoncmd && message.deletable) {
+  if (config.bot.deleteoncmd) {
     message.delete()
   }
 
