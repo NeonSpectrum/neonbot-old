@@ -15,10 +15,23 @@ module.exports.embed = (message) => {
   return e
 }
 
-module.exports.updateconfig = (message) => {
-  fs.writeFile("./config.json", JSON.stringify(config, null, 2), (err) => {
-    if (err) log(err)
-  })
+module.exports.updateconfig = () => {
+  if (!process.env.HEROKU) {
+    fs.writeFile("./config.json", JSON.stringify(config, null, 2), (err) => {
+      if (err) log(err)
+    })
+  } else {
+    var paste = require("better-pastebin");
+    paste.setDevKey(process.env.DEV_KEY)
+    paste.login(process.env.PB_USER, process.env.PB_PASS, (success, data) => {
+      if (!success) throw data
+      paste.edit(process.env.PB_ID, {
+        contents: JSON.stringify(config, null, 2)
+      }, (success, data) => {
+        console.log(success)
+      });
+    })
+  }
 }
 
 module.exports.isOwner = (id) => {

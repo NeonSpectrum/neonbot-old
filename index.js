@@ -10,30 +10,28 @@ if (!fs.existsSync('./config.json')) {
     config = require('./config.json')
     bot.login(config.token)
   })
-} else {
-  if (!(config.token && config.prefix && config.googleapi && config.ownerid)) {
-    require('./setup.js')(() => {
-      config = require('./config.json')
-      bot.login(config.token)
-    })
-  } else {
+} else if (!(config.token && config.prefix && config.googleapi && config.ownerid)) {
+  require('./setup.js')(() => {
+    config = require('./config.json')
     bot.login(config.token)
-  }
+  })
+} else {
+  bot.login(config.token)
 }
 
-var $ = require('./handler/functions')
-
-var admin_module = require('./modules/administration')
-var util_module = require('./modules/utilities')
-var music_module = require('./modules/music')
-
-var modules = {
-  "admin": Object.keys(admin_module()),
-  "music": Object.keys(music_module()),
-  "util": Object.keys(util_module())
-}
+var $, admin_module, util_module, music_module, modules
 
 bot.on('ready', () => {
+  $ = require('./handler/functions')
+  admin_module = require('./modules/administration')
+  util_module = require('./modules/utilities')
+  music_module = require('./modules/music')
+  modules = {
+    "admin": Object.keys(admin_module()),
+    "music": Object.keys(music_module()),
+    "util": Object.keys(util_module())
+  }
+
   displayAscii()
   $.log(`Logged in as ${bot.user.tag}!`)
   bot.user.setActivity(config.bot.game.name, {
