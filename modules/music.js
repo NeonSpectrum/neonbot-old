@@ -317,10 +317,8 @@ async function play(message, connection) {
   server.dispatcher = connection.playStream(ytdl(server.queue[currentQueue].url, {
     quality: "highestaudio",
     highWaterMark: 1024 * 1024 * 10,
-  }, {
-    volume: config.music.volume / 100
   }))
-
+  server.dispatcher.setVolume(config.music.volume / 100)
   message.channel.send(embed(server.queue[currentQueue].title).setTitle("Now Playing #" + (currentQueue + 1)))
   $.log("Now playing " + server.queue[currentQueue].title)
 
