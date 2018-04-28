@@ -27,8 +27,6 @@ module.exports.updateconfig = () => {
       if (!success) throw data
       paste.edit(process.env.PB_ID, {
         contents: JSON.stringify(config, null, 2)
-      }, (success, data) => {
-        console.log(success)
       });
     })
   }
