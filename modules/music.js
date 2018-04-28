@@ -24,29 +24,29 @@ var listofqueuemessageid = ""
 var autoplayid = []
 
 module.exports = (bot, message) => {
-  if (message !== undefined) server = servers[message.guild.id]
+  if (message !== undefined) {
+    if (!servers[message.guild.id]) {
+      servers[message.guild.id] = {
+        queue: []
+      }
+    }
+    server = servers[message.guild.id]
+  }
   return {
     play: async (args) => {
       if (!message.member.voiceChannel) return message.reply("You must be in a voice channel!")
-      if (!args) return message.reply("Please provide a keyword or link.")
-      if (!servers[message.guild.id]) servers[message.guild.id] = {
-        queue: []
-      }
-      server = servers[message.guild.id]
+      if (!args[0]) return message.reply("Please provide a keyword or link.")
 
-      if (Number.isInteger(+args)) {
-        if (songSearchList.length == 0) return
-        listofqueuemessageid.delete()
-        listofqueuemessageid = ""
-        message.channel.send(embed(songSearchList[args - 1].title).setTitle(`You have selected #${args}. `))
-          .then(msg => msg.delete(5000))
-        var index = server.queue.push({
-          title: songSearchList[args - 1].title,
-          url: songSearchList[args - 1].url,
-          requested: message.author
+      if (args[0].match(/^(https?\:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+$/g)) {
+        $.log("Processing " + args[0])
+        var info = await ytdl.getInfo(args[0])
+        $.log("Done Processing " + args[0])
+        server.queue.push({
+          title: info.title,
+          url: info.video_url,
+          requested: message.author,
+          info: info
         })
-        server.queue[index - 1].info = await ytdl.getInfo(songSearchList[args - 1].url)
-        songSearchList = []
       } else if (args[0].match(/^.*(youtu.be\/|list=)([^#\&\?]*).*/g)) {
         try {
           playlist = await yt.getPlaylist(args[0])
@@ -71,7 +71,7 @@ module.exports = (bot, message) => {
               info: info
             })
 
-            if (i == 1 && !message.guild.voiceConnection) {
+            if (i == 0 && !message.guild.voiceConnection) {
               message.member.voiceChannel.join()
                 .then((connection) => {
                   play(message, connection)
@@ -81,18 +81,21 @@ module.exports = (bot, message) => {
             error++
           }
         }
-        msg.edit(embed(`Done! Loaded ${videos.length} songs.` + (error > 0 ? ` ${error} failed to load.` : "")))
-        return
-      } else if (args[0].match(/^(https?\:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+$/g)) {
-        $.log("Processing " + args[0])
-        var info = await ytdl.getInfo(args[0])
-        $.log("Done Processing " + args[0])
-        server.queue.push({
-          title: info.title,
-          url: info.video_url,
-          requested: message.author,
-          info: info
-        })
+        return msg.edit(embed(`Done! Loaded ${videos.length} songs.` + (error > 0 ? ` ${error} failed to load.` : "")))
+      } else if (Number.isInteger(+args[0])) {
+        if (songSearchList.length != 0) {
+          listofqueuemessageid.delete()
+          listofqueuemessageid = ""
+          message.channel.send(embed(songSearchList[args - 1].title).setTitle(`You have selected #${args}. `))
+            .then(msg => msg.delete(5000))
+          var index = server.queue.push({
+            title: songSearchList[args - 1].title,
+            url: songSearchList[args - 1].url,
+            requested: message.author
+          })
+          server.queue[index - 1].info = await ytdl.getInfo(songSearchList[args - 1].url)
+          songSearchList = []
+        }
       } else {
         try {
           var videos = await yt.searchVideos(args.join(" "))
@@ -110,7 +113,7 @@ module.exports = (bot, message) => {
           })
         }
         listofqueuemessageid = await message.channel.send(temp)
-        return listofqueuemessageid
+        return
       }
 
       if (!message.guild.voiceConnection)
@@ -121,20 +124,20 @@ module.exports = (bot, message) => {
     },
     stop: () => {
       if (server && server.queue) server.queue = []
-      if (server.dispatcher) server.dispatcher.end(true)
+      if (server.dispatcher) server.dispatcher.end("stop")
       if (message.guild.voiceConnection) message.guild.voiceConnection.disconnect()
       autoplayid = []
       message.channel.send(embed("Player stopped!"))
       $.log("Player stopped!")
     },
     skip: () => {
-      if (server.dispatcher) server.dispatcher.end()
+      if (server.dispatcher) server.dispatcher.end("skip")
+      $.log("Player skipped!")
     },
     list: () => {
       if (server === undefined || server.queue.length === 0) {
         message.channel.send(embed("The playlist is empty"))
       } else {
-
         var embeds = []
         for (var i = 1, j = 0; i <= Math.ceil(server.queue.length / 10); i++) {
           var temp = []
@@ -158,17 +161,25 @@ module.exports = (bot, message) => {
       }
     },
     volume: (args) => {
-      if (Number.isInteger(+args)) {
+      if (Number.isInteger(+args[0])) {
         config.music.volume = +args
         if (server && server.dispatcher) server.dispatcher.setVolume(args / 100)
         message.channel.send(embed(`Volume is now set to ${args}%`))
         $.updateconfig()
+      } else {
+        message.channel.send(embed(`Volume is set to ${config.music.volume}%`))
       }
     },
-    repeat: () => {
-      config.music.repeat = !config.music.repeat
-      message.channel.send(embed("Repeat is now " + (config.music.repeat ? "enabled" : "disabled") + "."))
-      $.updateconfig()
+    repeat: (args) => {
+      if (args[0] && args[0].toLowerCase() != "off" && args[0].toLowerCase() != "single" && args[0].toLowerCase() != "all") {
+        message.channel.send(embed("Invalid parameters. (off | single | all)"))
+      } else if (!args[0]) {
+        message.channel.send(embed("Repeat is set to " + config.music.repeat + "."))
+      } else {
+        config.music.repeat = args[0]
+        message.channel.send(embed("Repeat is now set to " + args[0] + "."))
+        $.updateconfig()
+      }
     },
     pause: () => {
       if (server && server.dispatcher && !server.dispatcher.paused) {
@@ -223,22 +234,26 @@ module.exports = (bot, message) => {
       if (message.guild.voiceConnection) message.guild.voiceConnection.disconnect()
     },
     lyrics: (args) => {
-      if (Number.isInteger(+args)) {
-        request(lyricSearchList[args - 1].url, (err, res, body) => {
-          var $ = cheerio.load(body)
-          var string = $("div.col-xs-12.col-lg-8.text-center div").eq(6).text()
-          var strings = []
-          do {
-            var part = string.substring(0, 2001)
-            part = part.substring(0, part.lastIndexOf("\n\n") + 1)
-            strings.push(part)
-            string = string.replace(part, "")
-          } while (string.length > 0)
-          for (var i = 0; i < strings.length; i++) {
-            message.channel.send(embed(strings[i]))
-          }
-          lyricSearchList = []
-        })
+      if (Number.isInteger(+args[0])) {
+        if (lyricSearchList.length > 0) {
+          request(lyricSearchList[args - 1].url, (err, res, body) => {
+            lyricSearchList = []
+            var $ = cheerio.load(body)
+            var string = $("div.col-xs-12.col-lg-8.text-center div").eq(6).text()
+            var strings = []
+            do {
+              var part = string.substring(0, 2001)
+              part = part.substring(0, part.lastIndexOf(part.lastIndexOf("\n\n") >= 0 ? "\n\n" : "\n") + 1)
+              strings.push(part)
+              string = string.replace(part, "")
+            } while (string.length > 0)
+            for (var i = 0; i < strings.length; i++) {
+              var temp = embed(strings[i])
+              if (i == 0) temp.setTitle($("div.lyricsh h2 b").text())
+              message.channel.send(temp)
+            }
+          })
+        }
       } else {
         var keyword = args.join(" ")
         request("https://search.azlyrics.com/search.php?q=" + keyword.replace(/\s/g, "+"), (err, res, body) => {
@@ -273,7 +288,7 @@ async function play(message, connection) {
   var server = servers[message.guild.id]
   if (!server.queue[currentQueue]) {
     currentQueue = 0
-    if (!config.music.repeat) {
+    if (config.music.repeat == "off") {
       server.queue = []
       if (config.music.autoplay) {
         autoplayid = $.addIfNotExists(autoplayid, previnfo.video_id)
@@ -313,9 +328,9 @@ async function play(message, connection) {
 
   previnfo = server.queue[currentQueue].info
 
-  server.dispatcher.on("end", (stop) => {
-    if (stop === true) return
-    currentQueue++
+  server.dispatcher.on("end", (mode) => {
+    if (mode === "stop") return
+    else if (config.music.repeat != "single" || mode === "skip") currentQueue += 1
     play(message, connection)
   })
 }
