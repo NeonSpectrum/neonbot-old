@@ -47,9 +47,9 @@ module.exports = (bot, message) => {
 
         for (var i = 0; i < videos.length; i++) {
           try {
-            $.log("Processing " + videos[i].id)
+            $.log("Processing " + "https://www.youtube.com/watch?v=" + videos[i].id)
             var info = await ytdl.getInfo(videos[i].id)
-            $.log("Done Processing " + videos[i].id)
+            $.log("Done Processing " + "https://www.youtube.com/watch?v=" + videos[i].id)
 
             server.queue.push({
               title: info.title,
@@ -148,11 +148,11 @@ module.exports = (bot, message) => {
       } else {
         var embeds = []
         for (var i = 1, j = 0; i <= Math.ceil(server.queue.length / 10); i++) {
-          var temp = []
+          var temp = embed()
           for (; j < server.queue.length; j++) {
-            temp.push(`${j+1}. ${server.queue[j].title}`)
+            temp.addField(`${j+1}. ${server.queue[j].title}`, server.queue[j].url)
           };
-          embeds.push(embed(temp.join("\n")))
+          embeds.push(embed(temp))
         }
         if (Math.ceil(server.queue.length / 10) == 1) {
           message.channel.send(embeds[0].setTitle("Playlist"))
