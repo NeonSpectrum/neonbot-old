@@ -102,7 +102,7 @@ module.exports = (bot, message) => {
         } catch (err) {
           return message.reply("Cannot find any videos")
         }
-        var temp = embed(`Click on the react below to choose.`)
+        var temp = embed().setAuthor("Choose 1-5 below.", "https://i.imgur.com/SBMH84I.png")
         var songSearchList = []
         for (var i = 0, j = 1; i < videos.length; i++, j++) {
           temp.addField(`${j}. ${videos[i].title}`, videos[i].url)
@@ -113,9 +113,7 @@ module.exports = (bot, message) => {
           })
         }
         var msg = await message.channel.send(temp)
-        var collector = msg.createReactionCollector((reaction, user) => user.id === message.author.id, {
-          time: 60 * 1000
-        });
+        var collector = msg.createReactionCollector((reaction, user) => user.id === message.author.id);
         collector.on('collect', async react => {
           react.message.delete()
           var i = reaction_numbers.indexOf(react._emoji.name)
@@ -133,6 +131,11 @@ module.exports = (bot, message) => {
               play(message, connection)
             })
         })
+        setTimeout(() => {
+          try {
+            msg.delete()
+          } catch (err) {}
+        }, 30000)
         for (var i = 1; i <= 5; i++) {
           try {
             await msg.react(reaction_numbers[i])
@@ -274,14 +277,12 @@ module.exports = (bot, message) => {
           }
         })
         if (lyricSearchList.length > 0) {
-          var temp = embed().setTitle(`${config.prefix}lyrics <1-5>`)
+          var temp = embed().setAuthor("Choose 1-5 below.", "https://i.imgur.com/SBMH84I.png")
           for (var i = 0; i < lyricSearchList.length; i++) {
             temp.addField(`${i + 1}. ${lyricSearchList[i].title}`, lyricSearchList[i].url)
           }
           var msg = await message.channel.send(temp)
-          var collector = msg.createReactionCollector((reaction, user) => user.id === message.author.id, {
-            time: 60 * 1000
-          });
+          var collector = msg.createReactionCollector((reaction, user) => user.id === message.author.id);
           collector.on('collect', async react => {
             react.message.delete()
             var i = reaction_numbers.indexOf(react._emoji.name)
@@ -303,6 +304,11 @@ module.exports = (bot, message) => {
               }
             })
           })
+          setTimeout(() => {
+            try {
+              msg.delete()
+            } catch (err) {}
+          }, 30000)
           for (var i = 1; i <= 5; i++) {
             try {
               await msg.react(reaction_numbers[i])

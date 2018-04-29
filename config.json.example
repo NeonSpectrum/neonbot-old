@@ -3,18 +3,8 @@
   "prefix": "",
   "googleapi": "",
   "ownerid": "",
-  "music": {
-    "volume": 100,
-    "repeat": false,
-    "autoplay": false
-  },
-  "bot": {
-    "game": {
-      "type": "",
-      "name": ""
-    },
-    "deleteoncmd": false,
-    "logchannel": "",
-    "voicetts": false
+  "game": {
+    "type": "",
+    "name": ""
   }
 }
