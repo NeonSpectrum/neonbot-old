@@ -60,24 +60,6 @@ bot.on('message', message => {
   }
   if (!message.content.startsWith(config.prefix)) return
 
-  const embeds = [];
-
-  for (let i = 0; i < 5; ++i)
-    embeds.push($.embed().addField('Page', i + 1));
-  new EmbedsMode()
-    .setArray(embeds)
-    .setAuthorizedUser(message.author)
-    .setChannel(message.channel)
-    .showPageIndicator(false)
-    .setPage(3)
-    .setTitle('Test Title')
-    .setDescription('Test Description')
-    .setFooter('Test Footer Text')
-    .setColor(0xFF00AE)
-    .addBlankField()
-    .addField('Test Field 1', 'Test Field 1', true)
-    .addField('Test Field 2', 'Test Field 2', true)
-    .build();
   var admin = admin_module(bot, message)
   var music = music_module(bot, message)
   var utils = util_module(bot, message)
