@@ -150,7 +150,7 @@ module.exports = (bot, message) => {
         var temp = embed()
         for (var i = 0; i < server.queue.length; i++) {
           temp.addField(`${i+1}. ${server.queue[i].title}`, server.queue[i].url)
-          if (i % 9 == 0) {
+          if (i != 0 && i % 9 == 0) {
             embeds.push(temp)
             temp = embed()
           }
