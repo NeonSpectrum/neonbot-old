@@ -15,19 +15,21 @@ var yt = new Youtube(config.googleapi)
 var $ = require('../handler/functions')
 var embed = $.embed
 var servers = []
-var currentQueue = 0
-var autoplayid = []
-var server = null
 var reaction_numbers = ["\u0030\u20E3", "\u0031\u20E3", "\u0032\u20E3", "\u0033\u20E3", "\u0034\u20E3", "\u0035\u20E3", "\u0036\u20E3", "\u0037\u20E3", "\u0038\u20E3", "\u0039\u20E3"]
 
 module.exports = (bot, message) => {
+  var currentQueue, autoplayid, server
   if (message !== undefined) {
     if (!servers[message.guild.id]) {
       servers[message.guild.id] = {
-        queue: []
+        queue: [],
+        autoplayid = [],
+        currentQueue = 0
       }
     }
     server = servers[message.guild.id]
+    currentQueue = servers[message.guild.id].currentQueue
+    autoplayid = servers[message.guild.id].autoplayid
   }
   return {
     play: async args => {
@@ -90,7 +92,7 @@ module.exports = (bot, message) => {
         } catch (err) {
           return message.reply("Cannot find any videos")
         }
-        var temp = embed(`${config.prefix}play <1-5>`)
+        var temp = embed(`Click on the react below to choose.`)
         var songSearchList = []
         for (var i = 0, j = 1; i < videos.length; i++, j++) {
           temp.addField(`${j}. ${videos[i].title}`, videos[i].url)
@@ -159,7 +161,10 @@ module.exports = (bot, message) => {
         }
         var footer = [`${server.queue.length} songs`, moment.utc(totalseconds * 1000).format("hh:mm:ss"), `Volume: ${config.music.volume}%`, `Repeat: ${config.music.repeat}`, `Autoplay: ${config.music.autoplay ? "on" : "off"}`]
         if (Math.ceil(server.queue.length / 10) == 1) {
-          message.channel.send(embeds[0].setAuthor('Player Queue', "https://i.imgur.com/SBMH84I.png"))
+          message.channel.send(embeds[0]
+            .setAuthor('Player Queue', "https://i.imgur.com/SBMH84I.png")
+            .setFooter(footer.join(" | "))
+          )
         } else {
           new EmbedsMode()
             .setArray(embeds)
@@ -307,6 +312,9 @@ module.exports = (bot, message) => {
 var previnfo;
 async function play(message, connection) {
   var server = servers[message.guild.id]
+  var currentQueue = servers[message.guild.id].currentQueue
+  var autoplayid = servers[message.guild.id].autoplayid
+
   if (!server.queue[currentQueue]) {
     currentQueue = 0
     if (config.music.repeat == "off") {
