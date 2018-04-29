@@ -58,8 +58,8 @@ module.exports.addServerToConfig = (id) => {
     voicettsch: "",
     music: {
       volume: 100,
-      repeat: "off",
-      autoplay: false
+      autoplay: false,
+      repeat: "off"
     }
   }
   module.exports.updateconfig()
