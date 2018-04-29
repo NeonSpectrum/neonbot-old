@@ -58,7 +58,7 @@ module.exports = (bot, message) => {
               info: info
             })
 
-            if (i == 0 && !message.guild.voiceConnection) {
+            if (!message.guild.voiceConnection) {
               message.member.voiceChannel.join()
                 .then(connection => {
                   play(message, connection)
