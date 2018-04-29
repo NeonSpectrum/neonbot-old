@@ -28,12 +28,15 @@ module.exports = (bot, message) => {
         .addField("Your ping is", Date.now() - message.createdTimestamp + " ms")
       )
     },
-    botinfo: () => {
+    stats: () => {
       message.channel.send(embed()
-        .setDescription("Bot Information")
         .setThumbnail(bot.user.displayAvatarURL)
-        .addField("Bot Name", bot.user.username)
+        .addField("Bot Name", bot.user.tag)
         .addField("Created On", bot.user.createdAt)
+        .addField("Created By", bot.users.get("260397381856526337").tag)
+        .addField("Server Count", Array.from(bot.guilds.keys()).length)
+        .addField("Ram Usage", `Approximately ${Math.round(process.memoryUsage().heapUsed / 1024 / 1024 * 100) / 100} MB`)
+        .addField("Uptime", $.formatSeconds(Math.floor(process.uptime())))
       )
     },
     say: (args) => {
@@ -43,7 +46,6 @@ module.exports = (bot, message) => {
     },
     serverinfo: () => {
       message.channel.send(embed()
-        .setDescription("Server Information")
         .setThumbnail(message.guild.iconURL)
         .addField("Server Name", message.guild.name)
         .addField("Created On", message.guild.createdAt)

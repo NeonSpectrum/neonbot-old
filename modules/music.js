@@ -164,14 +164,14 @@ module.exports = (bot, message) => {
         var temp = embed()
         var totalseconds = 0
         for (var i = 0; i < _server.queue.length && _server.queue[i].info; i++) {
-          temp.addField(`${_server.currentQueue == i ? "*" : ""}${i+1}. ${_server.queue[i].title} (${moment.utc(_server.queue[i].info.length_seconds * 1000).format("mm:ss")})`, _server.queue[i].url)
+          temp.addField(`${_server.currentQueue == i ? "*" : ""}${i+1}. ${_server.queue[i].title} (${$.formatSeconds(_server.queue[i].info.length_seconds).substring(3)})`, _server.queue[i].url)
           totalseconds += +_server.queue[i].info.length_seconds
           if (i != 0 && i % 9 == 0 || i == _server.queue.length - 1) {
             embeds.push(temp)
             temp = embed()
           }
         }
-        var footer = [`${_server.queue.length} ${_server.queue.length == 1 ? "song" : "songs"}`, moment.utc(totalseconds * 1000).format("mm:ss"), `Volume: ${config.servers[message.guild.id].music.volume}%`, `Repeat: ${config.servers[message.guild.id].music.repeat}`, `Autoplay: ${config.servers[message.guild.id].music.autoplay ? "on" : "off"}`]
+        var footer = [`${_server.queue.length} ${_server.queue.length == 1 ? "song" : "songs"}`, $.formatSeconds(totalseconds), `Volume: ${config.servers[message.guild.id].music.volume}%`, `Repeat: ${config.servers[message.guild.id].music.repeat}`, `Autoplay: ${config.servers[message.guild.id].music.autoplay ? "on" : "off"}`]
         if (Math.ceil(_server.queue.length / 10) == 1 && embeds[0]) {
           message.channel.send(embeds[0]
             .setAuthor('Player Queue', "https://i.imgur.com/SBMH84I.png")
@@ -250,7 +250,7 @@ module.exports = (bot, message) => {
           .setTitle("Title")
           .setDescription(_server.queue[_server.currentQueue].title)
           .setThumbnail(info.thumbnail_url)
-          .addField("Time", `${moment.utc(_server.dispatcher.time).format("mm:ss")} - ${moment.utc(info.length_seconds*1000).format("mm:ss")}`)
+          .addField("Time", `${$.formatSeconds(_server.dispatcher.time / 1000)} - ${$.formatSeconds(info.length_seconds).format("mm:ss")}`)
           .addField("Description", (info.description.length > 500 ? info.description.substring(0, 500) + "..." : info.description))
           .setFooter(footer.join(" | "), `https://cdn.discordapp.com/avatars/${requested.id}/${requested.avatar}.png?size=32`)
       } else {
@@ -357,7 +357,7 @@ async function play(message, connection) {
   }))
   _server.dispatcher.setVolume(config.servers[message.guild.id].music.volume / 100)
   var requested = _server.queue[_server.currentQueue].requested
-  var footer = [requested.username, moment.utc(_server.queue[_server.currentQueue].info.length_seconds * 1000).format("mm:ss"), `Volume: ${config.servers[message.guild.id].music.volume}%`, `Repeat: ${config.servers[message.guild.id].music.repeat}`, `Autoplay: ${config.servers[message.guild.id].music.autoplay ? "on" : "off"}`]
+  var footer = [requested.username, $.formatSeconds(_server.queue[_server.currentQueue].info.length_seconds), `Volume: ${config.servers[message.guild.id].music.volume}%`, `Repeat: ${config.servers[message.guild.id].music.repeat}`, `Autoplay: ${config.servers[message.guild.id].music.autoplay ? "on" : "off"}`]
   message.channel.send(embed()
     .setAuthor("Now Playing #" + (_server.currentQueue + 1), "https://i.imgur.com/SBMH84I.png")
     .setFooter(footer.join(" | "), `https://cdn.discordapp.com/avatars/${requested.id}/${requested.avatar}.png?size=32`)
