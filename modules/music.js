@@ -244,7 +244,7 @@ module.exports = (bot, message) => {
     leave: () => {
       if (message.guild.voiceConnection) message.guild.voiceConnection.disconnect()
     },
-    lyrics: async args => {
+    lyrics: args => {
       var keyword = args.join(" ")
       request("https://search.azlyrics.com/search.php?q=" + keyword.replace(/\s/g, "+"), async (err, res, body) => {
         var $ = cheerio.load(body)
@@ -271,7 +271,7 @@ module.exports = (bot, message) => {
           collector.on('collect', async react => {
             react.message.delete()
             var i = reaction_numbers.indexOf(react._emoji.name)
-            request(lyricSearchList[i - 1].url, (err, res, body) => {
+            request(lyricSearchList[i - 1].url, async (err, res, body) => {
               lyricSearchList = []
               var $ = cheerio.load(body)
               var string = $("div.col-xs-12.col-lg-8.text-center div").eq(6).text()
