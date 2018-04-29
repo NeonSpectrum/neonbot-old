@@ -161,14 +161,14 @@ module.exports = (bot, message) => {
         message.channel.send(embed("The playlist is empty"))
       } else {
         var embeds = []
-        var temp = embed()
+        var temp = []
         var totalseconds = 0
         for (var i = 0; i < _server.queue.length && _server.queue[i].info; i++) {
-          temp.addField(`${_server.currentQueue == i ? "*" : ""}${i+1}. **${_server.queue[i].title}**`, `\`${$.formatSeconds(_server.queue[i].info.length_seconds)} | ${_server.queue[i].requested.username}\``)
+          temp.push(`\`${_server.currentQueue == i ? "*" : ""}${i+1}.\` [**${_server.queue[i].title}**](${_server.queue[i].url})\n\t  \`${$.formatSeconds(_server.queue[i].info.length_seconds)} | ${_server.queue[i].requested.username}\``)
           totalseconds += +_server.queue[i].info.length_seconds
           if (i != 0 && i % 9 == 0 || i == _server.queue.length - 1) {
-            embeds.push(temp)
-            temp = embed()
+            embeds.push(embed().setDescription(temp.join("\n")))
+            temp = []
           }
         }
         var footer = [`${_server.queue.length} ${_server.queue.length == 1 ? "song" : "songs"}`, $.formatSeconds(totalseconds), `Volume: ${config.servers[message.guild.id].music.volume}%`, `Repeat: ${config.servers[message.guild.id].music.repeat}`, `Autoplay: ${config.servers[message.guild.id].music.autoplay ? "on" : "off"}`]
@@ -360,8 +360,7 @@ async function play(message, connection) {
   message.channel.send(embed()
     .setAuthor("Now Playing #" + (_server.currentQueue + 1), "https://i.imgur.com/SBMH84I.png")
     .setFooter(footer.join(" | "), `https://cdn.discordapp.com/avatars/${requested.id}/${requested.avatar}.png?size=16`)
-    .setTitle(_server.queue[_server.currentQueue].title)
-    .setURL(_server.queue[_server.currentQueue].url)
+    .setDescription(`[**${_server.queue[_server.currentQueue].title}**](${_server.queue[_server.currentQueue].url})`)
   )
   $.log("Now playing " + _server.queue[_server.currentQueue].title)
 
