@@ -72,20 +72,16 @@ bot.on('message', message => {
 bot.on('voiceStateUpdate', (oldMember, newMember) => {
   if (newMember.user.bot) return
 
-  var music = music_module(bot, bot.channels.get(config.bot.logchannel))
-
   if (oldMember.voiceChannelID != null && newMember.voiceChannelID == null) {
     if (config.bot.voicetts)
       bot.channels.get(config.bot.logchannel).send(newMember.user.username + " has disconnected", {
         tts: true
       }).then(msg => msg.delete(5000))
-    if (newMember.guild.channels.get(oldMember.voiceChannelID).members.filter(s => s.user.id != bot.user.id).size == 0) music.pause()
   } else if (oldMember.voiceChannelID == null && newMember.voiceChannelID != null) {
     if (config.bot.voicetts)
       bot.channels.get(config.bot.logchannel).send(newMember.user.username + " has connected", {
         tts: true
       }).then(msg => msg.delete(5000))
-    if (newMember.guild.channels.get(newMember.voiceChannelID).members.filter(s => s.user.id != bot.user.id).size > 0) music.resume()
   }
 })
 

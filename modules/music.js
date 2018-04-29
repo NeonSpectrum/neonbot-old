@@ -1,4 +1,4 @@
-﻿var fs = require('fs')
+var fs = require('fs')
 var moment = require('moment')
 var Discord = require('discord.js')
 var {
@@ -24,11 +24,13 @@ module.exports = (bot, message) => {
       servers[message.guild.id] = {
         queue: [],
         autoplayid: [],
-        currentQueue: 0
+        currentQueue: 0,
+        currentChannel: ""
       }
     }
     _bot = bot
     _server = servers[message.guild.id]
+    _server.currentChannel = message.channel.id
   }
   return {
     play: async args => {
@@ -308,35 +310,41 @@ module.exports = (bot, message) => {
   }
 }
 
+bot.on('voiceStateUpdate', (oldMember, newMember) => {
+  if (newMember.user.bot) return
+
+  var music = music_module(bot, bot.channels.get(_server.currentChannel))
+
+  if (oldMember.voiceChannelID != null && newMember.voiceChannelID == null) {
+    if (newMember.guild.channels.get(oldMember.voiceChannelID).members.filter(s => s.user.id != bot.user.id).size == 0) music.pause()
+  } else if (oldMember.voiceChannelID == null && newMember.voiceChannelID != null) {
+    if (newMember.guild.channels.get(newMember.voiceChannelID).members.filter(s => s.user.id != bot.user.id).size > 0) music.resume()
+  }
+})
+
 var previnfo;
 async function play(message, connection) {
-  console.log(_server.currentQueue)
   if (!_server.queue[_server.currentQueue]) {
     _server.currentQueue = 0
     if (config.music.repeat == "off") {
       _server.queue = []
       if (config.music.autoplay) {
-        try {
-          _server.autoplayid = $.addIfNotExists(_server.autoplayid, previnfo.video_id)
-          for (var i = 0; i < previnfo.related_videos.length; i++) {
-            var id = previnfo.related_videos[i].id || previnfo.related_videos[i].video_id
-            if (!$.isInArray(_server.autoplayid, id)) {
-              _server.autoplayid.push(id)
-              previnfo = await ytdl.getInfo(id)
-              break
-            }
+        _server.autoplayid = $.addIfNotExists(_server.autoplayid, previnfo.video_id)
+        for (var i = 0; i < previnfo.related_videos.length; i++) {
+          var id = previnfo.related_videos[i].id || previnfo.related_videos[i].video_id
+          if (!$.isInArray(_server.autoplayid, id)) {
+            _server.autoplayid.push(id)
+            previnfo = await ytdl.getInfo(id)
+            break
           }
-          console.log(bot)
-          _server.queue.push({
-            id: previnfo.video_id,
-            title: previnfo.title,
-            url: previnfo.video_url,
-            requested: _bot.user,
-            info: previnfo
-          })
-        } catch (err) {
-          console.log(err)
         }
+        _server.queue.push({
+          id: previnfo.video_id,
+          title: previnfo.title,
+          url: previnfo.video_url,
+          requested: _bot.user,
+          info: previnfo
+        })
       } else {
         message.guild.voiceConnection.disconnect()
         return
@@ -364,7 +372,6 @@ async function play(message, connection) {
   _server.dispatcher.on("end", mode => {
     if (mode === "stop") return
     else if (config.music.repeat != "single" || mode === "skip") _server.currentQueue += 1
-    console.log("hi")
     play(message, connection)
   })
 }
