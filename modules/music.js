@@ -244,7 +244,7 @@ module.exports = (bot, message) => {
     leave: () => {
       if (message.guild.voiceConnection) message.guild.voiceConnection.disconnect()
     },
-    lyrics: args => {
+    lyrics: async args => {
       var keyword = args.join(" ")
       request("https://search.azlyrics.com/search.php?q=" + keyword.replace(/\s/g, "+"), async (err, res, body) => {
         var $ = cheerio.load(body)
