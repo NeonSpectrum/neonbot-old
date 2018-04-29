@@ -17,8 +17,8 @@ var embed = $.embed
 var servers = []
 var reaction_numbers = ["\u0030\u20E3", "\u0031\u20E3", "\u0032\u20E3", "\u0033\u20E3", "\u0034\u20E3", "\u0035\u20E3", "\u0036\u20E3", "\u0037\u20E3", "\u0038\u20E3", "\u0039\u20E3"]
 
+var _bot, _server
 module.exports = (bot, message) => {
-  var currentQueue, autoplayid, server
   if (message !== undefined) {
     if (!servers[message.guild.id]) {
       servers[message.guild.id] = {
@@ -27,9 +27,8 @@ module.exports = (bot, message) => {
         currentQueue: 0
       }
     }
-    server = servers[message.guild.id]
-    currentQueue = servers[message.guild.id].currentQueue
-    autoplayid = servers[message.guild.id].autoplayid
+    _bot = bot
+    _server = servers[message.guild.id]
   }
   return {
     play: async args => {
@@ -53,7 +52,7 @@ module.exports = (bot, message) => {
             var info = await ytdl.getInfo(videos[i].id)
             $.log("Done Processing " + "https://www.youtube.com/watch?v=" + videos[i].id)
 
-            server.queue.push({
+            _server.queue.push({
               title: info.title,
               url: info.video_url,
               requested: message.author,
@@ -75,7 +74,7 @@ module.exports = (bot, message) => {
         $.log("Processing " + args[0])
         var info = await ytdl.getInfo(args[0])
         $.log("Done Processing " + args[0])
-        server.queue.push({
+        _server.queue.push({
           title: info.title,
           url: info.video_url,
           requested: message.author,
@@ -111,12 +110,12 @@ module.exports = (bot, message) => {
           var i = reaction_numbers.indexOf(react._emoji.name)
           message.channel.send(embed(songSearchList[i - 1].title).setTitle(`You have selected #${i}. `))
             .then(msg => msg.delete(5000))
-          var index = server.queue.push({
+          var index = _server.queue.push({
             title: songSearchList[i - 1].title,
             url: songSearchList[i - 1].url,
             requested: message.author
           })
-          server.queue[index - 1].info = await ytdl.getInfo(songSearchList[i - 1].url)
+          _server.queue[index - 1].info = await ytdl.getInfo(songSearchList[i - 1].url)
           if (!message.guild.voiceConnection)
             message.member.voiceChannel.join()
             .then((connection) => {
@@ -133,34 +132,34 @@ module.exports = (bot, message) => {
       }
     },
     stop: () => {
-      if (server && server.queue) server.queue = []
-      if (server.dispatcher) server.dispatcher.end("stop")
+      if (_server && _server.queue) _server.queue = []
+      if (_server.dispatcher) _server.dispatcher.end("stop")
       if (message.guild.voiceConnection) message.guild.voiceConnection.disconnect()
-      autoplayid = []
+      _server.autoplayid = []
       message.channel.send(embed("Player stopped!"))
       $.log("Player stopped!")
     },
     skip: () => {
-      if (server.dispatcher) server.dispatcher.end("skip")
+      if (_server.dispatcher) _server.dispatcher.end("skip")
       $.log("Player skipped!")
     },
     list: () => {
-      if (server === undefined || server.queue.length === 0) {
+      if (_server === undefined || _server.queue.length === 0) {
         message.channel.send(embed("The playlist is empty"))
       } else {
         var embeds = []
         var temp = embed()
         var totalseconds = 0
-        for (var i = 0; i < server.queue.length; i++) {
-          temp.addField(`${currentQueue == i ? "*" : ""}${i+1}. ${server.queue[i].title} (${moment.utc(server.queue[i].info.length_seconds * 1000).format("mm:ss")})`, server.queue[i].url)
-          totalseconds += +server.queue[i].info.length_seconds
-          if (i != 0 && i % 9 == 0 || i == server.queue.length - 1) {
+        for (var i = 0; i < _server.queue.length && _server.queue[i].info; i++) {
+          temp.addField(`${_server.currentQueue == i ? "*" : ""}${i+1}. ${_server.queue[i].title} (${moment.utc(_server.queue[i].info.length_seconds * 1000).format("mm:ss")})`, _server.queue[i].url)
+          totalseconds += +_server.queue[i].info.length_seconds
+          if (i != 0 && i % 9 == 0 || i == _server.queue.length - 1) {
             embeds.push(temp)
             temp = embed()
           }
         }
-        var footer = [`${server.queue.length} ${server.queue.length == 1 ? "song" : "songs"}`, moment.utc(totalseconds * 1000).format("mm:ss"), `Volume: ${config.music.volume}%`, `Repeat: ${config.music.repeat}`, `Autoplay: ${config.music.autoplay ? "on" : "off"}`]
-        if (Math.ceil(server.queue.length / 10) == 1) {
+        var footer = [`${_server.queue.length} ${_server.queue.length == 1 ? "song" : "songs"}`, moment.utc(totalseconds * 1000).format("mm:ss"), `Volume: ${config.music.volume}%`, `Repeat: ${config.music.repeat}`, `Autoplay: ${config.music.autoplay ? "on" : "off"}`]
+        if (Math.ceil(_server.queue.length / 10) == 1 && embeds[0]) {
           message.channel.send(embeds[0]
             .setAuthor('Player Queue', "https://i.imgur.com/SBMH84I.png")
             .setFooter(footer.join(" | "))
@@ -181,7 +180,7 @@ module.exports = (bot, message) => {
     volume: args => {
       if (Number.isInteger(+args[0])) {
         config.music.volume = +args
-        if (server && server.dispatcher) server.dispatcher.setVolume(args / 100)
+        if (_server && _server.dispatcher) _server.dispatcher.setVolume(args / 100)
         message.channel.send(embed(`Volume is now set to ${args}%`))
         $.updateconfig()
       } else {
@@ -200,8 +199,8 @@ module.exports = (bot, message) => {
       }
     },
     pause: () => {
-      if (server && server.dispatcher && !server.dispatcher.paused && server.queue.length > 0) {
-        server.dispatcher.pause()
+      if (_server && _server.dispatcher && !_server.dispatcher.paused && _server.queue.length > 0) {
+        _server.dispatcher.pause()
         if (message.channel) {
           message.channel.send(embed(`Player paused ${config.prefix}resume to unpause.`))
         } else {
@@ -211,8 +210,8 @@ module.exports = (bot, message) => {
       }
     },
     resume: () => {
-      if (server && server.dispatcher && server.dispatcher.paused && server.queue.length > 0) {
-        server.dispatcher.resume()
+      if (_server && _server.dispatcher && _server.dispatcher.paused && _server.queue.length > 0) {
+        _server.dispatcher.resume()
         if (message.channel) {
           message.channel.send(embed(`Player resumed ${config.prefix}pause to pause.`))
         } else {
@@ -222,7 +221,7 @@ module.exports = (bot, message) => {
       }
     },
     autoplay: () => {
-      autoplayid = []
+      _server.autoplayid = []
       config.music.autoplay = !config.music.autoplay
       message.channel.send(embed("Autoplay is now " + (config.music.autoplay ? "enabled" : "disabled") + "."))
       $.updateconfig()
@@ -230,15 +229,15 @@ module.exports = (bot, message) => {
     },
     nowplaying: () => {
       var temp
-      if (server && server.queue[currentQueue]) {
-        var requested = server.queue[currentQueue].requested
-        var info = server.queue[currentQueue].info
+      if (_server && _server.queue[_server.currentQueue]) {
+        var requested = _server.queue[_server.currentQueue].requested
+        var info = _server.queue[_server.currentQueue].info
         var footer = [requested.username, `Volume: ${config.music.volume}%`, `Repeat: ${config.music.repeat}`, `Autoplay: ${config.music.autoplay ? "on" : "off"}`]
         temp = embed()
           .setTitle("Title")
-          .setDescription(server.queue[currentQueue].title)
+          .setDescription(_server.queue[_server.currentQueue].title)
           .setThumbnail(info.thumbnail_url)
-          .addField("Time", `${moment.utc(server.dispatcher.time).format("mm:ss")} - ${moment.utc(info.length_seconds*1000).format("mm:ss")}`)
+          .addField("Time", `${moment.utc(_server.dispatcher.time).format("mm:ss")} - ${moment.utc(info.length_seconds*1000).format("mm:ss")}`)
           .addField("Description", (info.description.length > 500 ? info.description.substring(0, 500) + "..." : info.description))
           .setFooter(footer.join(" | "), `https://cdn.discordapp.com/avatars/${requested.id}/${requested.avatar}.png?size=32`)
       } else {
@@ -311,58 +310,61 @@ module.exports = (bot, message) => {
 
 var previnfo;
 async function play(message, connection) {
-  var server = servers[message.guild.id]
-  var currentQueue = servers[message.guild.id].currentQueue
-  var autoplayid = servers[message.guild.id].autoplayid
-
-  if (!server.queue[currentQueue]) {
-    currentQueue = 0
+  console.log(_server.currentQueue)
+  if (!_server.queue[_server.currentQueue]) {
+    _server.currentQueue = 0
     if (config.music.repeat == "off") {
-      server.queue = []
+      _server.queue = []
       if (config.music.autoplay) {
-        autoplayid = $.addIfNotExists(autoplayid, previnfo.video_id)
-        for (var i = 0; i < previnfo.related_videos.length; i++) {
-          var id = previnfo.related_videos[i].id || previnfo.related_videos[i].video_id
-          if (!$.isInArray(autoplayid, id)) {
-            autoplayid.push(id)
-            previnfo = await ytdl.getInfo(id)
-            break
+        try {
+          _server.autoplayid = $.addIfNotExists(_server.autoplayid, previnfo.video_id)
+          for (var i = 0; i < previnfo.related_videos.length; i++) {
+            var id = previnfo.related_videos[i].id || previnfo.related_videos[i].video_id
+            if (!$.isInArray(_server.autoplayid, id)) {
+              _server.autoplayid.push(id)
+              previnfo = await ytdl.getInfo(id)
+              break
+            }
           }
+          console.log(bot)
+          _server.queue.push({
+            id: previnfo.video_id,
+            title: previnfo.title,
+            url: previnfo.video_url,
+            requested: _bot.user,
+            info: previnfo
+          })
+        } catch (err) {
+          console.log(err)
         }
-        server.queue.push({
-          id: previnfo.video_id,
-          title: previnfo.title,
-          url: previnfo.video_url,
-          requested: bot.user,
-          info: previnfo
-        })
       } else {
         message.guild.voiceConnection.disconnect()
         return
       }
     }
   }
-  server.dispatcher = connection.playStream(ytdl(server.queue[currentQueue].url, process.env.HEROKU ? {
+  _server.dispatcher = connection.playStream(ytdl(_server.queue[_server.currentQueue].url, process.env.HEROKU ? {
     quality: "highestaudio"
   } : {
     filter: "audioonly"
   }))
-  server.dispatcher.setVolume(config.music.volume / 100)
-  var requested = server.queue[currentQueue].requested
-  var footer = [requested.username, moment.utc(server.queue[currentQueue].info.length_seconds * 1000).format("mm:ss"), `Volume: ${config.music.volume}%`, `Repeat: ${config.music.repeat}`, `Autoplay: ${config.music.autoplay ? "on" : "off"}`]
+  _server.dispatcher.setVolume(config.music.volume / 100)
+  var requested = _server.queue[_server.currentQueue].requested
+  var footer = [requested.username, moment.utc(_server.queue[_server.currentQueue].info.length_seconds * 1000).format("mm:ss"), `Volume: ${config.music.volume}%`, `Repeat: ${config.music.repeat}`, `Autoplay: ${config.music.autoplay ? "on" : "off"}`]
   message.channel.send(embed()
-    .setAuthor("Now Playing #" + (currentQueue + 1), "https://i.imgur.com/SBMH84I.png")
+    .setAuthor("Now Playing #" + (_server.currentQueue + 1), "https://i.imgur.com/SBMH84I.png")
     .setFooter(footer.join(" | "), `https://cdn.discordapp.com/avatars/${requested.id}/${requested.avatar}.png?size=32`)
-    .setTitle(server.queue[currentQueue].title)
-    .setURL(server.queue[currentQueue].url)
+    .setTitle(_server.queue[_server.currentQueue].title)
+    .setURL(_server.queue[_server.currentQueue].url)
   )
-  $.log("Now playing " + server.queue[currentQueue].title)
+  $.log("Now playing " + _server.queue[_server.currentQueue].title)
 
-  previnfo = server.queue[currentQueue].info
+  previnfo = _server.queue[_server.currentQueue].info
 
-  server.dispatcher.on("end", mode => {
+  _server.dispatcher.on("end", mode => {
     if (mode === "stop") return
-    else if (config.music.repeat != "single" || mode === "skip") currentQueue += 1
+    else if (config.music.repeat != "single" || mode === "skip") _server.currentQueue += 1
+    console.log("hi")
     play(message, connection)
   })
 }
