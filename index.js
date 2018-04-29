@@ -43,7 +43,6 @@ bot.on('ready', () => {
     type: config.game.type.toUpperCase()
   })
 })
-
 bot.on('message', message => {
   if (message.author.bot) return
   if (message.channel.type === "dm") {

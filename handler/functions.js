@@ -65,11 +65,35 @@ module.exports.addServerToConfig = (id) => {
   module.exports.updateconfig()
 }
 
-module.exports.formatSeconds = (secs) => {
-  var t = new Date(1970, 0, 1);
-  t.setSeconds(secs);
-  var s = t.toTimeString().substr(0, 8);
-  if (secs > 86399)
-    s = Math.floor((t - Date.parse("1/1/70")) / 3600000) + s.substr(2);
-  return s;
+module.exports.formatSeconds = (secs, format) => {
+  var sec_num = parseInt(secs, 10); // don't forget the second param
+  var hours = Math.floor(sec_num / 3600);
+  var minutes = Math.floor((sec_num - (hours * 3600)) / 60);
+  var seconds = sec_num - (hours * 3600) - (minutes * 60);
+
+  if (hours < 10) {
+    hours = "0" + hours;
+  }
+  if (minutes < 10) {
+    minutes = "0" + minutes;
+  }
+  if (seconds < 10) {
+    seconds = "0" + seconds;
+  }
+
+  if (format == undefined) {
+    var time = hours + ':' + minutes + ':' + seconds
+    if (hours == "00") {
+      time = time.substring(3)
+    }
+    return time
+  } else if (format == 3) {
+    return hours + ':' + minutes + ':' + seconds;
+  } else if (format == 2) {
+    minutes = parseInt(hours) * 60 + parseInt(minutes)
+    return (minutes < 10 ? "0" + minutes : minutes) + ':' + seconds
+  } else if (format == 1) {
+    seconds = parseInt(hours) * 60 + parseInt(minutes) * 60 + parseInt(seconds)
+    return seconds < 10 ? "0" + seconds : seconds
+  }
 }

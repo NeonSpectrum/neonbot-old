@@ -164,7 +164,7 @@ module.exports = (bot, message) => {
         var temp = embed()
         var totalseconds = 0
         for (var i = 0; i < _server.queue.length && _server.queue[i].info; i++) {
-          temp.addField(`${_server.currentQueue == i ? "*" : ""}${i+1}. ${_server.queue[i].title}`, `[Link](${_server.queue[i].url}) | ${$.formatSeconds(_server.queue[i].info.length_seconds).substring(3)} | ${_server.queue[i].requested.username}`)
+          temp.addField(`${_server.currentQueue == i ? "*" : ""}${i+1}. **${_server.queue[i].title}**`, `\`${$.formatSeconds(_server.queue[i].info.length_seconds)} | ${_server.queue[i].requested.username}\``)
           totalseconds += +_server.queue[i].info.length_seconds
           if (i != 0 && i % 9 == 0 || i == _server.queue.length - 1) {
             embeds.push(temp)
@@ -175,7 +175,7 @@ module.exports = (bot, message) => {
         if (Math.ceil(_server.queue.length / 10) == 1 && embeds[0]) {
           message.channel.send(embeds[0]
             .setAuthor('Player Queue', "https://i.imgur.com/SBMH84I.png")
-            .setFooter(footer.join(" | "))
+            .setFooter(footer.join(" | "), `https://cdn.discordapp.com/avatars/${bot.user.id}/${bot.user.avatar}.png?size=16`)
           )
         } else {
           new EmbedsMode()
@@ -185,7 +185,7 @@ module.exports = (bot, message) => {
             .showPageIndicator(true)
             .setAuthor('Player Queue', "https://i.imgur.com/SBMH84I.png")
             .setColor("#59ABE3")
-            .setFooter(footer.join(" | "))
+            .setFooter(footer.join(" | "), `https://cdn.discordapp.com/avatars/${bot.user.id}/${bot.user.avatar}.png?size=16`)
             .build();
         }
       }
@@ -250,7 +250,7 @@ module.exports = (bot, message) => {
           .setTitle("Title")
           .setDescription(_server.queue[_server.currentQueue].title)
           .setThumbnail(info.thumbnail_url)
-          .addField("Time", `${$.formatSeconds(_server.dispatcher.time / 1000)} - ${$.formatSeconds(info.length_seconds).format("mm:ss")}`)
+          .addField("Time", `${$.formatSeconds(_server.dispatcher.time / 1000)} - ${$.formatSeconds(info.length_seconds)}`)
           .addField("Description", (info.description.length > 500 ? info.description.substring(0, 500) + "..." : info.description))
           .setFooter(footer.join(" | "), `https://cdn.discordapp.com/avatars/${requested.id}/${requested.avatar}.png?size=32`)
       } else {
@@ -360,7 +360,7 @@ async function play(message, connection) {
   var footer = [requested.username, $.formatSeconds(_server.queue[_server.currentQueue].info.length_seconds), `Volume: ${config.servers[message.guild.id].music.volume}%`, `Repeat: ${config.servers[message.guild.id].music.repeat}`, `Autoplay: ${config.servers[message.guild.id].music.autoplay ? "on" : "off"}`]
   message.channel.send(embed()
     .setAuthor("Now Playing #" + (_server.currentQueue + 1), "https://i.imgur.com/SBMH84I.png")
-    .setFooter(footer.join(" | "), `https://cdn.discordapp.com/avatars/${requested.id}/${requested.avatar}.png?size=32`)
+    .setFooter(footer.join(" | "), `https://cdn.discordapp.com/avatars/${requested.id}/${requested.avatar}.png?size=16`)
     .setTitle(_server.queue[_server.currentQueue].title)
     .setURL(_server.queue[_server.currentQueue].url)
   )
