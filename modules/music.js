@@ -150,16 +150,16 @@ module.exports = (bot, message) => {
         var temp = embed()
         var totalseconds = 0
         for (var i = 0; i < server.queue.length; i++) {
-          temp.addField(`${currentQueue == i ? "*" : ""}${i+1}. ${server.queue[i].title} (${moment.utc(server.queue[currentQueue].info.length_seconds * 1000).format("mm:ss")})`, server.queue[i].url)
-          totalseconds += +server.queue[currentQueue].info.length_seconds
+          temp.addField(`${currentQueue == i ? "*" : ""}${i+1}. ${server.queue[i].title} (${moment.utc(server.queue[i].info.length_seconds * 1000).format("mm:ss")})`, server.queue[i].url)
+          totalseconds += +server.queue[i].info.length_seconds
           if (i != 0 && i % 9 == 0 || i == server.queue.length - 1) {
             embeds.push(temp)
             temp = embed()
           }
         }
-        var footer = [moment.utc(totalseconds * 1000).format("mm:ss"), `Volume: ${config.music.volume}%`, `Repeat: ${config.music.repeat}`, `Autoplay: ${config.music.autoplay ? "on" : "off"}`]
+        var footer = [`${server.queue.length} songs`, moment.utc(totalseconds * 1000).format("hh:mm:ss"), `Volume: ${config.music.volume}%`, `Repeat: ${config.music.repeat}`, `Autoplay: ${config.music.autoplay ? "on" : "off"}`]
         if (Math.ceil(server.queue.length / 10) == 1) {
-          message.channel.send(embeds[0].setTitle("Lis"))
+          message.channel.send(embeds[0].setAuthor('Player Queue', "https://i.imgur.com/SBMH84I.png"))
         } else {
           new EmbedsMode()
             .setArray(embeds)
@@ -168,6 +168,7 @@ module.exports = (bot, message) => {
             .showPageIndicator(true)
             .setAuthor('Player Queue', "https://i.imgur.com/SBMH84I.png")
             .setColor("#59ABE3")
+            .setFooter(footer.join(" | "))
             .build();
         }
       }
@@ -284,12 +285,16 @@ module.exports = (bot, message) => {
               for (var i = 0; i < strings.length; i++) {
                 var temp = embed(strings[i])
                 if (i == 0) temp.setTitle($("div.lyricsh h2 b").text())
-                message.channel.send(temp)
+                await message.channel.send(temp)
               }
             })
           })
           for (var i = 1; i <= 5; i++) {
-            await msg.react(reaction_numbers[i])
+            try {
+              await msg.react(reaction_numbers[i])
+            } catch (err) {
+              break
+            }
           }
         } else {
           message.channel.send(embed("No lyrics found."))
