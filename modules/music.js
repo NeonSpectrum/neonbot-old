@@ -147,12 +147,13 @@ module.exports = (bot, message) => {
         message.channel.send(embed("The playlist is empty"))
       } else {
         var embeds = []
-        for (var i = 1, j = 0; i <= Math.ceil(server.queue.length / 10); i++) {
-          var temp = embed()
-          for (; j < server.queue.length; j++) {
-            temp.addField(`${j+1}. ${server.queue[j].title}`, server.queue[j].url)
-          };
-          embeds.push(temp)
+        var temp = embed()
+        for (var i = 0; i < server.queue.length; i++) {
+          temp.addField(`${i+1}. ${server.queue[i].title}`, server.queue[i].url)
+          if (i % 9 == 0) {
+            embeds.push(temp)
+            temp = embed()
+          }
         }
         if (Math.ceil(server.queue.length / 10) == 1) {
           message.channel.send(embeds[0].setTitle("Playlist"))
