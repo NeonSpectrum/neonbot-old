@@ -163,11 +163,11 @@ module.exports = (bot, message) => {
         var embeds = []
         var temp = embed()
         var totalseconds = 0
-        for (var i = 0; i < _server.queue.length && _server.queue[i].info; i++) {
+        for (var i = 0, j = 1; i < _server.queue.length && _server.queue[i].info; i++) {
           temp.addField(`${_server.currentQueue == i ? "*" : ""}${i+1}. **${_server.queue[i].title}**`, `\`${$.formatSeconds(_server.queue[i].info.length_seconds)} | ${_server.queue[i].requested.username}\``)
           totalseconds += +_server.queue[i].info.length_seconds
           if (i != 0 && i % 9 == 0 || i == _server.queue.length - 1) {
-            embeds.push(temp)
+            embeds.push(temp.setAuthor(`Player Queue | Page ${j++} of ${Math.ceil(_server.queue.length / 10)}`, "https://i.imgur.com/SBMH84I.png"))
             temp = embed()
           }
         }
@@ -182,8 +182,7 @@ module.exports = (bot, message) => {
             .setArray(embeds)
             .setAuthorizedUser(message.author)
             .setChannel(message.channel)
-            .showPageIndicator(true)
-            .setAuthor('Player Queue', "https://i.imgur.com/SBMH84I.png")
+            .showPageIndicator(false)
             .setColor("#59ABE3")
             .setFooter(footer.join(" | "), `https://cdn.discordapp.com/avatars/${bot.user.id}/${bot.user.avatar}.png?size=16`)
             .build();
