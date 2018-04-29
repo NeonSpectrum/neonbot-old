@@ -325,8 +325,9 @@ async function play(message, connection) {
       }
     }
   }
-
-  server.dispatcher = connection.playStream(ytdl(server.queue[currentQueue].url, {
+  server.dispatcher = connection.playStream(ytdl(server.queue[currentQueue].url, process.env.HEROKU ? {
+    quality: "highestaudio"
+  } : {
     filter: "audioonly"
   }))
   server.dispatcher.setVolume(config.music.volume / 100)
