@@ -152,14 +152,14 @@ module.exports = (bot, message) => {
         var temp = embed()
         var totalseconds = 0
         for (var i = 0; i < server.queue.length; i++) {
-          temp.addField(`${currentQueue == i ? "*" : ""}${i+1}. ${server.queue[i].title} (${moment.utc(server.queue[i].info.length_seconds * 1000).format("mm:ss")})`, server.queue[i].url)
+          temp.addField(`${currentQueue == i ? "*" : ""}${i+1}. ${server.queue[i].title} (${moment().startOf('day').add(moment.duration(server.queue[i].info.length_seconds / 1000)).format('wmm:ss')})`, server.queue[i].url)
           totalseconds += +server.queue[i].info.length_seconds
           if (i != 0 && i % 9 == 0 || i == server.queue.length - 1) {
             embeds.push(temp)
             temp = embed()
           }
         }
-        var footer = [`${server.queue.length} songs`, moment.utc(totalseconds * 1000).format("hh:mm:ss"), `Volume: ${config.music.volume}%`, `Repeat: ${config.music.repeat}`, `Autoplay: ${config.music.autoplay ? "on" : "off"}`]
+        var footer = [`${server.queue.length} ${server.queue.length == 1 ? "song" : "songs"}`, moment().startOf('day').add(moment.duration(totalseconds / 1000)).format('HH:mm:ss'), `Volume: ${config.music.volume}%`, `Repeat: ${config.music.repeat}`, `Autoplay: ${config.music.autoplay ? "on" : "off"}`]
         if (Math.ceil(server.queue.length / 10) == 1) {
           message.channel.send(embeds[0]
             .setAuthor('Player Queue', "https://i.imgur.com/SBMH84I.png")
@@ -200,10 +200,10 @@ module.exports = (bot, message) => {
       }
     },
     pause: () => {
-      if (server && server.dispatcher && !server.dispatcher.paused) {
+      if (server && server.dispatcher && !server.dispatcher.paused && server.queue.length > 0) {
         server.dispatcher.pause()
         if (message.channel) {
-          message.channel.send(embed(`Player paused ${config.prefix}resume to unpause.`))
+          message.channel.send(embed(`Player paused \`${config.prefix}resume\` to unpause.`))
         } else {
           message.send(embed(`Player has automatically paused because there are no users connected.`))
         }
@@ -211,10 +211,10 @@ module.exports = (bot, message) => {
       }
     },
     resume: () => {
-      if (server && server.dispatcher && server.dispatcher.paused) {
+      if (server && server.dispatcher && server.dispatcher.paused && server.queue.length > 0) {
         server.dispatcher.resume()
         if (message.channel) {
-          message.channel.send(embed(`Player resumed ${config.prefix}pause to pause.`))
+          message.channel.send(embed(`Player resumed \`${config.prefix}pause\` to pause.`))
         } else {
           message.send(embed(`Player has automatically resumed.`))
         }
