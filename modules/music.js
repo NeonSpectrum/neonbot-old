@@ -30,8 +30,6 @@ module.exports = (bot, message) => {
       bot.on('voiceStateUpdate', (oldMember, newMember) => {
         if (newMember.user.bot) return
 
-        var music = music_module(bot, bot.channels.get(_server.currentChannel))
-
         if (oldMember.voiceChannelID != null && newMember.voiceChannelID == null) {
           if (newMember.guild.channels.get(oldMember.voiceChannelID).members.filter(s => s.user.id != bot.user.id).size == 0) music.pause()
         } else if (oldMember.voiceChannelID == null && newMember.voiceChannelID != null) {
