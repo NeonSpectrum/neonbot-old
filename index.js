@@ -31,17 +31,30 @@ bot.on('ready', () => {
     "music": Object.keys(music_module()),
     "util": Object.keys(util_module())
   }
-
+  var arr = Array.from(bot.guilds.keys())
+  for (var i = 0; i < arr.length; i++) {
+    if (Object.keys(config.servers).indexOf(arr[i]) == -1) {
+      $.addServerToConfig(arr[i])
+    }
+  }
   displayAscii()
   $.log(`Logged in as ${bot.user.tag}`)
-  bot.user.setActivity(config.bot.game.name, {
-    type: config.bot.game.type.toUpperCase()
+  bot.user.setActivity(config.game.name, {
+    type: config.game.type.toUpperCase()
   })
 })
 
 bot.on('message', message => {
   if (message.author.bot) return
-  if (message.channel.type === "dm") return
+  if (message.channel.type === "dm") {
+    if (message.content.trim() == "invite") {
+      bot.generateInvite(['ADMINISTRATOR'])
+        .then(link => {
+          message.reply(`Generated bot invite link: ${link}`);
+        });
+    }
+    return
+  }
   if (!message.content.startsWith(config.prefix)) return
 
   var admin = admin_module(bot, message)
@@ -52,7 +65,7 @@ bot.on('message', message => {
   var cmd = messageArray[0].substring(config.prefix.length).toLowerCase()
   var args = messageArray.slice(1)
 
-  if (config.bot.deleteoncmd) {
+  if (config.servers[message.guild.id].deleteoncmd) {
     message.delete()
   }
 
@@ -73,13 +86,13 @@ bot.on('voiceStateUpdate', (oldMember, newMember) => {
   if (newMember.user.bot) return
 
   if (oldMember.voiceChannelID != null && newMember.voiceChannelID == null) {
-    if (config.bot.voicetts)
-      bot.channels.get(config.bot.logchannel).send(newMember.user.username + " has disconnected", {
+    if (config.servers[oldMember.guild.id].voicetts)
+      bot.channels.get(config.servers[oldMember.guild.id].voicettsch).send(oldMember.user.username + " has disconnected", {
         tts: true
       }).then(msg => msg.delete(5000))
   } else if (oldMember.voiceChannelID == null && newMember.voiceChannelID != null) {
-    if (config.bot.voicetts)
-      bot.channels.get(config.bot.logchannel).send(newMember.user.username + " has connected", {
+    if (config.servers[newMember.guild.id].voicetts)
+      bot.channels.get(config.servers[newMember.guild.id].voicettsch).send(newMember.user.username + " has connected", {
         tts: true
       }).then(msg => msg.delete(5000))
   }

@@ -50,3 +50,17 @@ module.exports.addIfNotExists = (arr, value) => {
   arr.push(value)
   return arr
 }
+
+module.exports.addServerToConfig = (id) => {
+  config.servers[id] = {
+    deleteoncmd: false,
+    voicetts: false,
+    voicettsch: "",
+    music: {
+      volume: 100,
+      repeat: "off",
+      autoplay: false
+    }
+  }
+  module.exports.updateconfig()
+}

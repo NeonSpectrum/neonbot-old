@@ -66,7 +66,7 @@ module.exports = (bot, message) => {
       if (!message.member.hasPermission("MANAGE_MESSAGES")) return errors.noPerms(message, "MANAGE_MESSAGES")
       if (!args[0]) args[0] = 1
 
-      message.channel.bulkDelete(+args[0] + (!config.bot.deleteoncmd ? 1 : 0))
+      message.channel.bulkDelete(+args[0] + (!config.servers[message.guild.id].deleteoncmd ? 1 : 0))
     },
     kick: (args) => {
       if (!message.member.hasPermission("KICK_MEMBERS")) return errors.noPerms(message, "KICK_MEMBERS")
@@ -163,19 +163,14 @@ module.exports = (bot, message) => {
       }
     },
     deleteoncmd: () => {
-      config.bot.deleteoncmd = !config.bot.deleteoncmd
-      message.channel.send(embed("Delete On Cmd is now " + (config.bot.deleteoncmd ? "enabled" : "disabled") + "."))
+      config.servers[message.guild.id].deleteoncmd = !config.servers[message.guild.id].deleteoncmd
+      message.channel.send(embed("Delete On Cmd is now " + (config.servers[message.guild.id].deleteoncmd ? "enabled" : "disabled") + "."))
       $.updateconfig()
     },
     voicetts: () => {
-      config.bot.voicetts = !config.bot.voicetts
-      config.bot.logchannel = config.bot.voicetts ? message.channel.id : ""
-      message.channel.send(embed("Voice TTS is now " + (config.bot.voicetts ? "enabled" : "disabled") + "."))
-      $.updateconfig()
-    },
-    logchannel: () => {
-      config.bot.logchannel = message.channel.id
-      message.channel.send(embed("This channel is now the log channel."))
+      config.servers[message.guild.id].voicetts = !config.servers[message.guild.id].voicetts
+      config.servers[message.guild.id].voicettsch = config.servers[message.guild.id].voicetts ? message.channel.id : ""
+      message.channel.send(embed("Voice TTS is now " + (config.servers[message.guild.id].voicetts ? "enabled" : "disabled") + "."))
       $.updateconfig()
     }
   }

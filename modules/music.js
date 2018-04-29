@@ -27,6 +27,17 @@ module.exports = (bot, message) => {
         currentQueue: 0,
         currentChannel: ""
       }
+      bot.on('voiceStateUpdate', (oldMember, newMember) => {
+        if (newMember.user.bot) return
+
+        var music = music_module(bot, bot.channels.get(_server.currentChannel))
+
+        if (oldMember.voiceChannelID != null && newMember.voiceChannelID == null) {
+          if (newMember.guild.channels.get(oldMember.voiceChannelID).members.filter(s => s.user.id != bot.user.id).size == 0) music.pause()
+        } else if (oldMember.voiceChannelID == null && newMember.voiceChannelID != null) {
+          if (newMember.guild.channels.get(newMember.voiceChannelID).members.filter(s => s.user.id != bot.user.id).size > 0) music.resume()
+        }
+      })
     }
     _bot = bot
     _server = servers[message.guild.id]
@@ -160,7 +171,7 @@ module.exports = (bot, message) => {
             temp = embed()
           }
         }
-        var footer = [`${_server.queue.length} ${_server.queue.length == 1 ? "song" : "songs"}`, moment.utc(totalseconds * 1000).format("mm:ss"), `Volume: ${config.music.volume}%`, `Repeat: ${config.music.repeat}`, `Autoplay: ${config.music.autoplay ? "on" : "off"}`]
+        var footer = [`${_server.queue.length} ${_server.queue.length == 1 ? "song" : "songs"}`, moment.utc(totalseconds * 1000).format("mm:ss"), `Volume: ${config.servers[message.guild.id].music.volume}%`, `Repeat: ${config.servers[message.guild.id].music.repeat}`, `Autoplay: ${config.servers[message.guild.id].music.autoplay ? "on" : "off"}`]
         if (Math.ceil(_server.queue.length / 10) == 1 && embeds[0]) {
           message.channel.send(embeds[0]
             .setAuthor('Player Queue', "https://i.imgur.com/SBMH84I.png")
@@ -181,21 +192,21 @@ module.exports = (bot, message) => {
     },
     volume: args => {
       if (Number.isInteger(+args[0])) {
-        config.music.volume = +args
+        config.servers[message.guild.id].music.volume = +args
         if (_server && _server.dispatcher) _server.dispatcher.setVolume(args / 100)
         message.channel.send(embed(`Volume is now set to ${args}%`))
         $.updateconfig()
       } else {
-        message.channel.send(embed(`Volume is set to ${config.music.volume}%`))
+        message.channel.send(embed(`Volume is set to ${config.servers[message.guild.id].music.volume}%`))
       }
     },
     repeat: args => {
       if (args[0] && args[0].toLowerCase() != "off" && args[0].toLowerCase() != "single" && args[0].toLowerCase() != "all") {
         message.channel.send(embed("Invalid parameters. (off | single | all)"))
       } else if (!args[0]) {
-        message.channel.send(embed("Repeat is set to " + config.music.repeat + "."))
+        message.channel.send(embed("Repeat is set to " + config.servers[message.guild.id].music.repeat + "."))
       } else {
-        config.music.repeat = args[0]
+        config.servers[message.guild.id].music.repeat = args[0]
         message.channel.send(embed("Repeat is now set to " + args[0] + "."))
         $.updateconfig()
       }
@@ -224,17 +235,17 @@ module.exports = (bot, message) => {
     },
     autoplay: () => {
       _server.autoplayid = []
-      config.music.autoplay = !config.music.autoplay
-      message.channel.send(embed("Autoplay is now " + (config.music.autoplay ? "enabled" : "disabled") + "."))
+      config.servers[message.guild.id].music.autoplay = !config.servers[message.guild.id].music.autoplay
+      message.channel.send(embed("Autoplay is now " + (config.servers[message.guild.id].music.autoplay ? "enabled" : "disabled") + "."))
       $.updateconfig()
-      $.log("Autoplay " + (config.music.autoplay ? "enabled" : "disabled") + ".")
+      $.log("Autoplay " + (config.servers[message.guild.id].music.autoplay ? "enabled" : "disabled") + ".")
     },
     nowplaying: () => {
       var temp
       if (_server && _server.queue[_server.currentQueue]) {
         var requested = _server.queue[_server.currentQueue].requested
         var info = _server.queue[_server.currentQueue].info
-        var footer = [requested.username, `Volume: ${config.music.volume}%`, `Repeat: ${config.music.repeat}`, `Autoplay: ${config.music.autoplay ? "on" : "off"}`]
+        var footer = [requested.username, `Volume: ${config.servers[message.guild.id].music.volume}%`, `Repeat: ${config.servers[message.guild.id].music.repeat}`, `Autoplay: ${config.servers[message.guild.id].music.autoplay ? "on" : "off"}`]
         temp = embed()
           .setTitle("Title")
           .setDescription(_server.queue[_server.currentQueue].title)
@@ -310,25 +321,13 @@ module.exports = (bot, message) => {
   }
 }
 
-bot.on('voiceStateUpdate', (oldMember, newMember) => {
-  if (newMember.user.bot) return
-
-  var music = music_module(bot, bot.channels.get(_server.currentChannel))
-
-  if (oldMember.voiceChannelID != null && newMember.voiceChannelID == null) {
-    if (newMember.guild.channels.get(oldMember.voiceChannelID).members.filter(s => s.user.id != bot.user.id).size == 0) music.pause()
-  } else if (oldMember.voiceChannelID == null && newMember.voiceChannelID != null) {
-    if (newMember.guild.channels.get(newMember.voiceChannelID).members.filter(s => s.user.id != bot.user.id).size > 0) music.resume()
-  }
-})
-
 var previnfo;
 async function play(message, connection) {
   if (!_server.queue[_server.currentQueue]) {
     _server.currentQueue = 0
-    if (config.music.repeat == "off") {
+    if (config.servers[message.guild.id].music.repeat == "off") {
       _server.queue = []
-      if (config.music.autoplay) {
+      if (config.servers[message.guild.id].music.autoplay) {
         _server.autoplayid = $.addIfNotExists(_server.autoplayid, previnfo.video_id)
         for (var i = 0; i < previnfo.related_videos.length; i++) {
           var id = previnfo.related_videos[i].id || previnfo.related_videos[i].video_id
@@ -356,9 +355,9 @@ async function play(message, connection) {
   } : {
     filter: "audioonly"
   }))
-  _server.dispatcher.setVolume(config.music.volume / 100)
+  _server.dispatcher.setVolume(config.servers[message.guild.id].music.volume / 100)
   var requested = _server.queue[_server.currentQueue].requested
-  var footer = [requested.username, moment.utc(_server.queue[_server.currentQueue].info.length_seconds * 1000).format("mm:ss"), `Volume: ${config.music.volume}%`, `Repeat: ${config.music.repeat}`, `Autoplay: ${config.music.autoplay ? "on" : "off"}`]
+  var footer = [requested.username, moment.utc(_server.queue[_server.currentQueue].info.length_seconds * 1000).format("mm:ss"), `Volume: ${config.servers[message.guild.id].music.volume}%`, `Repeat: ${config.servers[message.guild.id].music.repeat}`, `Autoplay: ${config.servers[message.guild.id].music.autoplay ? "on" : "off"}`]
   message.channel.send(embed()
     .setAuthor("Now Playing #" + (_server.currentQueue + 1), "https://i.imgur.com/SBMH84I.png")
     .setFooter(footer.join(" | "), `https://cdn.discordapp.com/avatars/${requested.id}/${requested.avatar}.png?size=32`)
@@ -371,7 +370,7 @@ async function play(message, connection) {
 
   _server.dispatcher.on("end", mode => {
     if (mode === "stop") return
-    else if (config.music.repeat != "single" || mode === "skip") _server.currentQueue += 1
+    else if (config.servers[message.guild.id].music.repeat != "single" || mode === "skip") _server.currentQueue += 1
     play(message, connection)
   })
 }
