@@ -164,7 +164,7 @@ module.exports = (bot, message) => {
         var temp = embed()
         var totalseconds = 0
         for (var i = 0; i < _server.queue.length && _server.queue[i].info; i++) {
-          temp.addField(`${_server.currentQueue == i ? "*" : ""}${i+1}. ${_server.queue[i].title} (${$.formatSeconds(_server.queue[i].info.length_seconds).substring(3)})`, _server.queue[i].url)
+          temp.addField(`${_server.currentQueue == i ? "*" : ""}${i+1}. ${_server.queue[i].title}`, `[Link](${_server.queue[i].url}) | ${$.formatSeconds(_server.queue[i].info.length_seconds).substring(3)} | ${_server.queue[i].requested.username}`)
           totalseconds += +_server.queue[i].info.length_seconds
           if (i != 0 && i % 9 == 0 || i == _server.queue.length - 1) {
             embeds.push(temp)
