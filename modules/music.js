@@ -42,7 +42,7 @@ module.exports = (bot, message) => {
           return message.channel.send(embed(`Invalid Playlist URL`))
         }
 
-        var msg = await message.channel.send(embed(`Adding ${videos.length} to the queue`))
+        var msg = await message.channel.send(embed(`Adding ${videos.length} ${videos.length == 1 ? "song" : "songs"} to the queue`))
         var error = 0
 
         for (var i = 0; i < videos.length; i++) {
@@ -152,7 +152,7 @@ module.exports = (bot, message) => {
           for (; j < server.queue.length; j++) {
             temp.addField(`${j+1}. ${server.queue[j].title}`, server.queue[j].url)
           };
-          embeds.push(embed(temp))
+          embeds.push(temp)
         }
         if (Math.ceil(server.queue.length / 10) == 1) {
           message.channel.send(embeds[0].setTitle("Playlist"))
