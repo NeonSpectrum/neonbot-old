@@ -23,8 +23,8 @@ module.exports = (bot, message) => {
     if (!servers[message.guild.id]) {
       servers[message.guild.id] = {
         queue: [],
-        autoplayid = [],
-        currentQueue = 0
+        autoplayid: [],
+        currentQueue: 0
       }
     }
     server = servers[message.guild.id]
