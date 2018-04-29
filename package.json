@@ -14,7 +14,7 @@
     "bufferutil": "^3.0.4",
     "cheerio": "^1.0.0-rc.2",
     "colors": "^1.2.1",
-    "discord-paginationembed": "github:gazmull/discord-paginationembed",
+    "discord-paginationembed": "github:gazmull/discord-paginationembed#v11",
     "discord.js": "^11.3.2",
     "erlpack": "github:discordapp/erlpack",
     "libsodium-wrappers": "^0.7.3",

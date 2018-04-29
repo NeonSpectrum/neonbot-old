@@ -47,9 +47,9 @@ module.exports = (bot, message) => {
 
         for (var i = 0; i < videos.length; i++) {
           try {
-            $.log("Processing " + args[0])
+            $.log("Processing " + videos[i].id)
             var info = await ytdl.getInfo(videos[i].id)
-            $.log("Done Processing " + args[0])
+            $.log("Done Processing " + videos[i].id)
 
             server.queue.push({
               title: info.title,
@@ -122,7 +122,11 @@ module.exports = (bot, message) => {
             })
         })
         for (var i = 1; i <= 5; i++) {
-          await msg.react(reaction_numbers[i])
+          try {
+            await msg.react(reaction_numbers[i])
+          } catch (err) {
+            break
+          }
         }
       }
     },
@@ -219,13 +223,14 @@ module.exports = (bot, message) => {
       if (server && server.queue[currentQueue]) {
         var requested = server.queue[currentQueue].requested
         var info = server.queue[currentQueue].info
+        var footer = [requested.username, `Volume: ${config.music.volume}%`, `Repeat: ${config.music.repeat}`, `Autoplay: ${config.music.autoplay ? "on" : "off"}`]
         temp = embed()
           .setTitle("Title")
           .setDescription(server.queue[currentQueue].title)
           .setThumbnail(info.thumbnail_url)
           .addField("Time", `${moment.utc(server.dispatcher.time).format("mm:ss")} - ${moment.utc(info.length_seconds*1000).format("mm:ss")}`)
           .addField("Description", (info.description.length > 500 ? info.description.substring(0, 500) + "..." : info.description))
-          .setFooter(requested.username, `https://cdn.discordapp.com/avatars/${requested.id}/${requested.avatar}.png?size=32`)
+          .setFooter(footer.join(" | "), `https://cdn.discordapp.com/avatars/${requested.id}/${requested.avatar}.png?size=32`)
       } else {
         temp = embed("Nothing playing")
       }
@@ -322,11 +327,11 @@ async function play(message, connection) {
   }
 
   server.dispatcher = connection.playStream(ytdl(server.queue[currentQueue].url, {
-    quality: "highestaudio"
+    filter: "audioonly"
   }))
   server.dispatcher.setVolume(config.music.volume / 100)
   var requested = server.queue[currentQueue].requested
-  var footer = [requested.username, moment.utc(server.queue[currentQueue].info.length_seconds * 1000).format("mm:ss"), `Volume: ${config.music.volume}`, `Repeat: ${config.music.repeat}`, `Autoplay: ${config.music.autoplay ? "on" : "off"}`]
+  var footer = [requested.username, moment.utc(server.queue[currentQueue].info.length_seconds * 1000).format("mm:ss"), `Volume: ${config.music.volume}%`, `Repeat: ${config.music.repeat}`, `Autoplay: ${config.music.autoplay ? "on" : "off"}`]
   message.channel.send(embed()
     .setAuthor("Now Playing #" + (currentQueue + 1), "https://i.imgur.com/SBMH84I.png")
     .setFooter(footer.join(" | "), `https://cdn.discordapp.com/avatars/${requested.id}/${requested.avatar}.png?size=32`)
