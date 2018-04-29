@@ -34,22 +34,7 @@ module.exports = (bot, message) => {
       if (!message.member.voiceChannel) return message.reply("You must be in a voice channel!")
       if (!args[0]) return message.reply("Please provide a keyword or link.")
 
-      if (args[0].match(/^(https?\:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+$/g)) {
-        $.log("Processing " + args[0])
-        var info = await ytdl.getInfo(args[0])
-        $.log("Done Processing " + args[0])
-        server.queue.push({
-          title: info.title,
-          url: info.video_url,
-          requested: message.author,
-          info: info
-        })
-        if (!message.guild.voiceConnection)
-          message.member.voiceChannel.join()
-          .then(connection => {
-            play(message, connection)
-          })
-      } else if (args[0].match(/^.*(youtu.be\/|list=)([^#\&\?]*).*/g)) {
+      if (args[0].match(/^.*(youtu.be\/|list=)([^#\&\?]*).*/g)) {
         try {
           playlist = await yt.getPlaylist(args[0])
           videos = await playlist.getVideos()
@@ -84,6 +69,21 @@ module.exports = (bot, message) => {
           }
         }
         return msg.edit(embed(`Done! Loaded ${videos.length} songs.` + (error > 0 ? ` ${error} failed to load.` : "")))
+      } else if (args[0].match(/^(https?\:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+$/g)) {
+        $.log("Processing " + args[0])
+        var info = await ytdl.getInfo(args[0])
+        $.log("Done Processing " + args[0])
+        server.queue.push({
+          title: info.title,
+          url: info.video_url,
+          requested: message.author,
+          info: info
+        })
+        if (!message.guild.voiceConnection)
+          message.member.voiceChannel.join()
+          .then(connection => {
+            play(message, connection)
+          })
       } else {
         try {
           var videos = await yt.searchVideos(args.join(" "))
