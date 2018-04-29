@@ -149,8 +149,8 @@ module.exports = (bot, message) => {
         var embeds = []
         var temp = embed()
         for (var i = 0; i < server.queue.length; i++) {
-          temp.addField(`${i+1}. ${server.queue[i].title}`, server.queue[i].url)
-          if (i != 0 && i % 9 == 0) {
+          temp.addField(`${currentQueue == i ? "*" : ""}${i+1}. ${server.queue[i].title}`, server.queue[i].url)
+          if (i != 0 && i % 9 == 0 || i == server.queue.length - 1) {
             embeds.push(temp)
             temp = embed()
           }
