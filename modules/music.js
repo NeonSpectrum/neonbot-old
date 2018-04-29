@@ -148,22 +148,25 @@ module.exports = (bot, message) => {
       } else {
         var embeds = []
         var temp = embed()
+        var totalseconds = 0
         for (var i = 0; i < server.queue.length; i++) {
-          temp.addField(`${currentQueue == i ? "*" : ""}${i+1}. ${server.queue[i].title}`, server.queue[i].url)
+          temp.addField(`${currentQueue == i ? "*" : ""}${i+1}. ${server.queue[i].title} (${moment.utc(server.queue[currentQueue].info.length_seconds * 1000).format("mm:ss")})`, server.queue[i].url)
+          totalseconds += +server.queue[currentQueue].info.length_seconds
           if (i != 0 && i % 9 == 0 || i == server.queue.length - 1) {
             embeds.push(temp)
             temp = embed()
           }
         }
+        var footer = [moment.utc(totalseconds * 1000).format("mm:ss"), `Volume: ${config.music.volume}%`, `Repeat: ${config.music.repeat}`, `Autoplay: ${config.music.autoplay ? "on" : "off"}`]
         if (Math.ceil(server.queue.length / 10) == 1) {
-          message.channel.send(embeds[0].setTitle("Playlist"))
+          message.channel.send(embeds[0].setTitle("Lis"))
         } else {
           new EmbedsMode()
             .setArray(embeds)
             .setAuthorizedUser(message.author)
             .setChannel(message.channel)
             .showPageIndicator(true)
-            .setTitle('Playlist')
+            .setAuthor('Player Queue', "https://i.imgur.com/SBMH84I.png")
             .setColor("#59ABE3")
             .build();
         }
