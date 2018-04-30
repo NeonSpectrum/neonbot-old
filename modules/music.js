@@ -1,6 +1,5 @@
 var fs = require('fs')
 var moment = require('moment')
-var Discord = require('discord.js')
 var {
   Embeds: EmbedsMode
 } = require('discord-paginationembed')
@@ -17,20 +16,20 @@ var embed = $.embed
 var servers = []
 var reaction_numbers = ["\u0030\u20E3", "\u0031\u20E3", "\u0032\u20E3", "\u0033\u20E3", "\u0034\u20E3", "\u0035\u20E3", "\u0036\u20E3", "\u0037\u20E3", "\u0038\u20E3", "\u0039\u20E3"]
 
-var _bot, _server
 module.exports = (bot, message) => {
+  var server;
   if (typeof message === "object") {
     if (!servers[message.guild.id]) {
       servers[message.guild.id] = {
         queue: [],
         autoplayid: [],
         currentQueue: 0,
-        currentChannel: ""
+        currentChannel: "",
+        previnfo: null
       }
     }
-    _bot = bot
-    _server = servers[message.guild.id]
-    _server.currentChannel = message.channel ? message.channel.id : _server.currentChannel
+    server = servers[message.guild.id]
+    server.currentChannel = message.channel ? message.channel.id : server.currentChannel
   }
   return {
     play: async args => {
@@ -54,7 +53,7 @@ module.exports = (bot, message) => {
             var info = await ytdl.getInfo(videos[i].id)
             $.log("Done Processing " + "https://www.youtube.com/watch?v=" + videos[i].id)
 
-            _server.queue.push({
+            server.queue.push({
               title: info.title,
               url: info.video_url,
               requested: message.author,
@@ -76,7 +75,7 @@ module.exports = (bot, message) => {
         $.log("Processing " + args[0])
         var info = await ytdl.getInfo(args[0])
         $.log("Done Processing " + args[0])
-        _server.queue.push({
+        server.queue.push({
           title: info.title,
           url: info.video_url,
           requested: message.author,
@@ -111,12 +110,12 @@ module.exports = (bot, message) => {
           var i = reaction_numbers.indexOf(react._emoji.name)
           message.channel.send(embed(songSearchList[i - 1].title).setTitle(`You have selected #${i}. `))
             .then(msg => msg.delete(5000))
-          var index = _server.queue.push({
+          var index = server.queue.push({
             title: songSearchList[i - 1].title,
             url: songSearchList[i - 1].url,
             requested: message.author
           })
-          _server.queue[index - 1].info = await ytdl.getInfo(songSearchList[i - 1].url)
+          server.queue[index - 1].info = await ytdl.getInfo(songSearchList[i - 1].url)
           if (!message.guild.voiceConnection)
             message.member.voiceChannel.join()
             .then((connection) => {
@@ -136,34 +135,34 @@ module.exports = (bot, message) => {
       }
     },
     stop: () => {
-      if (_server && _server.queue) _server.queue = []
-      if (_server.dispatcher) _server.dispatcher.end("stop")
+      if (server && server.queue) server.queue = []
+      if (server.dispatcher) server.dispatcher.end("stop")
       if (message.guild.voiceConnection) message.guild.voiceConnection.disconnect()
-      _server.autoplayid = []
+      server.autoplayid = []
       message.channel.send(embed("Player stopped!"))
       $.log("Player stopped!")
     },
     skip: () => {
-      if (_server.dispatcher) _server.dispatcher.end("skip")
+      if (server.dispatcher) server.dispatcher.end("skip")
       $.log("Player skipped!")
     },
     list: () => {
-      if (_server === undefined || _server.queue.length === 0) {
+      if (server === undefined || server.queue.length === 0) {
         message.channel.send(embed("The playlist is empty"))
       } else {
         var embeds = []
         var temp = []
         var totalseconds = 0
-        for (var i = 0; i < _server.queue.length && _server.queue[i].info; i++) {
-          temp.push(`\`${_server.currentQueue == i ? "*" : ""}${i+1}.\` [**${_server.queue[i].title}**](${_server.queue[i].url})\n\t  \`${$.formatSeconds(_server.queue[i].info.length_seconds)} | ${_server.queue[i].requested.username}\``)
-          totalseconds += +_server.queue[i].info.length_seconds
-          if (i != 0 && i % 9 == 0 || i == _server.queue.length - 1) {
+        for (var i = 0; i < server.queue.length && server.queue[i].info; i++) {
+          temp.push(`\`${server.currentQueue == i ? "*" : ""}${i+1}.\` [**${server.queue[i].title}**](${server.queue[i].url})\n\t  \`${$.formatSeconds(server.queue[i].info.length_seconds)} | ${server.queue[i].requested.username}\``)
+          totalseconds += +server.queue[i].info.length_seconds
+          if (i != 0 && i % 9 == 0 || i == server.queue.length - 1) {
             embeds.push(embed().setDescription(temp.join("\n")))
             temp = []
           }
         }
-        var footer = [`${_server.queue.length} ${_server.queue.length == 1 ? "song" : "songs"}`, $.formatSeconds(totalseconds), `Volume: ${config.servers[message.guild.id].music.volume}%`, `Repeat: ${config.servers[message.guild.id].music.repeat}`, `Autoplay: ${config.servers[message.guild.id].music.autoplay ? "on" : "off"}`]
-        if (Math.ceil(_server.queue.length / 10) == 1 && embeds[0]) {
+        var footer = [`${server.queue.length} ${server.queue.length == 1 ? "song" : "songs"}`, $.formatSeconds(totalseconds), `Volume: ${config.servers[message.guild.id].music.volume}%`, `Repeat: ${config.servers[message.guild.id].music.repeat}`, `Autoplay: ${config.servers[message.guild.id].music.autoplay ? "on" : "off"}`]
+        if (Math.ceil(server.queue.length / 10) == 1 && embeds[0]) {
           message.channel.send(embeds[0]
             .setAuthor('Player Queue', "https://i.imgur.com/SBMH84I.png")
             .setFooter(footer.join(" | "), `https://cdn.discordapp.com/avatars/${bot.user.id}/${bot.user.avatar}.png?size=16`)
@@ -183,7 +182,7 @@ module.exports = (bot, message) => {
     volume: args => {
       if (Number.isInteger(+args[0])) {
         config.servers[message.guild.id].music.volume = +args
-        if (_server && _server.dispatcher) _server.dispatcher.setVolume(args / 100)
+        if (server && server.dispatcher) server.dispatcher.setVolume(args / 100)
         message.channel.send(embed(`Volume is now set to ${args}%`))
         $.updateconfig()
       } else {
@@ -202,8 +201,8 @@ module.exports = (bot, message) => {
       }
     },
     pause: () => {
-      if (_server && _server.dispatcher && !_server.dispatcher.paused && _server.queue.length > 0) {
-        _server.dispatcher.pause()
+      if (server && server.dispatcher && !server.dispatcher.paused && server.queue.length > 0) {
+        server.dispatcher.pause()
         if (message.channel) {
           message.channel.send(embed(`Player paused ${config.prefix}resume to unpause.`))
         } else {
@@ -213,8 +212,8 @@ module.exports = (bot, message) => {
       }
     },
     resume: () => {
-      if (_server && _server.dispatcher && _server.dispatcher.paused && _server.queue.length > 0) {
-        _server.dispatcher.resume()
+      if (server && server.dispatcher && server.dispatcher.paused && server.queue.length > 0) {
+        server.dispatcher.resume()
         if (message.channel) {
           message.channel.send(embed(`Player resumed ${config.prefix}pause to pause.`))
         } else {
@@ -231,15 +230,15 @@ module.exports = (bot, message) => {
     },
     nowplaying: () => {
       var temp
-      if (_server && _server.queue[_server.currentQueue]) {
-        var requested = _server.queue[_server.currentQueue].requested
-        var info = _server.queue[_server.currentQueue].info
+      if (server && server.queue[server.currentQueue]) {
+        var requested = server.queue[server.currentQueue].requested
+        var info = server.queue[server.currentQueue].info
         var footer = [requested.username, `Volume: ${config.servers[message.guild.id].music.volume}%`, `Repeat: ${config.servers[message.guild.id].music.repeat}`, `Autoplay: ${config.servers[message.guild.id].music.autoplay ? "on" : "off"}`]
         temp = embed()
           .setTitle("Title")
-          .setDescription(_server.queue[_server.currentQueue].title)
+          .setDescription(server.queue[server.currentQueue].title)
           .setThumbnail(info.thumbnail_url)
-          .addField("Time", `${$.formatSeconds(_server.dispatcher.time / 1000)} - ${$.formatSeconds(info.length_seconds)}`)
+          .addField("Time", `${$.formatSeconds(server.dispatcher.time / 1000)} - ${$.formatSeconds(info.length_seconds)}`)
           .addField("Description", (info.description.length > 500 ? info.description.substring(0, 500) + "..." : info.description))
           .setFooter(footer.join(" | "), `https://cdn.discordapp.com/avatars/${requested.id}/${requested.avatar}.png?size=32`)
       } else {
@@ -312,58 +311,57 @@ module.exports = (bot, message) => {
       })
     }
   }
-}
 
-var previnfo;
-async function play(message, connection) {
-  if (!_server.queue[_server.currentQueue]) {
-    _server.currentQueue = 0
-    if (config.servers[message.guild.id].music.repeat == "off") {
-      _server.queue = []
-      if (config.servers[message.guild.id].music.autoplay) {
-        _server.autoplayid = $.addIfNotExists(_server.autoplayid, previnfo.video_id)
-        for (var i = 0; i < previnfo.related_videos.length; i++) {
-          var id = previnfo.related_videos[i].id || previnfo.related_videos[i].video_id
-          if (!$.isInArray(_server.autoplayid, id)) {
-            _server.autoplayid.push(id)
-            previnfo = await ytdl.getInfo(id)
-            break
+  async function play(message, connection) {
+    if (!server.queue[server.currentQueue]) {
+      server.currentQueue = 0
+      if (config.servers[message.guild.id].music.repeat == "off") {
+        server.queue = []
+        if (config.servers[message.guild.id].music.autoplay) {
+          server.autoplayid = $.addIfNotExists(server.autoplayid, server.previnfo.video_id)
+          for (var i = 0; i < server.previnfo.related_videos.length; i++) {
+            var id = server.previnfo.related_videos[i].id || server.previnfo.related_videos[i].video_id
+            if (!$.isInArray(server.autoplayid, id)) {
+              server.autoplayid.push(id)
+              server.previnfo = await ytdl.getInfo(id)
+              break
+            }
           }
+          server.queue.push({
+            id: server.previnfo.video_id,
+            title: server.previnfo.title,
+            url: server.previnfo.video_url,
+            requested: bot.user,
+            info: server.previnfo
+          })
+        } else {
+          message.guild.voiceConnection.disconnect()
+          return
         }
-        _server.queue.push({
-          id: previnfo.video_id,
-          title: previnfo.title,
-          url: previnfo.video_url,
-          requested: _bot.user,
-          info: previnfo
-        })
-      } else {
-        message.guild.voiceConnection.disconnect()
-        return
       }
     }
+    server.dispatcher = connection.playStream(ytdl(server.queue[server.currentQueue].url, process.env.HEROKU ? {
+      quality: "highestaudio",
+      highWaterMark: 1024 * 1024 * 10
+    } : {
+      filter: "audioonly"
+    }))
+    server.dispatcher.setVolume(config.servers[message.guild.id].music.volume / 100)
+    var requested = server.queue[server.currentQueue].requested
+    var footer = [requested.username, $.formatSeconds(server.queue[server.currentQueue].info.length_seconds), `Volume: ${config.servers[message.guild.id].music.volume}%`, `Repeat: ${config.servers[message.guild.id].music.repeat}`, `Autoplay: ${config.servers[message.guild.id].music.autoplay ? "on" : "off"}`]
+    message.channel.send(embed()
+      .setAuthor("Now Playing #" + (server.currentQueue + 1), "https://i.imgur.com/SBMH84I.png")
+      .setFooter(footer.join(" | "), `https://cdn.discordapp.com/avatars/${requested.id}/${requested.avatar}.png?size=16`)
+      .setDescription(`[**${server.queue[server.currentQueue].title}**](${server.queue[server.currentQueue].url})`)
+    )
+    $.log("Now playing " + server.queue[server.currentQueue].title)
+
+    server.previnfo = server.queue[server.currentQueue].info
+
+    server.dispatcher.on("end", mode => {
+      if (mode === "stop") return
+      else if (config.servers[message.guild.id].music.repeat != "single" || mode === "skip") server.currentQueue += 1
+      play(message, connection)
+    })
   }
-  _server.dispatcher = connection.playStream(ytdl(_server.queue[_server.currentQueue].url, process.env.HEROKU ? {
-    quality: "highestaudio",
-    highWaterMark: 1024 * 1024 * 10
-  } : {
-    filter: "audioonly"
-  }))
-  _server.dispatcher.setVolume(config.servers[message.guild.id].music.volume / 100)
-  var requested = _server.queue[_server.currentQueue].requested
-  var footer = [requested.username, $.formatSeconds(_server.queue[_server.currentQueue].info.length_seconds), `Volume: ${config.servers[message.guild.id].music.volume}%`, `Repeat: ${config.servers[message.guild.id].music.repeat}`, `Autoplay: ${config.servers[message.guild.id].music.autoplay ? "on" : "off"}`]
-  message.channel.send(embed()
-    .setAuthor("Now Playing #" + (_server.currentQueue + 1), "https://i.imgur.com/SBMH84I.png")
-    .setFooter(footer.join(" | "), `https://cdn.discordapp.com/avatars/${requested.id}/${requested.avatar}.png?size=16`)
-    .setDescription(`[**${_server.queue[_server.currentQueue].title}**](${_server.queue[_server.currentQueue].url})`)
-  )
-  $.log("Now playing " + _server.queue[_server.currentQueue].title)
-
-  previnfo = _server.queue[_server.currentQueue].info
-
-  _server.dispatcher.on("end", mode => {
-    if (mode === "stop") return
-    else if (config.servers[message.guild.id].music.repeat != "single" || mode === "skip") _server.currentQueue += 1
-    play(message, connection)
-  })
 }

@@ -106,8 +106,12 @@ bot.on('voiceStateUpdate', (oldMember, newMember) => {
 })
 
 bot.on('error', (err) => {
-  console.log(err)
+  $.log(err)
 })
+
+process.on('uncaughtException', (err) => {
+  $.log(err)
+});
 
 function getModule(command) {
   var modulekeys = Object.keys(modules)
