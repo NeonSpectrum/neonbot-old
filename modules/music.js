@@ -19,7 +19,7 @@ var reaction_numbers = ["\u0030\u20E3", "\u0031\u20E3", "\u0032\u20E3", "\u0033\
 
 var _bot, _server
 module.exports = (bot, message) => {
-  if (message !== undefined) {
+  if (typeof message === "object") {
     if (!servers[message.guild.id]) {
       servers[message.guild.id] = {
         queue: [],
@@ -27,19 +27,10 @@ module.exports = (bot, message) => {
         currentQueue: 0,
         currentChannel: ""
       }
-      bot.on('voiceStateUpdate', (oldMember, newMember) => {
-        if (newMember.user.bot) return
-
-        if (oldMember.voiceChannelID != null && newMember.voiceChannelID == null) {
-          if (newMember.guild.channels.get(oldMember.voiceChannelID).members.filter(s => s.user.id != bot.user.id).size == 0) music.pause()
-        } else if (oldMember.voiceChannelID == null && newMember.voiceChannelID != null) {
-          if (newMember.guild.channels.get(newMember.voiceChannelID).members.filter(s => s.user.id != bot.user.id).size > 0) music.resume()
-        }
-      })
     }
     _bot = bot
     _server = servers[message.guild.id]
-    _server.currentChannel = message.channel.id
+    _server.currentChannel = message.channel ? message.channel.id : _server.currentChannel
   }
   return {
     play: async args => {
@@ -116,6 +107,7 @@ module.exports = (bot, message) => {
         var collector = msg.createReactionCollector((reaction, user) => user.id === message.author.id);
         collector.on('collect', async react => {
           react.message.delete()
+          msg = null;
           var i = reaction_numbers.indexOf(react._emoji.name)
           message.channel.send(embed(songSearchList[i - 1].title).setTitle(`You have selected #${i}. `))
             .then(msg => msg.delete(5000))
@@ -132,9 +124,7 @@ module.exports = (bot, message) => {
             })
         })
         setTimeout(() => {
-          try {
-            msg.delete()
-          } catch (err) {}
+          if (msg != null) msg.delete()
         }, 30000)
         for (var i = 1; i <= 5; i++) {
           try {
@@ -217,7 +207,7 @@ module.exports = (bot, message) => {
         if (message.channel) {
           message.channel.send(embed(`Player paused ${config.prefix}resume to unpause.`))
         } else {
-          message.send(embed(`Player has automatically paused because there are no users connected.`))
+          _bot.channels.get(servers[message.guild.id].currentChannel).send(embed(`Player has automatically paused because there are no users connected.`))
         }
         $.log("Player paused!")
       }
@@ -228,7 +218,7 @@ module.exports = (bot, message) => {
         if (message.channel) {
           message.channel.send(embed(`Player resumed ${config.prefix}pause to pause.`))
         } else {
-          message.send(embed(`Player has automatically resumed.`))
+          _bot.channels.get(servers[message.guild.id].currentChannel).send(embed(`Player has automatically resumed.`))
         }
         $.log("Player resumed!")
       }
@@ -285,6 +275,7 @@ module.exports = (bot, message) => {
           var collector = msg.createReactionCollector((reaction, user) => user.id === message.author.id);
           collector.on('collect', async react => {
             react.message.delete()
+            msg = null
             var i = reaction_numbers.indexOf(react._emoji.name)
             request(lyricSearchList[i - 1].url, async (err, res, body) => {
               lyricSearchList = []
@@ -305,9 +296,7 @@ module.exports = (bot, message) => {
             })
           })
           setTimeout(() => {
-            try {
-              msg.delete()
-            } catch (err) {}
+            if (msg != null) msg.delete()
           }, 30000)
           for (var i = 1; i <= 5; i++) {
             try {
@@ -354,7 +343,8 @@ async function play(message, connection) {
     }
   }
   _server.dispatcher = connection.playStream(ytdl(_server.queue[_server.currentQueue].url, process.env.HEROKU ? {
-    quality: "highestaudio"
+    quality: "highestaudio",
+    highWaterMark: 1024 * 1024 * 10
   } : {
     filter: "audioonly"
   }))
