@@ -105,6 +105,10 @@ bot.on('voiceStateUpdate', (oldMember, newMember) => {
   }
 })
 
+bot.on('error', (err) => {
+  console.log(err)
+})
+
 function getModule(command) {
   var modulekeys = Object.keys(modules)
   for (var i = 0; i < modulekeys.length; i++) {

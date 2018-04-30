@@ -224,7 +224,6 @@ module.exports = (bot, message) => {
       }
     },
     autoplay: () => {
-      _server.autoplayid = []
       config.servers[message.guild.id].music.autoplay = !config.servers[message.guild.id].music.autoplay
       message.channel.send(embed("Autoplay is now " + (config.servers[message.guild.id].music.autoplay ? "enabled" : "disabled") + "."))
       $.updateconfig()
