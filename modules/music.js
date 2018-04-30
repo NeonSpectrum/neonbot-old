@@ -253,6 +253,7 @@ module.exports = (bot, message) => {
     lyrics: args => {
       var keyword = args.join(" ")
       request("https://search.azlyrics.com/search.php?q=" + keyword.replace(/\s/g, "+"), async (err, res, body) => {
+        if (err) return $.log(err)
         var $ = cheerio.load(body)
         var count = 1
         var lyricSearchList = []
@@ -277,6 +278,7 @@ module.exports = (bot, message) => {
             msg = null
             var i = reaction_numbers.indexOf(react._emoji.name)
             request(lyricSearchList[i - 1].url, async (err, res, body) => {
+              if (err) return $.log(err)
               lyricSearchList = []
               var $ = cheerio.load(body)
               var string = $("div.col-xs-12.col-lg-8.text-center div").eq(6).text()
