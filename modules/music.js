@@ -357,12 +357,20 @@ module.exports = (bot, message) => {
         }
       }
     }
-    server.dispatcher = connection.playStream(ytdl(server.queue[server.currentQueue].url, process.env.HEROKU ? {
+    const stream = ytdl(server.queue[server.currentQueue].url, process.env.HEROKU ? {
       quality: "highestaudio",
       highWaterMark: 1024 * 1024 * 10
     } : {
       filter: "audioonly"
-    }))
+    })
+    stream.on('data', (chunk) => {
+      console.log('downloaded', chunk.length);
+    });
+
+    stream.on('end', () => {
+      console.log('Finished');
+    });
+    server.dispatcher = connection.playStream(stream)
     server.dispatcher.setVolume(server.config.music.volume / 100)
     var requested = server.queue[server.currentQueue].requested
     var footer = [requested.username, $.formatSeconds(server.queue[server.currentQueue].info.length_seconds), `Volume: ${server.config.music.volume}%`, `Repeat: ${server.config.music.repeat}`, `Autoplay: ${server.config.music.autoplay ? "on" : "off"}`]
