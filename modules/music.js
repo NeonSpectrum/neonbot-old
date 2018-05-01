@@ -369,7 +369,7 @@ module.exports = (bot, message) => {
       filter: "audioonly"
     })
 
-    await $.wait(1000)
+    await $.wait(500)
     server.dispatcher = connection.play(stream, {
       volume: server.config.music.volume / 100,
       highWaterMark: 1,
