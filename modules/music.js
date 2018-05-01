@@ -380,5 +380,7 @@ module.exports = (bot, message) => {
       else if (server.config.music.repeat != "single" || mode === "skip") server.currentQueue += 1
       play(message, connection)
     })
+
+    server.dispatcher.on('error', console.error);
   }
 }
