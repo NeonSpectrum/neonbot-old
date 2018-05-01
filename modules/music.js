@@ -268,17 +268,17 @@ module.exports = (bot, message) => {
       }
     },
     lyrics: args => {
-      if (process.env.HEROKU) return message.reply("Disabled temporarily.")
+      if (false) return message.reply("Disabled temporarily.")
       var keyword = args.join(" ")
-      request("https://search.azlyrics.com/search.php?q=" + keyword.replace(/\s/g, "+"), async (err, res, body) => {
+      request("https://www.musixmatch.com/search/" + keyword.replace(/\s/g, "+"), async (err, res, body) => {
         var $ = cheerio.load(body)
         var count = 1
         var lyricSearchList = []
-        $("td.visitedlyr a").each(function() {
-          if (count <= 5 && $(this).attr("href").indexOf("/lyrics/") > -1) {
+        $("a.title").each(function() {
+          if (count <= 5) {
             lyricSearchList.push({
-              title: $(this).text(),
-              url: $(this).attr("href")
+              title: $(this).find("span").text(),
+              url: "https://www.musixmatch.com" + $(this).attr("href")
             })
             count++
           }
@@ -297,17 +297,17 @@ module.exports = (bot, message) => {
             request(lyricSearchList[i - 1].url, async (err, res, body) => {
               lyricSearchList = []
               var $ = cheerio.load(body)
-              var string = $("div.col-xs-12.col-lg-8.text-center div").eq(6).text()
+              var string = $("p.mxm-lyrics__content").text()
               var strings = []
               do {
                 var part = string.substring(0, 2001)
-                part = part.substring(0, part.lastIndexOf(part.lastIndexOf("\n\n") >= 0 ? "\n\n" : "\n") + 1)
+                part = part.substring(0, part.lastIndexOf("\n\n") >= 0 ? part.lastIndexOf("\n\n") + 1 : undefined)
                 strings.push(part)
                 string = string.replace(part, "")
               } while (string.length > 0)
               for (var i = 0; i < strings.length; i++) {
                 var temp = embed(strings[i])
-                if (i == 0) temp.setTitle($("div.lyricsh h2 b").text())
+                if (i == 0) temp.setTitle($("h1.mxm-track-title__track").text().replace($("h1.mxm-track-title__track small").text(), ""))
                 await message.channel.send(temp)
               }
             })
