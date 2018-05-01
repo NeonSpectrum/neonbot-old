@@ -1,5 +1,4 @@
 var Discord = require("discord.js")
-var config = require("../config.json")
 
 module.exports.noPerms = (message, perm) => {
   var embed = new Discord.RichEmbed()

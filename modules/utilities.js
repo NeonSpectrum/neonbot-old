@@ -1,8 +1,8 @@
 var Discord = require("discord.js")
 var errors = require("../handler/errors.js")
-var config = require('../config.json')
 var help = require("../help.json")
 var $ = require('../handler/functions')
+var config = $.getConfig()
 var embed = $.embed
 var log = $.log
 

@@ -1,12 +1,17 @@
 var fs = require('fs')
 var Discord = require("discord.js")
 var errors = require("../handler/errors.js")
-var config = require('../config.json')
 var $ = require('../handler/functions')
+var config = $.getConfig()
 var embed = $.embed
 var log = $.log
 
 module.exports = (bot, message) => {
+  if (typeof message == "object") {
+    var server = {
+      config: $.getServerConfig(message.guild.id)
+    }
+  }
   return {
     addrole: (args) => {
       if (!message.member.hasPermission("MANAGE_ROLES")) return errors.noPerms(message, "MANAGE_ROLES")
@@ -66,7 +71,7 @@ module.exports = (bot, message) => {
       if (!message.member.hasPermission("MANAGE_MESSAGES")) return errors.noPerms(message, "MANAGE_MESSAGES")
       if (!args[0]) args[0] = 1
 
-      message.channel.bulkDelete(+args[0] + (!config.servers[message.guild.id].deleteoncmd ? 1 : 0))
+      message.channel.bulkDelete(+args[0] + (!server.config.deleteoncmd ? 1 : 0))
     },
     kick: (args) => {
       if (!message.member.hasPermission("KICK_MEMBERS")) return errors.noPerms(message, "KICK_MEMBERS")
@@ -90,13 +95,13 @@ module.exports = (bot, message) => {
         .addField("Reason", kReason)
       )
     },
-    prefix: (args) => {
+    prefix: async (args) => {
       if (!message.member.hasPermission("MANAGE_SERVER")) return message.reply("No no no.")
       if (!args[0]) return message.reply(`Usage: ${config.prefix}prefix <desired prefix here>`)
 
-      config.prefix = args[0]
-
-      $.updateconfig()
+      server.config = await $.updateServer({
+        prefix: args[0]
+      })
 
       message.channel.send(embed(`Set to ${args[0]}`)
         .setTitle("Prefix Set!")
@@ -127,15 +132,16 @@ module.exports = (bot, message) => {
         .setDescription(`<@${rMember.id}>, We removed ${gRole.name} from them.`)
       )
     },
-    setgame: (args) => {
-      if (!$.isOwner(message.member.id)) return
+    setgame: async (args) => {
+      if (!$.isOwner(message.member.id)) return message.reply("You don't have a permission to set game.")
       if (!(args[0].toUpperCase() == "PLAYING" || args[0].toUpperCase() == "LISTENING" || args[0].toUpperCase() == "WATCHING"))
         return message.reply("Invalid Parameters. Not a valid game type. (PLAYING, WATCHING, LISTENING)")
 
-      config.bot.game.type = args[0].toUpperCase()
-      config.bot.game.name = args.slice(1).join(" ")
+      server.config = await $.updateConfig({
+        "game.type": args[0].toUpperCase(),
+        "game.name": args.slice(1).join(" ")
+      })
 
-      $.updateconfig()
       bot.user.setActivity(args.slice(1).join(" "), {
         type: args[0].toUpperCase()
       })
@@ -162,16 +168,18 @@ module.exports = (bot, message) => {
         })
       }
     },
-    deleteoncmd: () => {
-      config.servers[message.guild.id].deleteoncmd = !config.servers[message.guild.id].deleteoncmd
-      message.channel.send(embed("Delete On Cmd is now " + (config.servers[message.guild.id].deleteoncmd ? "enabled" : "disabled") + "."))
-      $.updateconfig()
+    deleteoncmd: async () => {
+      server.config = await $.updateServer({
+        deleteoncmd: !server.config.deleteoncmd
+      })
+      message.channel.send(embed("Delete On Cmd is now " + (server.config.deleteoncmd ? "enabled" : "disabled") + "."))
     },
-    voicetts: () => {
-      config.servers[message.guild.id].voicetts = !config.servers[message.guild.id].voicetts
-      config.servers[message.guild.id].voicettsch = config.servers[message.guild.id].voicetts ? message.channel.id : ""
-      message.channel.send(embed("Voice TTS is now " + (config.servers[message.guild.id].voicetts ? "enabled" : "disabled") + "."))
-      $.updateconfig()
+    voicetts: async () => {
+      server.config = await $.updateServer({
+        voicetts: !server.config.voicetts,
+        voicettsch: !server.config.voicetts ? message.channel.id : ""
+      })
+      message.channel.send(embed("Voice TTS is now " + (server.config.voicetts ? "enabled" : "disabled") + "."))
     }
   }
 }

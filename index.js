@@ -1,53 +1,67 @@
+require('dotenv').config()
 var fs = require('fs')
 var colors = require('colors/safe');
 var Discord = require("discord.js")
 var bot = new Discord.Client()
-
-var config = fs.existsSync('./config.json') ? require('./config.json') : null;
+var MongoClient = require('mongodb').MongoClient;
 
 var {
   Embeds: EmbedsMode
 } = require('discord-paginationembed')
 
-if (!fs.existsSync('./config.json')) {
-  require('./setup.js')(() => {
-    config = require('./config.json')
-    bot.login(config.token)
-  })
-} else if (!(config.token && config.prefix && config.googleapi && config.ownerid)) {
-  require('./setup.js')(() => {
-    config = require('./config.json')
-    bot.login(config.token)
-  })
-} else {
-  bot.login(config.token)
-}
+var db, guildlist, config;
 
-var $, admin_module, util_module, music_module, modules
+var $ = require('./handler/functions');
+var admin_module, util_module, music_module, modules
 
-bot.on('ready', () => {
-  $ = require('./handler/functions')
-  admin_module = require('./modules/administration')
-  util_module = require('./modules/utilities')
-  music_module = require('./modules/music')
+displayAscii()
+MongoClient.connect(`mongodb://${process.env.DB_USER}:${process.env.DB_PASS}@${process.env.DB_HOST}/${process.env.DB_NAME}`, (err, client) => {
+  if (!err) {
+    try {
+      $.log(`MongoDB connection established on ${process.env.DB_HOST}`);
+      db = client.db(process.env.DB_NAME);
+      $.setDB(db)
+      db.collection("settings").find({}).toArray(async (err, items) => {
+        if (items.length == 0) {
+          items = await require('./setup.js')(db)
+        }
+        config = items[0]
+        $.setConfig(config)
+
+        db.collection("servers").find({}).toArray((err, items) => {
+          guildlist = items
+          bot.login(config.token)
+        })
+      })
+    } catch (err) {
+      console.log(err)
+    }
+  } else {
+    throw `${err}\nFailed to establish connection to ${process.env.DB_HOST}`;
+  }
+})
+
+bot.on('ready', async () => {
+  try {
+    admin_module = require('./modules/administration')
+    util_module = require('./modules/utilities')
+    music_module = require('./modules/music')
+  } catch (err) {
+    $.log(err)
+  }
   modules = {
     "admin": Object.keys(admin_module()),
     "music": Object.keys(music_module()),
     "util": Object.keys(util_module())
   }
-  var arr = Array.from(bot.guilds.keys())
-  for (var i = 0; i < arr.length; i++) {
-    if (Object.keys(config.servers).indexOf(arr[i]) == -1) {
-      $.addServerToConfig(arr[i])
-    }
-  }
-  displayAscii()
-  $.log(`Logged in as ${bot.user.tag}`)
+  await $.processDatabase(Array.from(bot.guilds.keys()), guildlist)
+  $.log(`Logged in as ${bot.user.tag} in ${bot.guilds.size} ${bot.guilds.size == 1 ? "guild" : "guilds"}`)
   bot.user.setActivity(config.game.name, {
     type: config.game.type.toUpperCase()
   })
 })
-bot.on('message', message => {
+
+bot.on('message', async message => {
   if (message.author.bot) return
   if (message.channel.type === "dm") {
     if (message.content.trim() == "invite") {
@@ -58,17 +72,17 @@ bot.on('message', message => {
     }
     return
   }
-  if (!message.content.startsWith(config.prefix)) return
+  var server = await $.getServerConfig(message.guild.id)
+  if (!message.content.startsWith(server.prefix)) return
 
   var admin = admin_module(bot, message)
   var music = music_module(bot, message)
   var utils = util_module(bot, message)
-
   var messageArray = message.content.trim().split(/\s/g)
-  var cmd = messageArray[0].substring(config.prefix.length).toLowerCase()
+  var cmd = messageArray[0].substring(server.prefix.length).toLowerCase()
   var args = messageArray.slice(1)
 
-  if (config.servers[message.guild.id].deleteoncmd) {
+  if (config.deleteoncmd) {
     message.delete()
   }
 
@@ -106,11 +120,11 @@ bot.on('voiceStateUpdate', (oldMember, newMember) => {
 })
 
 bot.on('error', (err) => {
-  $.log(err)
+  $.log("Bot Error: " + err)
 })
 
 process.on('uncaughtException', (err) => {
-  $.log(err)
+  $.log("Uncaught Exception: " + (err.stack || err))
 });
 
 function getModule(command) {

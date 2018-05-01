@@ -2,7 +2,7 @@ var fs = require('fs')
 var Discord = require('discord.js')
 var moment = require('moment');
 var colors = require('colors/safe');
-var config = require("../config.json")
+var servers, config, db;
 
 module.exports.log = (message) => {
   console.log(colors.yellow(moment().format('YYYY-MM-DD hh:mm:ss A')) + " | " + colors.cyan(typeof message === 'object' ? JSON.stringify(message) : message));
@@ -15,22 +15,22 @@ module.exports.embed = (message) => {
   return e
 }
 
-module.exports.updateconfig = () => {
-  if (!process.env.HEROKU) {
-    fs.writeFile("./config.json", JSON.stringify(config, null, 2), (err) => {
-      if (err) log(err)
-    })
-  } else {
-    var paste = require("better-pastebin");
-    paste.setDevKey(process.env.DEV_KEY)
-    paste.login(process.env.PB_USER, process.env.PB_PASS, (success, data) => {
-      if (!success) throw data
-      paste.edit(process.env.PB_ID, {
-        contents: JSON.stringify(config, null, 2)
-      });
-    })
-  }
-}
+// module.exports.updateconfig = () => {
+//   if (!process.env.HEROKU) {
+//     fs.writeFile("./config.json", JSON.stringify(config, null, 2), (err) => {
+//       if (err) log(err)
+//     })
+//   } else {
+//     var paste = require("better-pastebin");
+//     paste.setDevKey(process.env.DEV_KEY)
+//     paste.login(process.env.PB_USER, process.env.PB_PASS, (success, data) => {
+//       if (!success) throw data
+//       paste.edit(process.env.PB_ID, {
+//         contents: JSON.stringify(config, null, 2)
+//       });
+//     })
+//   }
+// }
 
 module.exports.isOwner = (id) => {
   return id == config.ownerid
@@ -51,22 +51,113 @@ module.exports.addIfNotExists = (arr, value) => {
   return arr
 }
 
-module.exports.addServerToConfig = (id) => {
-  config.servers[id] = {
-    deleteoncmd: false,
-    voicetts: false,
-    voicettsch: "",
-    music: {
-      volume: 100,
-      autoplay: false,
-      repeat: "off"
+module.exports.processDatabase = (arr, items) => {
+  return new Promise(resolve => {
+    var i = 0
+    var loop = () => {
+      if (i == arr.length) {
+        module.exports.refreshServerConfig(() => {
+          resolve()
+        })
+      } else {
+        var isExists = false
+        for (var j = 0; j < items.length; j++) {
+          if (items[j].server_id == arr[i]) {
+            isExists = true
+            break
+          }
+        }
+        if (!isExists) {
+          db.collection("servers").insert({
+            server_id: arr[i],
+            prefix: config.default_prefix,
+            deleteoncmd: false,
+            voicetts: false,
+            voicettsch: "",
+            music: {
+              volume: 100,
+              autoplay: false,
+              repeat: "off"
+            }
+          }, (err, items) => {
+            i++
+            loop()
+          })
+        } else {
+          i++
+          loop()
+        }
+      }
+    }
+    loop()
+  })
+}
+
+module.exports.setDB = (x) => {
+  db = x
+}
+
+module.exports.getDB = () => {
+  return db
+}
+module.exports.setConfig = (x) => {
+  config = x
+}
+
+module.exports.getConfig = () => {
+  return config
+}
+
+module.exports.refreshConfig = (callback) => {
+  db.collection("settings").find({}).toArray((err, items) => {
+    config = items[0]
+    callback()
+  })
+}
+
+module.exports.getServerConfig = (id) => {
+  for (var i = 0; i < servers.length; i++) {
+    if (servers[i].server_id == id) {
+      return servers[i]
     }
   }
-  module.exports.updateconfig()
+}
+
+module.exports.refreshServerConfig = (callback) => {
+  db.collection("servers").find({}).toArray((err, items) => {
+    servers = items
+    callback()
+  })
+}
+
+module.exports.updateConfig = (options) => {
+  return new Promise(resolve => {
+    db.collection("settings").update({}, {
+      $set: options
+    }, (err, res) => {
+      module.exports.refreshConfig(() => {
+        resolve(module.exports.getConfig())
+      })
+    })
+  })
+}
+
+module.exports.updateServerConfig = (id, options) => {
+  return new Promise(resolve => {
+    db.collection("servers").update({
+      server_id: id
+    }, {
+      $set: options
+    }, (err, res) => {
+      module.exports.refreshServerConfig(() => {
+        resolve(module.exports.getServerConfig(id))
+      })
+    })
+  })
 }
 
 module.exports.formatSeconds = (secs, format) => {
-  var sec_num = parseInt(secs, 10); // don't forget the second param
+  var sec_num = parseInt(secs, 10);
   var hours = Math.floor(sec_num / 3600);
   var minutes = Math.floor((sec_num - (hours * 3600)) / 60);
   var seconds = sec_num - (hours * 3600) - (minutes * 60);
