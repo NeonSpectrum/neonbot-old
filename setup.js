@@ -44,10 +44,10 @@ module.exports = (db, callback) => {
       });
     } else {
       db.collection('settings').insert({
-        token: process.env.token,
-        default_prefix: process.env.prefix,
-        google_api: process.env.googleapi,
-        ownerid: process.env.ownerid,
+        token: process.env.TOKEN,
+        default_prefix: process.env.PREFIX,
+        google_api: process.env.GOOGLEAPI,
+        ownerid: process.env.OWNERID,
         game: {
           type: "",
           name: ""
