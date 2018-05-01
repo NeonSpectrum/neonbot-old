@@ -212,7 +212,7 @@ module.exports = (bot, message) => {
       if (server && server.dispatcher && !server.dispatcher.paused && server.queue.length > 0) {
         server.dispatcher.pause()
         if (message.channel) {
-          message.channel.send(embed(`Player paused ${config.prefix}resume to unpause.`))
+          message.channel.send(embed(`Player paused ${server.config.prefix}resume to unpause.`))
         } else {
           bot.channels.get(servers[message.guild.id].currentChannel).send(embed(`Player has automatically paused because there are no users connected.`))
         }
@@ -223,7 +223,7 @@ module.exports = (bot, message) => {
       if (server && server.dispatcher && server.dispatcher.paused && server.queue.length > 0) {
         server.dispatcher.resume()
         if (message.channel) {
-          message.channel.send(embed(`Player resumed ${config.prefix}pause to pause.`))
+          message.channel.send(embed(`Player resumed ${server.config.prefix}pause to pause.`))
         } else {
           bot.channels.get(servers[message.guild.id].currentChannel).send(embed(`Player has automatically resumed.`))
         }
