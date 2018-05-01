@@ -271,6 +271,7 @@ module.exports = (bot, message) => {
       if (false) return message.reply("Disabled temporarily.")
       var keyword = args.join(" ")
       request("https://www.musixmatch.com/search/" + keyword.replace(/\s/g, "+"), async (err, res, body) => {
+        console.log(err + res + body)
         var $ = cheerio.load(body)
         var count = 1
         var lyricSearchList = []
