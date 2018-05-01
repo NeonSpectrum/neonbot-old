@@ -11,7 +11,6 @@ module.exports = (bot, message) => {
     var server = {
       config: $.getServerConfig(message.guild.id)
     }
-    console.log(server.config)
   }
   return {
     addrole: (args) => {

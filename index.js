@@ -17,25 +17,21 @@ var admin_module, util_module, music_module, modules
 displayAscii()
 MongoClient.connect(`mongodb://${process.env.DB_USER}:${process.env.DB_PASS}@${process.env.DB_HOST}/${process.env.DB_NAME}`, (err, client) => {
   if (!err) {
-    try {
-      $.log(`MongoDB connection established on ${process.env.DB_HOST}`);
-      db = client.db(process.env.DB_NAME);
-      $.setDB(db)
-      db.collection("settings").find({}).toArray(async (err, items) => {
-        if (items.length == 0) {
-          items = await require('./setup.js')(db)
-        }
-        config = items[0]
-        $.setConfig(config)
+    $.log(`MongoDB connection established on ${process.env.DB_HOST}`);
+    db = client.db(process.env.DB_NAME);
+    $.setDB(db)
+    db.collection("settings").find({}).toArray(async (err, items) => {
+      if (items.length == 0) {
+        items = await require('./setup.js')(db)
+      }
+      config = items[0]
+      $.setConfig(config)
 
-        db.collection("servers").find({}).toArray((err, items) => {
-          guildlist = items
-          bot.login(config.token)
-        })
+      db.collection("servers").find({}).toArray((err, items) => {
+        guildlist = items
+        bot.login(config.token)
       })
-    } catch (err) {
-      console.log(err)
-    }
+    })
   } else {
     throw `${err}\nFailed to establish connection to ${process.env.DB_HOST}`;
   }

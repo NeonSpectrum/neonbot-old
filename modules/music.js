@@ -186,18 +186,14 @@ module.exports = (bot, message) => {
       }
     },
     volume: async args => {
-      try {
-        if (Number.isInteger(+args[0])) {
-          server.config = await $.updateServerConfig(message.guild.id, {
-            "music.volume": +args[0]
-          })
-          if (server && server.dispatcher) server.dispatcher.setVolume(args / 100)
-          message.channel.send(embed(`Volume is now set to ${server.config.music.volume}%`))
-        } else {
-          message.channel.send(embed(`Volume is set to ${server.config.music.volume}%`))
-        }
-      } catch (err) {
-        console.log(err)
+      if (Number.isInteger(+args[0])) {
+        server.config = await $.updateServerConfig(message.guild.id, {
+          "music.volume": +args[0]
+        })
+        if (server && server.dispatcher) server.dispatcher.setVolume(args / 100)
+        message.channel.send(embed(`Volume is now set to ${server.config.music.volume}%`))
+      } else {
+        message.channel.send(embed(`Volume is set to ${server.config.music.volume}%`))
       }
     },
     repeat: async args => {
@@ -235,15 +231,11 @@ module.exports = (bot, message) => {
       }
     },
     autoplay: async () => {
-      try {
-        server.config = await $.updateServerConfig(message.guild.id, {
-          "music.autoplay": !server.config.music.autoplay
-        })
-        message.channel.send(embed("Autoplay is now " + (server.config.music.autoplay ? "enabled" : "disabled") + "."))
-        $.log("Autoplay " + (server.config.music.autoplay ? "enabled" : "disabled") + ".")
-      } catch (err) {
-        console.log(err)
-      }
+      server.config = await $.updateServerConfig(message.guild.id, {
+        "music.autoplay": !server.config.music.autoplay
+      })
+      message.channel.send(embed("Autoplay is now " + (server.config.music.autoplay ? "enabled" : "disabled") + "."))
+      $.log("Autoplay " + (server.config.music.autoplay ? "enabled" : "disabled") + ".")
     },
     nowplaying: () => {
       var temp
