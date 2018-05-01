@@ -218,7 +218,7 @@ module.exports = (bot, message) => {
         if (message.channel) {
           message.channel.send(embed(`Player paused ${config.prefix}resume to unpause.`))
         } else {
-          _bot.channels.get(servers[message.guild.id].currentChannel).send(embed(`Player has automatically paused because there are no users connected.`))
+          bot.channels.get(servers[message.guild.id].currentChannel).send(embed(`Player has automatically paused because there are no users connected.`))
         }
         $.log("Player paused!")
       }
@@ -229,7 +229,7 @@ module.exports = (bot, message) => {
         if (message.channel) {
           message.channel.send(embed(`Player resumed ${config.prefix}pause to pause.`))
         } else {
-          _bot.channels.get(servers[message.guild.id].currentChannel).send(embed(`Player has automatically resumed.`))
+          bot.channels.get(servers[message.guild.id].currentChannel).send(embed(`Player has automatically resumed.`))
         }
         $.log("Player resumed!")
       }

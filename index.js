@@ -104,17 +104,21 @@ bot.on('voiceStateUpdate', (oldMember, newMember) => {
 
   if (oldMember.voiceChannelID != null && newMember.voiceChannelID == null) {
     var music = music_module(bot, oldMember)
-    if (config.servers[oldMember.guild.id].voicetts)
-      bot.channels.get(config.servers[oldMember.guild.id].voicettsch).send(newMember.user.username + " has disconnected", {
+    var config = $.getServerConfig(oldMember.guild.id)
+    if (config.voicetts) {
+      bot.channels.get(config.voicettsch).send(newMember.user.username + " has disconnected", {
         tts: true
       }).then(msg => msg.delete(5000))
+    }
     if (newMember.guild.channels.get(oldMember.voiceChannelID).members.filter(s => s.user.id != bot.user.id).size == 0) music.pause()
   } else if (oldMember.voiceChannelID == null && newMember.voiceChannelID != null) {
     var music = music_module(bot, newMember)
-    if (config.servers[newMember.guild.id].voicetts)
-      bot.channels.get(config.servers[newMember.guild.id].voicettsch).send(newMember.user.username + " has connected", {
+    var config = $.getServerConfig(newMember.guild.id)
+    if (config.voicetts) {
+      bot.channels.get(config.voicettsch).send(newMember.user.username + " has connected", {
         tts: true
       }).then(msg => msg.delete(5000))
+    }
     if (newMember.guild.channels.get(newMember.voiceChannelID).members.filter(s => s.user.id != bot.user.id).size > 0) music.resume()
   }
 })
