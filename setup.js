@@ -1,4 +1,6 @@
 var fs = require('fs')
+var $ = require('./handler/functions')
+
 module.exports = (db, callback) => {
   return new Promise(resolve => {
     if (!process.env.HEROKU) {
@@ -53,6 +55,7 @@ module.exports = (db, callback) => {
           name: ""
         }
       }, (err, items) => {
+        if (err) $.log(err)
         resolve(items.ops);
       })
     }
