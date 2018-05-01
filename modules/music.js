@@ -268,69 +268,64 @@ module.exports = (bot, message) => {
       }
     },
     lyrics: args => {
+      if (process.env.HEROKU) return message.reply("Disabled temporarily.")
       var keyword = args.join(" ")
-      try {
-        request("https://search.azlyrics.com/search.php?q=" + keyword.replace(/\s/g, "+"), async (err, res, body) => {
-          if (err) return $.log(err)
-          var $ = cheerio.load(body)
-          var count = 1
-          var lyricSearchList = []
-          $("td.visitedlyr a").each(function() {
-            if (count <= 5 && $(this).attr("href").indexOf("/lyrics/") > -1) {
-              lyricSearchList.push({
-                title: $(this).text(),
-                url: $(this).attr("href")
-              })
-              count++
-            }
-          })
-          if (lyricSearchList.length > 0) {
-            var temp = embed().setAuthor("Choose 1-5 below.", "https://i.imgur.com/SBMH84I.png")
-            for (var i = 0; i < lyricSearchList.length; i++) {
-              temp.addField(`${i + 1}. ${lyricSearchList[i].title}`, lyricSearchList[i].url)
-            }
-            var msg = await message.channel.send(temp)
-            var collector = msg.createReactionCollector((reaction, user) => user.id === message.author.id);
-            collector.on('collect', async react => {
-              react.message.delete()
-              msg = null
-              var i = reaction_numbers.indexOf(react._emoji.name)
-              request(lyricSearchList[i - 1].url, async (err, res, body) => {
-                if (err) return $.log(err)
-                lyricSearchList = []
-                var $ = cheerio.load(body)
-                var string = $("div.col-xs-12.col-lg-8.text-center div").eq(6).text()
-                var strings = []
-                do {
-                  var part = string.substring(0, 2001)
-                  part = part.substring(0, part.lastIndexOf(part.lastIndexOf("\n\n") >= 0 ? "\n\n" : "\n") + 1)
-                  strings.push(part)
-                  string = string.replace(part, "")
-                } while (string.length > 0)
-                for (var i = 0; i < strings.length; i++) {
-                  var temp = embed(strings[i])
-                  if (i == 0) temp.setTitle($("div.lyricsh h2 b").text())
-                  await message.channel.send(temp)
-                }
-              })
+      request("https://search.azlyrics.com/search.php?q=" + keyword.replace(/\s/g, "+"), async (err, res, body) => {
+        var $ = cheerio.load(body)
+        var count = 1
+        var lyricSearchList = []
+        $("td.visitedlyr a").each(function() {
+          if (count <= 5 && $(this).attr("href").indexOf("/lyrics/") > -1) {
+            lyricSearchList.push({
+              title: $(this).text(),
+              url: $(this).attr("href")
             })
-            setTimeout(() => {
-              if (msg != null) msg.delete()
-            }, 30000)
-            for (var i = 1; i <= 5; i++) {
-              try {
-                await msg.react(reaction_numbers[i])
-              } catch (err) {
-                break
-              }
-            }
-          } else {
-            message.channel.send(embed("No lyrics found."))
+            count++
           }
         })
-      } catch (err) {
-        console.log(err)
-      }
+        if (lyricSearchList.length > 0) {
+          var temp = embed().setAuthor("Choose 1-5 below.", "https://i.imgur.com/SBMH84I.png")
+          for (var i = 0; i < lyricSearchList.length; i++) {
+            temp.addField(`${i + 1}. ${lyricSearchList[i].title}`, lyricSearchList[i].url)
+          }
+          var msg = await message.channel.send(temp)
+          var collector = msg.createReactionCollector((reaction, user) => user.id === message.author.id);
+          collector.on('collect', async react => {
+            react.message.delete()
+            msg = null
+            var i = reaction_numbers.indexOf(react._emoji.name)
+            request(lyricSearchList[i - 1].url, async (err, res, body) => {
+              lyricSearchList = []
+              var $ = cheerio.load(body)
+              var string = $("div.col-xs-12.col-lg-8.text-center div").eq(6).text()
+              var strings = []
+              do {
+                var part = string.substring(0, 2001)
+                part = part.substring(0, part.lastIndexOf(part.lastIndexOf("\n\n") >= 0 ? "\n\n" : "\n") + 1)
+                strings.push(part)
+                string = string.replace(part, "")
+              } while (string.length > 0)
+              for (var i = 0; i < strings.length; i++) {
+                var temp = embed(strings[i])
+                if (i == 0) temp.setTitle($("div.lyricsh h2 b").text())
+                await message.channel.send(temp)
+              }
+            })
+          })
+          setTimeout(() => {
+            if (msg != null) msg.delete()
+          }, 30000)
+          for (var i = 1; i <= 5; i++) {
+            try {
+              await msg.react(reaction_numbers[i])
+            } catch (err) {
+              break
+            }
+          }
+        } else {
+          message.channel.send(embed("No lyrics found."))
+        }
+      })
     }
   }
 
