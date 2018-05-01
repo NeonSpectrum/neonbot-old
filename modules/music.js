@@ -115,7 +115,9 @@ module.exports = (bot, message) => {
           msg = null;
           var i = reaction_numbers.indexOf(react._emoji.name)
           message.channel.send(embed(songSearchList[i - 1].title).setTitle(`You have selected #${i}. `))
-            .then(msg => msg.delete(5000))
+            .then(msg => msg.delete({
+              timeout: 5000
+            }))
           var index = server.queue.push({
             title: songSearchList[i - 1].title,
             url: songSearchList[i - 1].url,
@@ -187,10 +189,11 @@ module.exports = (bot, message) => {
     },
     volume: async args => {
       if (Number.isInteger(+args[0])) {
+        if (+args[0] > 200) return message.channel.send(embed("The volume must be less than or equal to 200."))
+        if (server && server.dispatcher) server.dispatcher.setVolume(args / 100)
         server.config = await $.updateServerConfig(message.guild.id, {
           "music.volume": +args[0]
         })
-        if (server && server.dispatcher) server.dispatcher.setVolume(args / 100)
         message.channel.send(embed(`Volume is now set to ${server.config.music.volume}%`))
       } else {
         message.channel.send(embed(`Volume is set to ${server.config.music.volume}%`))
@@ -247,7 +250,7 @@ module.exports = (bot, message) => {
           .setTitle("Title")
           .setDescription(server.queue[server.currentQueue].title)
           .setThumbnail(info.thumbnail_url)
-          .addField("Time", `${$.formatSeconds(server.dispatcher.time / 1000)} - ${$.formatSeconds(info.length_seconds)}`)
+          .addField("Time", `${$.formatSeconds(server.dispatcher.streamTime / 1000)} - ${$.formatSeconds(info.length_seconds)}`)
           .addField("Description", (info.description.length > 500 ? info.description.substring(0, 500) + "..." : info.description))
           .setFooter(footer.join(" | "), `https://cdn.discordapp.com/avatars/${requested.id}/${requested.avatar}.png?size=32`)
       } else {
@@ -260,6 +263,7 @@ module.exports = (bot, message) => {
     },
     restart: () => {
       if (message.guild.voiceConnection) {
+        if (server.dispatcher) server.dispatcher.end("stop")
         message.guild.voiceConnection.disconnect()
         message.member.voiceChannel.join()
           .then((connection) => {
@@ -357,21 +361,21 @@ module.exports = (bot, message) => {
         }
       }
     }
+
     const stream = ytdl(server.queue[server.currentQueue].url, process.env.HEROKU ? {
       quality: "highestaudio",
-      highWaterMark: 1024 * 1024 * 10
+      highWaterMark: 1024 * 1024 * 5
     } : {
       filter: "audioonly"
     })
-    stream.on('data', (chunk) => {
-      console.log('downloaded', chunk.length);
-    });
 
-    stream.on('end', () => {
-      console.log('Finished');
-    });
-    server.dispatcher = connection.playStream(stream)
-    server.dispatcher.setVolume(server.config.music.volume / 100)
+    await $.wait(1000)
+    server.dispatcher = connection.play(stream, {
+      volume: server.config.music.volume / 100,
+      highWaterMark: 1,
+      bitrate: "auto"
+    })
+
     var requested = server.queue[server.currentQueue].requested
     var footer = [requested.username, $.formatSeconds(server.queue[server.currentQueue].info.length_seconds), `Volume: ${server.config.music.volume}%`, `Repeat: ${server.config.music.repeat}`, `Autoplay: ${server.config.music.autoplay ? "on" : "off"}`]
     message.channel.send(embed()
@@ -384,11 +388,10 @@ module.exports = (bot, message) => {
     server.previnfo = server.queue[server.currentQueue].info
 
     server.dispatcher.on("end", mode => {
+      stream.destroy()
       if (mode === "stop") return
       else if (server.config.music.repeat != "single" || mode === "skip") server.currentQueue += 1
       play(message, connection)
     })
-
-    server.dispatcher.on('error', console.error);
   }
 }

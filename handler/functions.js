@@ -9,7 +9,7 @@ module.exports.log = (message) => {
 }
 
 module.exports.embed = (message) => {
-  var e = new Discord.RichEmbed().setColor("#59ABE3")
+  var e = new Discord.MessageEmbed().setColor("#59ABE3")
   if (message !== undefined)
     e.setDescription(message)
   return e
@@ -187,4 +187,10 @@ module.exports.formatSeconds = (secs, format) => {
     seconds = parseInt(hours) * 60 + parseInt(minutes) * 60 + parseInt(seconds)
     return seconds < 10 ? "0" + seconds : seconds
   }
+}
+
+module.exports.wait = async (ms) => {
+  return new Promise(resolve => {
+    setTimeout(resolve, ms)
+  })
 }
