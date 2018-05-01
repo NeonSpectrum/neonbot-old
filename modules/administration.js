@@ -11,6 +11,7 @@ module.exports = (bot, message) => {
     var server = {
       config: $.getServerConfig(message.guild.id)
     }
+    console.log(server.config)
   }
   return {
     addrole: (args) => {
@@ -99,7 +100,7 @@ module.exports = (bot, message) => {
       if (!message.member.hasPermission("MANAGE_SERVER")) return message.reply("No no no.")
       if (!args[0]) return message.reply(`Usage: ${config.prefix}prefix <desired prefix here>`)
 
-      server.config = await $.updateServer({
+      server.config = await $.updateServerConfig(message.guild.id, {
         prefix: args[0]
       })
 
@@ -169,13 +170,13 @@ module.exports = (bot, message) => {
       }
     },
     deleteoncmd: async () => {
-      server.config = await $.updateServer({
+      server.config = await $.updateServerConfig(message.guild.id, {
         deleteoncmd: !server.config.deleteoncmd
       })
       message.channel.send(embed("Delete On Cmd is now " + (server.config.deleteoncmd ? "enabled" : "disabled") + "."))
     },
     voicetts: async () => {
-      server.config = await $.updateServer({
+      server.config = await $.updateServerConfig(message.guild.id, {
         voicetts: !server.config.voicetts,
         voicettsch: !server.config.voicetts ? message.channel.id : ""
       })
