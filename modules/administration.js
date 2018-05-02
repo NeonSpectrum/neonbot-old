@@ -172,7 +172,7 @@ Administration.prototype.setname = async function(args) {
     })
 }
 
-Administration.prototype.setgame = async function(args) {
+Administration.prototype.setgame = function(args) {
   var message = this.message,
     server = this.server
 
@@ -182,7 +182,7 @@ Administration.prototype.setgame = async function(args) {
 
   bot.user.setActivity(args.slice(1).join(" "), {
     type: args[0].toUpperCase()
-  }).then(() => {
+  }).then(async () => {
     server.config = await $.updateConfig({
       "game.type": args[0].toUpperCase(),
       "game.name": args.slice(1).join(" ")
