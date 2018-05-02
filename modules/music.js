@@ -144,7 +144,7 @@ module.exports = (bot, message) => {
     },
     stop: () => {
       if (server && server.queue) server.queue = []
-      if (server.dispatcher) server.dispatcher.destroy()
+      if (server.dispatcher) server.dispatcher.end()
       if (message.guild.voiceConnection) message.guild.voiceConnection.disconnect()
       server.autoplayid = []
       message.channel.send(embed("Player stopped!"))
@@ -375,21 +375,25 @@ module.exports = (bot, message) => {
       bitrate: "auto"
     })
 
-    var requested = server.queue[server.currentQueue].requested
-    var footer = [requested.username, $.formatSeconds(server.queue[server.currentQueue].info.length_seconds), `Volume: ${server.config.music.volume}%`, `Repeat: ${server.config.music.repeat}`, `Autoplay: ${server.config.music.autoplay ? "on" : "off"}`]
-    message.channel.send(embed()
-      .setAuthor("Now Playing #" + (server.currentQueue + 1), "https://i.imgur.com/SBMH84I.png")
-      .setFooter(footer.join(" | "), `https://cdn.discordapp.com/avatars/${requested.id}/${requested.avatar}.png?size=16`)
-      .setDescription(`[**${server.queue[server.currentQueue].title}**](${server.queue[server.currentQueue].url})`)
-    )
-    $.log("Now playing " + server.queue[server.currentQueue].title)
-
     server.previnfo = server.queue[server.currentQueue].info
+
+    server.dispatcher.on("start", () => {
+      var requested = server.queue[server.currentQueue].requested
+      var footer = [requested.username, $.formatSeconds(server.queue[server.currentQueue].info.length_seconds), `Volume: ${server.config.music.volume}%`, `Repeat: ${server.config.music.repeat}`, `Autoplay: ${server.config.music.autoplay ? "on" : "off"}`]
+      message.channel.send(embed()
+        .setAuthor("Now Playing #" + (server.currentQueue + 1), "https://i.imgur.com/SBMH84I.png")
+        .setFooter(footer.join(" | "), `https://cdn.discordapp.com/avatars/${requested.id}/${requested.avatar}.png?size=16`)
+        .setDescription(`[**${server.queue[server.currentQueue].title}**](${server.queue[server.currentQueue].url})`)
+      )
+      $.log("Now playing " + server.queue[server.currentQueue].title)
+    })
 
     server.dispatcher.on("end", () => {
       stream.destroy()
-      if (server.config.music.repeat != "single") server.currentQueue += 1
-      play(message, connection)
+      if (!server.dispatcher._writableState.destroyed) {
+        if (server.config.music.repeat != "single") server.currentQueue += 1
+        play(message, connection)
+      }
     })
   }
 }
