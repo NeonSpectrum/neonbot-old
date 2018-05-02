@@ -1,11 +1,12 @@
-var fs = require('fs')
-var Discord = require('discord.js')
-var moment = require('moment');
-var colors = require('colors/safe');
-var servers, config, db;
+const fs = require('fs')
+const Discord = require('discord.js')
+const moment = require('moment')
+const colors = require('colors/safe')
+
+var servers, config, db
 
 module.exports.log = (message) => {
-  console.log(colors.yellow(moment().format('YYYY-MM-DD hh:mm:ss A')) + " | " + colors.cyan(typeof message === 'object' ? JSON.stringify(message) : message));
+  console.log(colors.yellow(moment().format('YYYY-MM-DD hh:mm:ss A')) + " | " + colors.cyan(message))
 }
 
 module.exports.embed = (message) => {
@@ -14,23 +15,6 @@ module.exports.embed = (message) => {
     e.setDescription(message)
   return e
 }
-
-// module.exports.updateconfig = () => {
-//   if (!process.env.HEROKU) {
-//     fs.writeFile("./config.json", JSON.stringify(config, null, 2), (err) => {
-//       if (err) log(err)
-//     })
-//   } else {
-//     var paste = require("better-pastebin");
-//     paste.setDevKey(process.env.DEV_KEY)
-//     paste.login(process.env.PB_USER, process.env.PB_PASS, (success, data) => {
-//       if (!success) throw data
-//       paste.edit(process.env.PB_ID, {
-//         contents: JSON.stringify(config, null, 2)
-//       });
-//     })
-//   }
-// }
 
 module.exports.isOwner = (id) => {
   return id == config.ownerid
@@ -52,13 +36,12 @@ module.exports.addIfNotExists = (arr, value) => {
 }
 
 module.exports.processDatabase = (arr, items) => {
-  return new Promise(resolve => {
+  return new Promise((resolve, reject) => {
     var i = 0
-    var loop = () => {
+    var loop = async () => {
       if (i == arr.length) {
-        module.exports.refreshServerConfig(() => {
-          resolve()
-        })
+        await module.exports.refreshServerConfig()
+        resolve()
       } else {
         var isExists = false
         for (var j = 0; j < items.length; j++) {
@@ -74,6 +57,7 @@ module.exports.processDatabase = (arr, items) => {
             deleteoncmd: false,
             voicetts: false,
             voicettsch: "",
+            userlog: "",
             music: {
               volume: 100,
               autoplay: false,
@@ -108,10 +92,12 @@ module.exports.getConfig = () => {
   return config
 }
 
-module.exports.refreshConfig = (callback) => {
-  db.collection("settings").find({}).toArray((err, items) => {
-    config = items[0]
-    callback()
+module.exports.refreshConfig = () => {
+  return new Promise((resolve, reject) => {
+    db.collection("settings").find({}).toArray(async (err, items) => {
+      config = items[0]
+      resolve()
+    })
   })
 }
 
@@ -123,53 +109,55 @@ module.exports.getServerConfig = (id) => {
   }
 }
 
-module.exports.refreshServerConfig = (callback) => {
-  db.collection("servers").find({}).toArray((err, items) => {
-    servers = items
-    callback()
+module.exports.refreshServerConfig = () => {
+  return new Promise((resolve, reject) => {
+    db.collection("servers").find({}).toArray(async (err, items) => {
+      servers = items
+      resolve()
+    })
   })
 }
 
 module.exports.updateConfig = (options) => {
-  return new Promise(resolve => {
+  return new Promise((resolve, reject) => {
     db.collection("settings").update({}, {
       $set: options
-    }, (err, res) => {
-      module.exports.refreshConfig(() => {
-        resolve(module.exports.getConfig())
-      })
+    }, async (err, res) => {
+      if (err) module.exports.log("Updating to database: " + err)
+      await module.exports.refreshConfig()
+      resolve(module.exports.getConfig())
     })
   })
 }
 
 module.exports.updateServerConfig = (id, options) => {
-  return new Promise(resolve => {
+  return new Promise((resolve, reject) => {
     db.collection("servers").update({
       server_id: id
     }, {
       $set: options
-    }, (err, res) => {
-      module.exports.refreshServerConfig(() => {
-        resolve(module.exports.getServerConfig(id))
-      })
+    }, async (err, res) => {
+      if (err) module.exports.log("Updating to database: " + err)
+      await module.exports.refreshServerConfig()
+      resolve(module.exports.getServerConfig(id))
     })
   })
 }
 
 module.exports.formatSeconds = (secs, format) => {
-  var sec_num = parseInt(secs, 10);
-  var hours = Math.floor(sec_num / 3600);
-  var minutes = Math.floor((sec_num - (hours * 3600)) / 60);
-  var seconds = sec_num - (hours * 3600) - (minutes * 60);
+  var sec_num = parseInt(secs, 10)
+  var hours = Math.floor(sec_num / 3600)
+  var minutes = Math.floor((sec_num - (hours * 3600)) / 60)
+  var seconds = sec_num - (hours * 3600) - (minutes * 60)
 
   if (hours < 10) {
-    hours = "0" + hours;
+    hours = "0" + hours
   }
   if (minutes < 10) {
-    minutes = "0" + minutes;
+    minutes = "0" + minutes
   }
   if (seconds < 10) {
-    seconds = "0" + seconds;
+    seconds = "0" + seconds
   }
 
   if (format == undefined) {
@@ -179,7 +167,7 @@ module.exports.formatSeconds = (secs, format) => {
     }
     return time
   } else if (format == 3) {
-    return hours + ':' + minutes + ':' + seconds;
+    return hours + ':' + minutes + ':' + seconds
   } else if (format == 2) {
     minutes = parseInt(hours) * 60 + parseInt(minutes)
     return (minutes < 10 ? "0" + minutes : minutes) + ':' + seconds
@@ -190,7 +178,7 @@ module.exports.formatSeconds = (secs, format) => {
 }
 
 module.exports.wait = async (ms) => {
-  return new Promise(resolve => {
+  return new Promise((resolve, reject) => {
     setTimeout(resolve, ms)
   })
 }

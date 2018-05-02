@@ -1,18 +1,17 @@
 require('dotenv').config()
-var fs = require('fs')
-var colors = require('colors/safe');
-var Discord = require("discord.js")
-var bot = new Discord.Client()
-var MongoClient = require('mongodb').MongoClient;
+const fs = require('fs')
+const moment = require('moment')
+const colors = require('colors/safe');
+const Discord = require("discord.js")
+const bot = new Discord.Client()
+const MongoClient = require('mongodb').MongoClient;
+const $ = require('./handler/functions');
 
-var {
+const {
   Embeds: EmbedsMode
 } = require('discord-paginationembed')
 
-var db, guildlist, config;
-
-var $ = require('./handler/functions');
-var admin_module, util_module, music_module, modules
+var Admin, Util, Music, modules, db, guildlist, config
 
 displayAscii()
 MongoClient.connect(`mongodb://${process.env.DB_USER}:${process.env.DB_PASS}@${process.env.DB_HOST}/${process.env.DB_NAME}`, (err, client) => {
@@ -39,16 +38,16 @@ MongoClient.connect(`mongodb://${process.env.DB_USER}:${process.env.DB_PASS}@${p
 
 bot.on('ready', async () => {
   try {
-    admin_module = require('./modules/administration')
-    util_module = require('./modules/utilities')
-    music_module = require('./modules/music')
+    Admin = require('./modules/administration')
+    Util = require('./modules/utilities')
+    Music = require('./modules/music')
+    modules = {
+      "admin": getAllFuncs(new Admin()),
+      "music": getAllFuncs(new Music()),
+      "util": getAllFuncs(new Util())
+    }
   } catch (err) {
     $.log(err)
-  }
-  modules = {
-    "admin": Object.keys(admin_module()),
-    "music": Object.keys(music_module()),
-    "util": Object.keys(util_module())
   }
   await $.processDatabase(Array.from(bot.guilds.keys()), guildlist)
   $.log(`Logged in as ${bot.user.tag} in ${bot.guilds.size} ${bot.guilds.size == 1 ? "guild" : "guilds"}`)
@@ -71,9 +70,6 @@ bot.on('message', async message => {
   var server = await $.getServerConfig(message.guild.id)
   if (!message.content.startsWith(server.prefix)) return
 
-  var admin = admin_module(bot, message)
-  var music = music_module(bot, message)
-  var utils = util_module(bot, message)
   var messageArray = message.content.trim().split(/\s/g)
   var cmd = messageArray[0].substring(server.prefix.length).toLowerCase()
   var args = messageArray.slice(1)
@@ -84,12 +80,15 @@ bot.on('message', async message => {
 
   switch (getModule(cmd)) {
     case 'admin':
+      var admin = new Admin(message)
       admin[cmd](args)
       break
     case 'music':
+      var music = new Music(message)
       music[cmd](args)
       break
     case "util":
+      var utils = new Util(message)
       utils[cmd](args)
       break
   }
@@ -98,24 +97,56 @@ bot.on('message', async message => {
 bot.on('voiceStateUpdate', (oldMember, newMember) => {
   if (newMember.user.bot) return
 
+  var msg
+
   if (oldMember.voiceChannelID != null && newMember.voiceChannelID == null) {
-    var music = music_module(bot, oldMember)
+    var music = new Music(oldMember)
     var config = $.getServerConfig(oldMember.guild.id)
-    if (config.voicetts) {
-      bot.channels.get(config.voicettsch).send(newMember.user.username + " has disconnected", {
-        tts: true
-      }).then(msg => msg.delete(5000))
-    }
-    if (newMember.guild.channels.get(oldMember.voiceChannelID).members.filter(s => s.user.id != bot.user.id).size == 0) music.pause()
+
+    msg = `**${oldMember.user.username}** has disconnected from **${bot.channels.get(oldMember.voiceChannelID).name}**`
+
+    if (newMember.guild.channels.get(oldMember.voiceChannelID).members.filter(s => !s.user.bot).size == 0) music.pause()
   } else if (oldMember.voiceChannelID == null && newMember.voiceChannelID != null) {
-    var music = music_module(bot, newMember)
+    var music = new Music(newMember)
     var config = $.getServerConfig(newMember.guild.id)
+
+    msg = `**${newMember.user.username}** has connected to **${bot.channels.get(newMember.voiceChannelID).name}**.`
+
+    if (newMember.guild.channels.get(newMember.voiceChannelID).members.filter(s => !s.user.bot).size > 0) music.resume()
+  }
+  if (msg) {
     if (config.voicetts) {
-      bot.channels.get(config.voicettsch).send(newMember.user.username + " has connected", {
+      bot.channels.get(config.voicettsch).send(msg, {
         tts: true
-      }).then(msg => msg.delete(5000))
+      }).then(msg => msg.delete({
+        timeout: 5000
+      }))
     }
-    if (newMember.guild.channels.get(newMember.voiceChannelID).members.filter(s => s.user.id != bot.user.id).size > 0) music.resume()
+    if (config.logchannel != "") {
+      bot.channels.get(config.logchannel).send($.embed()
+        .setAuthor("Voice Presence Update", `https://cdn.discordapp.com/avatars/${bot.user.id}/${bot.user.avatar}.png?size=16`)
+        .setDescription(`\`${moment().format('YYYY-MM-DD hh:mm:ss A')}\` ${msg}.`)
+      )
+    }
+  }
+})
+
+bot.on('presenceUpdate', (oldMember, newMember) => {
+  if (newMember.user.bot) return
+  var config = $.getServerConfig(newMember.guild.id)
+  if (config.logchannel == "" || config.logchannel == undefined) return
+
+  var msg
+  if (oldMember.presence.status != newMember.presence.status) {
+    msg = `**${newMember.user.username}** is now **${newMember.presence.status}**.`
+  } else if (oldMember.presence.activity != newMember.presence.activity) {
+    msg = `**${newMember.user.username}** is now **${newMember.presence.setActivity.name == "" ? "nothing" : newMember.presence.setActivity.name.toLowerCase() + " " +newMember.presence.setActivity.name}**.`
+  }
+  if (msg) {
+    bot.channels.get(config.logchannel).send($.embed()
+      .setAuthor("User Presence Update", `https://cdn.discordapp.com/avatars/${bot.user.id}/${bot.user.avatar}.png?size=16`)
+      .setDescription(`\`${moment().format('YYYY-MM-DD hh:mm:ss A')}\` ${msg}`)
+    )
   }
 })
 
@@ -138,6 +169,15 @@ function getModule(command) {
   }
 }
 
+function getAllFuncs(obj) {
+  let methods = new Set();
+  while (obj = Reflect.getPrototypeOf(obj)) {
+    let keys = Reflect.ownKeys(obj)
+    keys.forEach((k) => methods.add(k));
+  }
+  return Array.from(methods);
+}
+
 function displayAscii() {
   console.log(colors.rainbow(`
  _______  _______  _______  ___      __   __  _______  _______  __    _  ______   _______   
@@ -149,3 +189,5 @@ function displayAscii() {
 |_______||_______||_______||_______|  |___|  |___|    |__| |__||_|  |__||______| |__| |__|  
 `))
 }
+
+module.exports = bot

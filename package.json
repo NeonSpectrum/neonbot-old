@@ -1,10 +1,10 @@
 {
-  "name": "neonbot",
-  "version": "1.0.0",
+  "name": "gzelypanda",
+  "version": "2.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "bot.js",
   "scripts": {
-    "start": "node index.js",
+    "start": "node bot.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
@@ -31,6 +31,6 @@
     "ytdl-core": "^0.20.2"
   },
   "nodemonConfig": {
-    "watch": "index.js"
+    "watch": "bot.js"
   }
 }
