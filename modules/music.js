@@ -279,15 +279,19 @@ Music.prototype.resume = function() {
   }
 }
 
-Music.prototype.autoplay = async () => {
+Music.prototype.autoplay = async function() {
   var message = this.message,
     server = this.server
 
-  server.config = await $.updateServerConfig(message.guild.id, {
-    "music.autoplay": !server.config.music.autoplay
-  })
-  message.channel.send($.embed("Autoplay is now " + (server.config.music.autoplay ? "enabled" : "disabled") + "."))
-  $.log("Autoplay " + (server.config.music.autoplay ? "enabled" : "disabled") + ".")
+  try {
+    server.config = await $.updateServerConfig(message.guild.id, {
+      "music.autoplay": !server.config.music.autoplay
+    })
+    message.channel.send($.embed("Autoplay is now " + (server.config.music.autoplay ? "enabled" : "disabled") + "."))
+    $.log("Autoplay " + (server.config.music.autoplay ? "enabled" : "disabled") + ".")
+  } catch (err) {
+    consol.log(err)
+  }
 }
 
 Music.prototype.nowplaying = function() {
@@ -334,74 +338,71 @@ Music.prototype.restart = function() {
 Music.prototype.execute = async function(connection) {
   var message = this.message,
     server = this.server
-  try {
-    if (!server.queue[server.currentQueue]) {
-      server.currentQueue = 0
-      if (server.config.music.repeat == "off") {
-        server.queue = []
-        if (server.config.music.autoplay) {
-          server.autoplayid = $.addIfNotExists(server.autoplayid, server.previnfo.video_id)
-          for (var i = 0; i < server.previnfo.related_videos.length; i++) {
-            var id = server.previnfo.related_videos[i].id || server.previnfo.related_videos[i].video_id
-            if (!$.isInArray(server.autoplayid, id)) {
-              server.autoplayid.push(id)
-              server.previnfo = await ytdl.getInfo(id)
-              break
-            }
+
+  if (!server.queue[server.currentQueue]) {
+    server.currentQueue = 0
+    if (server.config.music.repeat == "off") {
+      server.queue = []
+      if (server.config.music.autoplay) {
+        server.autoplayid = $.addIfNotExists(server.autoplayid, server.previnfo.video_id)
+        for (var i = 0; i < server.previnfo.related_videos.length; i++) {
+          var id = server.previnfo.related_videos[i].id || server.previnfo.related_videos[i].video_id
+          if (!$.isInArray(server.autoplayid, id)) {
+            server.autoplayid.push(id)
+            server.previnfo = await ytdl.getInfo(id)
+            break
           }
-          server.queue.push({
-            id: server.previnfo.video_id,
-            title: server.previnfo.title,
-            url: server.previnfo.video_url,
-            requested: bot.user,
-            info: server.previnfo
-          })
-        } else {
-          return message.guild.voiceConnection.disconnect()
         }
+        server.queue.push({
+          id: server.previnfo.video_id,
+          title: server.previnfo.title,
+          url: server.previnfo.video_url,
+          requested: bot.user,
+          info: server.previnfo
+        })
+      } else {
+        return message.guild.voiceConnection.disconnect()
       }
     }
-
-    const stream = ytdl(server.queue[server.currentQueue].url, process.env.HEROKU ? {
-      quality: "highestaudio",
-      highWaterMark: 1024 * 1024 * 5
-    } : {
-      filter: "audioonly"
-    })
-    await $.wait(500)
-    server.dispatcher = connection.play(stream, {
-      volume: server.config.music.volume / 100,
-      highWaterMark: 1,
-      bitrate: "auto"
-    })
-
-    server.previnfo = server.queue[server.currentQueue].info
-
-    server.dispatcher.on("start", () => {
-      try {
-        var requested = server.queue[server.currentQueue].requested
-        var footer = [requested.username, $.formatSeconds(server.queue[server.currentQueue].info.length_seconds), `Volume: ${server.config.music.volume}%`, `Repeat: ${server.config.music.repeat}`, `Autoplay: ${server.config.music.autoplay ? "on" : "off"}`]
-        message.channel.send($.embed()
-          .setAuthor("Now Playing #" + (server.currentQueue + 1), "https://i.imgur.com/SBMH84I.png")
-          .setFooter(footer.join(" | "), `https://cdn.discordapp.com/avatars/${requested.id}/${requested.avatar}.png?size=16`)
-          .setDescription(`[**${server.queue[server.currentQueue].title}**](${server.queue[server.currentQueue].url})`)
-        )
-        $.log("Now playing " + server.queue[server.currentQueue].title)
-      } catch (err) {
-        console.log(err)
-      }
-    })
-
-    server.dispatcher.on("finish", () => {
-      stream.destroy()
-      if (!server.dispatcher._writableState.destroyed) {
-        if (server.config.music.repeat != "single") server.currentQueue += 1
-        this.execute(connection)
-      }
-    })
-  } catch (err) {
-    console.log(err)
   }
+
+  const stream = ytdl(server.queue[server.currentQueue].url, process.env.HEROKU ? {
+    quality: "highestaudio",
+    highWaterMark: 1024 * 1024 * 5
+  } : {
+    filter: "audioonly"
+  })
+  await $.wait(500)
+  server.dispatcher = connection.play(stream, {
+    volume: server.config.music.volume / 100,
+    highWaterMark: 1,
+    bitrate: "auto"
+  })
+
+  server.previnfo = server.queue[server.currentQueue].info
+
+  server.dispatcher.on("start", () => {
+    try {
+      var requested = server.queue[server.currentQueue].requested
+      var footer = [requested.username, $.formatSeconds(server.queue[server.currentQueue].info.length_seconds), `Volume: ${server.config.music.volume}%`, `Repeat: ${server.config.music.repeat}`, `Autoplay: ${server.config.music.autoplay ? "on" : "off"}`]
+      message.channel.send($.embed()
+        .setAuthor("Now Playing #" + (server.currentQueue + 1), "https://i.imgur.com/SBMH84I.png")
+        .setFooter(footer.join(" | "), `https://cdn.discordapp.com/avatars/${requested.id}/${requested.avatar}.png?size=16`)
+        .setDescription(`[**${server.queue[server.currentQueue].title}**](${server.queue[server.currentQueue].url})`)
+      )
+      $.log("Now playing " + server.queue[server.currentQueue].title)
+    } catch (err) {
+      console.log(err)
+    }
+  })
+
+  server.dispatcher.on("finish", () => {
+    stream.destroy()
+    if (!server.dispatcher._writableState.destroyed) {
+      if (server.config.music.repeat != "single") server.currentQueue += 1
+      this.execute(connection)
+    }
+  })
 }
 
 module.exports = Music

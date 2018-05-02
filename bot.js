@@ -50,7 +50,7 @@ bot.on('ready', async () => {
     $.log(err)
   }
   await $.processDatabase(Array.from(bot.guilds.keys()), guildlist)
-  $.log(`Logged in as ${bot.user.tag} in ${bot.guilds.size} ${bot.guilds.size == 1 ? "guild" : "guilds"}`)
+  $.log(`Logged in as ${bot.user.tag} in ${bot.guilds.size} ${bot.guilds.size == 1 ? "guild" : "guilds"} with ${bot.channels.size} ${bot.channels.size == 1 ? "channel" : "channels"} and ${bot.users.size} ${bot.users.size == 1 ? "user" : "users"}`)
   bot.user.setActivity(config.game.name, {
     type: config.game.type.toUpperCase()
   })
