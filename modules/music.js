@@ -144,14 +144,14 @@ module.exports = (bot, message) => {
     },
     stop: () => {
       if (server && server.queue) server.queue = []
-      if (server.dispatcher) server.dispatcher.end("stop")
+      if (server.dispatcher) server.dispatcher.destroy()
       if (message.guild.voiceConnection) message.guild.voiceConnection.disconnect()
       server.autoplayid = []
       message.channel.send(embed("Player stopped!"))
       $.log("Player stopped!")
     },
     skip: () => {
-      if (server.dispatcher) server.dispatcher.end("skip")
+      if (server.dispatcher) server.dispatcher.end()
       $.log("Player skipped!")
     },
     list: () => {
@@ -356,8 +356,7 @@ module.exports = (bot, message) => {
             info: server.previnfo
           })
         } else {
-          message.guild.voiceConnection.disconnect()
-          return
+          return message.guild.voiceConnection.disconnect()
         }
       }
     }
@@ -387,10 +386,9 @@ module.exports = (bot, message) => {
 
     server.previnfo = server.queue[server.currentQueue].info
 
-    server.dispatcher.on("end", mode => {
+    server.dispatcher.on("end", () => {
       stream.destroy()
-      if (mode === "stop") return
-      else if (server.config.music.repeat != "single" || mode === "skip") server.currentQueue += 1
+      if (server.config.music.repeat != "single") server.currentQueue += 1
       play(message, connection)
     })
   }
