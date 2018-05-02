@@ -81,9 +81,8 @@ Administration.prototype.clear = function(args) {
 
   if (args > 100) return message.reply("Parameters must not be greater than 100.")
   if (!message.member.hasPermission("MANAGE_MESSAGES")) return errors.noPerms(message, "MANAGE_MESSAGES")
-  if (!args[0]) args[0] = 1
 
-  message.channel.bulkDelete(+args[0] + (!server.config.deleteoncmd ? 1 : 0))
+  message.channel.bulkDelete((+args[0] || 1) + (!server.config.deleteoncmd ? 1 : 0))
 }
 
 Administration.prototype.kick = function(args) {
