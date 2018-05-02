@@ -11,7 +11,7 @@ const {
   Embeds: EmbedsMode
 } = require('discord-paginationembed')
 
-var Admin, Util, Music, modules, db, guildlist, config
+var Admin, Util, Music, Search, modules, db, guildlist, config
 
 displayAscii()
 MongoClient.connect(`mongodb://${process.env.DB_USER}:${process.env.DB_PASS}@${process.env.DB_HOST}/${process.env.DB_NAME}`, (err, client) => {
@@ -38,13 +38,15 @@ MongoClient.connect(`mongodb://${process.env.DB_USER}:${process.env.DB_PASS}@${p
 
 bot.on('ready', async () => {
   try {
-    Admin = require('./modules/administration')
-    Util = require('./modules/utilities')
+    Administration = require('./modules/administration')
+    Utilities = require('./modules/utilities')
     Music = require('./modules/music')
+    Searches = require('./modules/searches')
     modules = {
-      "admin": getAllFuncs(new Admin()),
+      "admin": getAllFuncs(new Administration()),
       "music": getAllFuncs(new Music()),
-      "util": getAllFuncs(new Util())
+      "util": getAllFuncs(new Utilities()),
+      "search": getAllFuncs(new Searches())
     }
   } catch (err) {
     $.log(err)
@@ -74,13 +76,13 @@ bot.on('message', async message => {
   var cmd = messageArray[0].substring(server.prefix.length).toLowerCase()
   var args = messageArray.slice(1)
 
-  if (config.deleteoncmd) {
+  if (server.deleteoncmd) {
     message.delete()
   }
 
   switch (getModule(cmd)) {
     case 'admin':
-      var admin = new Admin(message)
+      var admin = new Administration(message)
       admin[cmd](args)
       break
     case 'music':
@@ -88,8 +90,12 @@ bot.on('message', async message => {
       music[cmd](args)
       break
     case "util":
-      var utils = new Util(message)
+      var utils = new Utilities(message)
       utils[cmd](args)
+      break
+    case "search":
+      var search = new Searches(message)
+      search[cmd](args)
       break
   }
 })

@@ -189,7 +189,7 @@ Music.prototype.list = function() {
       var temp = []
       var totalseconds = 0
       for (var i = 0; i < server.queue.length && server.queue[i].info; i++) {
-        temp.push(`\`${server.currentQueue == i ? "*" : ""}${i+1}.\` [**${server.queue[i].title}**](${server.queue[i].url})\n\t  \`${$.formatSeconds(server.queue[i].info.length_seconds)} | ${server.queue[i].requested.username}\``)
+        temp.push(`\`${server.currentQueue == i ? "*" : ""}${i+1}.\` [**${server.queue[i].title}**](${server.queue[i].url})\n\t  \`${$.formatSeconds(server.queue[i].info.length_seconds)} | ${server.queue[i].requested.tag}\``)
         totalseconds += +server.queue[i].info.length_seconds
         if (i != 0 && i % 9 == 0 || i == server.queue.length - 1) {
           embeds.push($.embed().setDescription(temp.join("\n")))
@@ -299,7 +299,7 @@ Music.prototype.nowplaying = function() {
   if (server && server.queue[server.currentQueue]) {
     var requested = server.queue[server.currentQueue].requested
     var info = server.queue[server.currentQueue].info
-    var footer = [requested.username, `Volume: ${server.config.music.volume}%`, `Repeat: ${server.config.music.repeat}`, `Autoplay: ${server.config.music.autoplay ? "on" : "off"}`]
+    var footer = [requested.tag, `Volume: ${server.config.music.volume}%`, `Repeat: ${server.config.music.repeat}`, `Autoplay: ${server.config.music.autoplay ? "on" : "off"}`]
     temp = $.embed()
       .setTitle("Title")
       .setDescription(server.queue[server.currentQueue].title)
@@ -381,7 +381,7 @@ Music.prototype.execute = async function(connection) {
   server.dispatcher.on("start", () => {
     try {
       var requested = server.queue[server.currentQueue].requested
-      var footer = [requested.username, $.formatSeconds(server.queue[server.currentQueue].info.length_seconds), `Volume: ${server.config.music.volume}%`, `Repeat: ${server.config.music.repeat}`, `Autoplay: ${server.config.music.autoplay ? "on" : "off"}`]
+      var footer = [requested.tag, $.formatSeconds(server.queue[server.currentQueue].info.length_seconds), `Volume: ${server.config.music.volume}%`, `Repeat: ${server.config.music.repeat}`, `Autoplay: ${server.config.music.autoplay ? "on" : "off"}`]
       message.channel.send($.embed()
         .setAuthor("Now Playing #" + (server.currentQueue + 1), "https://i.imgur.com/SBMH84I.png")
         .setFooter(footer.join(" | "), `https://cdn.discordapp.com/avatars/${requested.id}/${requested.avatar}.png?size=16`)
