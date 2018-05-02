@@ -140,7 +140,7 @@ bot.on('presenceUpdate', (oldMember, newMember) => {
   if (oldMember.presence.status != newMember.presence.status) {
     msg = `**${newMember.user.username}** is now **${newMember.presence.status}**.`
   } else if (oldMember.presence.activity != newMember.presence.activity) {
-    msg = `**${newMember.user.username}** is now **${newMember.presence.setActivity.name == "" ? "nothing" : newMember.presence.setActivity.name.toLowerCase() + " " +newMember.presence.setActivity.name}**.`
+    msg = `**${newMember.user.username}** is now **${newMember.presence.activity.name == "" ? "nothing" : newMember.presence.activity.name.toLowerCase() + " " +newMember.presence.setActivity.name}**.`
   }
   if (msg) {
     bot.channels.get(config.logchannel).send($.embed()
