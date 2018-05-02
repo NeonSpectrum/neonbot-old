@@ -1,10 +1,7 @@
 const fs = require('fs')
 const moment = require('moment')
 
-const {
-  bot,
-  db
-} = require('../bot')
+const bot = require('../bot')
 const {
   Embeds: EmbedsMode
 } = require('discord-paginationembed')
@@ -187,32 +184,36 @@ Music.prototype.list = function() {
   if (server === undefined || server.queue.length === 0) {
     message.channel.send($.embed("The playlist is empty"))
   } else {
-    var embeds = []
-    var temp = []
-    var totalseconds = 0
-    for (var i = 0; i < server.queue.length && server.queue[i].info; i++) {
-      temp.push(`\`${server.currentQueue == i ? "*" : ""}${i+1}.\` [**${server.queue[i].title}**](${server.queue[i].url})\n\t  \`${$.formatSeconds(server.queue[i].info.length_seconds)} | ${server.queue[i].requested.username}\``)
-      totalseconds += +server.queue[i].info.length_seconds
-      if (i != 0 && i % 9 == 0 || i == server.queue.length - 1) {
-        embeds.push($.embed().setDescription(temp.join("\n")))
-        temp = []
+    try {
+      var embeds = []
+      var temp = []
+      var totalseconds = 0
+      for (var i = 0; i < server.queue.length && server.queue[i].info; i++) {
+        temp.push(`\`${server.currentQueue == i ? "*" : ""}${i+1}.\` [**${server.queue[i].title}**](${server.queue[i].url})\n\t  \`${$.formatSeconds(server.queue[i].info.length_seconds)} | ${server.queue[i].requested.username}\``)
+        totalseconds += +server.queue[i].info.length_seconds
+        if (i != 0 && i % 9 == 0 || i == server.queue.length - 1) {
+          embeds.push($.embed().setDescription(temp.join("\n")))
+          temp = []
+        }
       }
-    }
-    var footer = [`${server.queue.length} ${server.queue.length == 1 ? "song" : "songs"}`, $.formatSeconds(totalseconds), `Volume: ${server.config.music.volume}%`, `Repeat: ${server.config.music.repeat}`, `Autoplay: ${server.config.music.autoplay ? "on" : "off"}`]
-    if (Math.ceil(server.queue.length / 10) == 1 && embeds[0]) {
-      message.channel.send(embeds[0]
-        .setAuthor('Player Queue', "https://i.imgur.com/SBMH84I.png")
-        .setFooter(footer.join(" | "), `https://cdn.discordapp.com/avatars/${bot.user.id}/${bot.user.avatar}.png?size=16`)
-      )
-    } else {
-      new EmbedsMode()
-        .setArray(embeds)
-        .setAuthorizedUser(message.author)
-        .setChannel(message.channel)
-        .setAuthor('Player Queue', "https://i.imgur.com/SBMH84I.png")
-        .setColor("#59ABE3")
-        .setFooter(footer.join(" | "), `https://cdn.discordapp.com/avatars/${bot.user.id}/${bot.user.avatar}.png?size=16`)
-        .build();
+      var footer = [`${server.queue.length} ${server.queue.length == 1 ? "song" : "songs"}`, $.formatSeconds(totalseconds), `Volume: ${server.config.music.volume}%`, `Repeat: ${server.config.music.repeat}`, `Autoplay: ${server.config.music.autoplay ? "on" : "off"}`]
+      if (Math.ceil(server.queue.length / 10) == 1 && embeds[0]) {
+        message.channel.send(embeds[0]
+          .setAuthor('Player Queue', "https://i.imgur.com/SBMH84I.png")
+          .setFooter(footer.join(" | "), `https://cdn.discordapp.com/avatars/${bot.user.id}/${bot.user.avatar}.png?size=16`)
+        )
+      } else {
+        new EmbedsMode()
+          .setArray(embeds)
+          .setAuthorizedUser(message.author)
+          .setChannel(message.channel)
+          .setAuthor('Player Queue', "https://i.imgur.com/SBMH84I.png")
+          .setColor("#59ABE3")
+          .setFooter(footer.join(" | "), `https://cdn.discordapp.com/avatars/${bot.user.id}/${bot.user.avatar}.png?size=16`)
+          .build();
+      }
+    } catch (err) {
+      console.log(err)
     }
   }
 }
