@@ -284,15 +284,11 @@ Music.prototype.autoplay = async function() {
   var message = this.message,
     server = this.server
 
-  try {
-    server.config = await $.updateServerConfig(message.guild.id, {
-      "music.autoplay": !server.config.music.autoplay
-    })
-    message.channel.send($.embed("Autoplay is now " + (server.config.music.autoplay ? "enabled" : "disabled") + "."))
-    $.log("Autoplay " + (server.config.music.autoplay ? "enabled" : "disabled") + ".")
-  } catch (err) {
-    consol.log(err)
-  }
+  server.config = await $.updateServerConfig(message.guild.id, {
+    "music.autoplay": !server.config.music.autoplay
+  })
+  message.channel.send($.embed("Autoplay is now " + (server.config.music.autoplay ? "enabled" : "disabled") + "."))
+  $.log("Autoplay " + (server.config.music.autoplay ? "enabled" : "disabled") + ".")
 }
 
 Music.prototype.nowplaying = function() {
