@@ -30,7 +30,6 @@ Searches.prototype.google = async function(args) {
     q: args.join(" "),
     num: 5
   }, function(err, res) {
-    if (err) console.log(err)
     var items = res.items
     var temp = []
     for (var i = 0; i < items.length; i++) {
@@ -69,4 +68,5 @@ Searches.prototype.ud = function(args) {
     )
   })
 }
+
 module.exports = Searches
