@@ -85,14 +85,14 @@ Games.prototype.pokemon = async function(args) {
       .setFooter(guessString(name))
     )
     var collector = new Discord.MessageCollector(message.channel, () => true)
-    var winner
+    var user
     collector.on("collect", (m) => {
+      user = m.author.tag
+      if (!server.score[user]) {
+        server.score[user] = 0
+      }
       if (m.content.toLowerCase() == name.toLowerCase()) {
-        winner = m.author.tag
-        if (!server.score[winner]) {
-          server.score[winner] = 0
-        }
-        server.score[winner] += 1
+        server.score[user] += 1
         collector.emit("end")
       }
     })
@@ -103,9 +103,9 @@ Games.prototype.pokemon = async function(args) {
         .attachFiles([real])
         .setAuthor("Who's that pokemon?", "https://i.imgur.com/3sQh8aN.png")
         .setImage("attachment://file.jpg")
-        .setDescription(`**${winner ? winner : "No one"}** got the correct answer!\nThe answer is **${name}**`)
+        .setDescription(`**${user ? user : "No one"}** got the correct answer!\nThe answer is **${name}**`)
       )
-      if (!winner) server.pokemonTimeout += 1
+      if (!user) server.pokemonTimeout += 1
       self.pokemon("loop")
     })
     setTimeout(() => {
@@ -117,6 +117,7 @@ Games.prototype.pokemon = async function(args) {
     var sorted = Object.keys(server.score).sort(function(a, b) {
       return server.score[a] - server.score[b]
     })
+    sorted.reverse()
     var temp = []
     for (var i = 0; i < sorted.length; i++) {
       temp.push(`\`${i+1}.\` **${sorted[i]}**: **${server.score[sorted[i]]} ${server.score[sorted[i]] == 1 ? "point" : "points"}**`)
