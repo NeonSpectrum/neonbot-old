@@ -385,7 +385,7 @@ Music.prototype.execute = async function(connection) {
     var requested = server.queue[server.currentQueue].requested
     var footer = [requested.tag, $.formatSeconds(server.queue[server.currentQueue].info.length_seconds), `Volume: ${server.config.music.volume}%`, `Repeat: ${server.config.music.repeat}`, `Autoplay: ${server.config.music.autoplay ? "on" : "off"}`]
 
-    if (server.lastFinishMessage) server.lastFinishedMessage.delete()
+    if (server.lastFinishedMessage) server.lastFinishedMessage.delete()
     server.lastFinishedMessage = await message.channel.send($.embed()
       .setAuthor("Finished Playing #" + (server.currentQueue + 1), "https://i.imgur.com/SBMH84I.png")
       .setFooter(footer.join(" | "), `https://cdn.discordapp.com/avatars/${requested.id}/${requested.avatar}.png?size=16`)
