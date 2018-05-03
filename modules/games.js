@@ -85,14 +85,14 @@ Games.prototype.pokemon = async function(args) {
       .setFooter(guessString(name))
     )
     var collector = new Discord.MessageCollector(message.channel, () => true)
-    var user
+    var winner
     collector.on("collect", (m) => {
-      user = m.author.tag
-      if (!server.score[user]) {
-        server.score[user] = 0
+      if (!server.score[m.author.tag]) {
+        server.score[m.author.tag] = 0
       }
       if (m.content.toLowerCase() == name.toLowerCase()) {
-        server.score[user] += 1
+        winner = m.author.tag
+        server.score[winner] += 1
         collector.emit("end")
       }
     })
@@ -103,9 +103,9 @@ Games.prototype.pokemon = async function(args) {
         .attachFiles([real])
         .setAuthor("Who's that pokemon?", "https://i.imgur.com/3sQh8aN.png")
         .setImage("attachment://file.jpg")
-        .setDescription(`**${user ? user : "No one"}** got the correct answer!\nThe answer is **${name}**`)
+        .setDescription(`**${winner ? winner : "No one"}** got the correct answer!\nThe answer is **${name}**`)
       )
-      if (!user) server.pokemonTimeout += 1
+      if (!winner) server.pokemonTimeout += 1
       self.pokemon("loop")
     })
     setTimeout(() => {
