@@ -159,7 +159,7 @@ Music.prototype.stop = function() {
       server.autoplayid = []
       message.channel.send($.embed("Player stopped!"))
       $.log("Player stopped!")
-      $.await(1000)
+      $.wait(1000)
       if (server && server.queue) server.queue = []
     }
   } catch (err) {
