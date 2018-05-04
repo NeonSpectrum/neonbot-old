@@ -150,20 +150,14 @@ Music.prototype.play = async function(args) {
 }
 
 Music.prototype.stop = function() {
-  try {
-    var message = this.message,
-      server = this.server
-    if (server.dispatcher) {
-      server.dispatcher.end()
-      if (message.guild.voiceConnection) message.guild.voiceConnection.disconnect()
-      server.autoplayid = []
-      message.channel.send($.embed("Player stopped!"))
-      $.log("Player stopped!")
-      $.wait(1000)
-      if (server && server.queue) server.queue = []
-    }
-  } catch (err) {
-    console.log(err)
+  var message = this.message,
+    server = this.server
+  if (server.dispatcher) {
+    server.dispatcher.end()
+    if (message.guild.voiceConnection) message.guild.voiceConnection.disconnect()
+    server.autoplayid = []
+    message.channel.send($.embed("Player stopped!"))
+    $.log("Player stopped!")
   }
 }
 
@@ -387,24 +381,22 @@ Music.prototype.execute = async function(connection) {
   })
 
   server.dispatcher.on("finish", async () => {
-    try {
-      var requested = server.queue[server.currentQueue].requested
-      var footer = [requested.tag, $.formatSeconds(server.queue[server.currentQueue].info.length_seconds), `Volume: ${server.config.music.volume}%`, `Repeat: ${server.config.music.repeat}`, `Autoplay: ${server.config.music.autoplay ? "on" : "off"}`]
+    var requested = server.queue[server.currentQueue].requested
+    var footer = [requested.tag, $.formatSeconds(server.queue[server.currentQueue].info.length_seconds), `Volume: ${server.config.music.volume}%`, `Repeat: ${server.config.music.repeat}`, `Autoplay: ${server.config.music.autoplay ? "on" : "off"}`]
 
-      if (server.lastFinishedMessage) server.lastFinishedMessage.delete()
-      server.lastFinishedMessage = await message.channel.send($.embed()
-        .setAuthor("Finished Playing #" + (server.currentQueue + 1), "https://i.imgur.com/SBMH84I.png")
-        .setFooter(footer.join(" | "), `https://cdn.discordapp.com/avatars/${requested.id}/${requested.avatar}.png?size=16`)
-        .setDescription(`[**${server.queue[server.currentQueue].title}**](${server.queue[server.currentQueue].url})`)
-      )
+    if (server.lastFinishedMessage) server.lastFinishedMessage.delete()
+    server.lastFinishedMessage = await message.channel.send($.embed()
+      .setAuthor("Finished Playing #" + (server.currentQueue + 1), "https://i.imgur.com/SBMH84I.png")
+      .setFooter(footer.join(" | "), `https://cdn.discordapp.com/avatars/${requested.id}/${requested.avatar}.png?size=16`)
+      .setDescription(`[**${server.queue[server.currentQueue].title}**](${server.queue[server.currentQueue].url})`)
+    )
 
-      stream.destroy()
-      if (!server.dispatcher._writableState.destroyed) {
-        if (server.config.music.repeat != "single") server.currentQueue += 1
-        this.execute(connection)
-      }
-    } catch (err) {
-      console.log(err)
+    stream.destroy()
+    if (!server.dispatcher._writableState.destroyed) {
+      if (server.config.music.repeat != "single") server.currentQueue += 1
+      this.execute(connection)
+    } else {
+      server.queue = []
     }
   })
 }
