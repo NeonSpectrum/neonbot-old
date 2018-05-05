@@ -19,6 +19,7 @@ function loop() {
   });
 
   child.on('close', function(code) {
+    console.log(code)
     if (code == 1641) {
       env.message = "updated"
     } else if (code == 1) {
