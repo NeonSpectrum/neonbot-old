@@ -53,7 +53,6 @@ bot.on('ready', async () => {
   } catch (err) {
     $.warn(err)
   }
-
   $.log(`Loaded Modules in ${((Date.now() - modulesTime) / 1000).toFixed(2)} secs.\n`)
 
   $.log(`Logged in as ${bot.user.tag}\n`)

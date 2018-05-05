@@ -195,7 +195,7 @@ Music.prototype.list = function() {
     if (Math.ceil(server.queue.length / 10) == 1 && embeds[0]) {
       message.channel.send(embeds[0]
         .setAuthor('Player Queue', "https://i.imgur.com/SBMH84I.png")
-        .setFooter(footer.join(" | "), `https://cdn.discordapp.com/avatars/${bot.user.id}/${bot.user.avatar}.png?size=16`)
+        .setFooter(footer.join(" | "), bot.user.displayAvatarURL())
       )
     } else {
       new EmbedsMode()
@@ -204,7 +204,7 @@ Music.prototype.list = function() {
         .setChannel(message.channel)
         .setAuthor('Player Queue', "https://i.imgur.com/SBMH84I.png")
         .setColor("#59ABE3")
-        .setFooter(footer.join(" | "), `https://cdn.discordapp.com/avatars/${bot.user.id}/${bot.user.avatar}.png?size=16`)
+        .setFooter(footer.join(" | "), bot.user.displayAvatarURL())
         .build();
     }
   }
@@ -376,7 +376,7 @@ Music.prototype.execute = async function(connection) {
     if (server.lastPlayingMessage) server.lastPlayingMessage.delete()
     server.lastPlayingMessage = await message.channel.send($.embed()
       .setAuthor("Now Playing #" + (server.currentQueue + 1), "https://i.imgur.com/SBMH84I.png")
-      .setFooter(footer.join(" | "), `https://cdn.discordapp.com/avatars/${requested.id}/${requested.avatar}.png?size=16`)
+      .setFooter(footer.join(" | "), requested.displayAvatarURL())
       .setDescription(`[**${server.queue[server.currentQueue].title}**](${server.queue[server.currentQueue].url})`)
     )
     this.log("Now playing " + server.queue[server.currentQueue].title)
@@ -389,7 +389,7 @@ Music.prototype.execute = async function(connection) {
     if (server.lastFinishedMessage) server.lastFinishedMessage.delete()
     server.lastFinishedMessage = await message.channel.send($.embed()
       .setAuthor("Finished Playing #" + (server.currentQueue + 1), "https://i.imgur.com/SBMH84I.png")
-      .setFooter(footer.join(" | "), `https://cdn.discordapp.com/avatars/${requested.id}/${requested.avatar}.png?size=16`)
+      .setFooter(footer.join(" | "), requested.displayAvatarURL())
       .setDescription(`[**${server.queue[server.currentQueue].title}**](${server.queue[server.currentQueue].url})`)
     )
 

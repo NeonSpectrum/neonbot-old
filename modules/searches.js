@@ -42,7 +42,7 @@ Searches.prototype.google = async function(args) {
     message.channel.send($.embed()
       .setAuthor(`Google Search for ${args.join(" ")}`, "http://i.imgur.com/G46fm8J.png")
       .setDescription(temp.join("\n"))
-      .setFooter(`Searched by ${message.author.tag}`, `https://cdn.discordapp.com/avatars/${message.author.id}/${message.author.avatar}.png?size=16`)
+      .setFooter(`Searched by ${message.author.tag}`, message.author.displayAvatarURL())
     )
   });
 }
@@ -67,7 +67,7 @@ Searches.prototype.ud = function(args) {
       .setDescription(`[**${entries[0].word}**](${entries[0].permalink})`)
       .addField("**Definition:**", entries[0].definition)
       .addField("**Example:**", entries[0].example)
-      .setFooter(`Searched by ${message.author.tag}`, `https://cdn.discordapp.com/avatars/${message.author.id}/${message.author.avatar}.png?size=16`)
+      .setFooter(`Searched by ${message.author.tag}`, message.author.displayAvatarURL())
     )
   })
 }

@@ -54,7 +54,7 @@ Utilities.prototype.stats = function() {
   var message = this.message
 
   message.channel.send($.embed()
-    .setThumbnail(bot.user.displayAvatarURL)
+    .setThumbnail(bot.user.displayAvatarURL())
     .addField("Bot Name", bot.user.tag)
     .addField("Created On", bot.user.createdAt)
     .addField("Created By", bot.users.get("260397381856526337").tag)
@@ -76,10 +76,11 @@ Utilities.prototype.serverinfo = function() {
   var message = this.message
 
   message.channel.send($.embed()
-    .setThumbnail(message.guild.iconURL)
+    .setThumbnail(message.guild.iconURL())
     .addField("Server Name", message.guild.name)
     .addField("Created On", message.guild.createdAt)
     .addField("You Joined", message.member.joinedAt)
+    .addField("Total Channels", message.guild.channels.filter(s => s.type != "category").size)
     .addField("Total Members", message.guild.memberCount)
   )
 }

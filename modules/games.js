@@ -130,7 +130,7 @@ Games.prototype.pokemon = async function(args) {
       .setAuthor("Who's that pokemon?", "https://i.imgur.com/3sQh8aN.png")
       .setTitle("Scoreboard")
       .setDescription(temp.join("\n"))
-    if (final) temp.setFooter("Thank you for playing!", `https://cdn.discordapp.com/avatars/${bot.user.id}/${bot.user.avatar}.png?size=16`)
+    if (final) temp.setFooter("Thank you for playing!", message.author.displayAvatarURL())
 
     message.channel.send(temp)
   }

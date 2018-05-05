@@ -318,13 +318,13 @@ Administration.prototype.update = function() {
   if (!$.isOwner(message.member.id)) return message.reply("You don't have a permission to update the bot.")
   exec("git remote show origin", async (err, stdout, stderr) => {
     if (stdout.indexOf("(fast-forwardable)") > -1 || stdout.indexOf("(up to date)") > -1) {
-      message.channel.send($.embed().setFooter(bot.user.tag, `https://cdn.discordapp.com/avatars/${bot.user.id}/${bot.user.avatar}.png?size=16`)
+      message.channel.send($.embed().setFooter(bot.user.tag, bot.user.displayAvatarURL())
         .setAuthor("GitHub Update", "https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png")
         .setDescription("Already up to date.")
       )
     } else {
       var msg = await message.channel.send($.embed()
-        .setFooter(bot.user.tag, `https://cdn.discordapp.com/avatars/${bot.user.id}/${bot.user.avatar}.png?size=16`)
+        .setFooter(bot.user.tag, bot.user.displayAvatarURL())
         .setAuthor("GitHub Update", "https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png")
         .setDescription("There is an update available. Update? (yes | no)")
       )
@@ -335,13 +335,13 @@ Administration.prototype.update = function() {
           msg.delete()
           msg = null
           var ghmsg = await message.channel.send($.embed()
-            .setFooter(bot.user.tag, `https://cdn.discordapp.com/avatars/${bot.user.id}/${bot.user.avatar}.png?size=16`)
+            .setFooter(bot.user.tag, bot.user.displayAvatarURL())
             .setAuthor("GitHub Update", "https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png")
             .setDescription("Updating...")
           )
           exec(`${process.env.GIT_PATH}git pull origin master`, async (err, stdout, stderr) => {
             await ghmsg.edit($.embed()
-              .setFooter(bot.user.tag, `https://cdn.discordapp.com/avatars/${bot.user.id}/${bot.user.avatar}.png?size=16`)
+              .setFooter(bot.user.tag, bot.user.displayAvatarURL())
               .setAuthor("GitHub Update", "https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png")
               .setDescription("Now restarting the bot to apply changes.")
             )
