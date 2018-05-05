@@ -292,7 +292,6 @@ Administration.prototype.logchannel = async function(args) {
 }
 
 Administration.prototype.debug = async function(args) {
-  throw "hi"
   var message = this.message,
     server = this.server
 
