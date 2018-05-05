@@ -21,7 +21,7 @@ function loop() {
 
   child.on('close', function(code) {
     console.log(code)
-    if (code == 1641) {
+    if (code == 2) {
       env.message = "updated"
     } else if (code == 1) {
       env.message = "crashed"
