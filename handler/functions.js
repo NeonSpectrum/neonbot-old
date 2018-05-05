@@ -25,7 +25,7 @@ module.exports.warn = (message, send = true) => {
     var guilds = Array.from(bot.guilds.keys())
     for (var i = 0; i < guilds.length; i++) {
       var conf = module.exports.getServerConfig(guilds[i])
-      if (conf.channel.debug != "") {
+      if (conf.channel.debug) {
         bot.channels.get(conf.channel.debug).send(module.exports.embed()
           .setAuthor("Error", "https://i.imgur.com/1vOMHlr.png")
           .setDescription(message)
