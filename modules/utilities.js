@@ -60,7 +60,7 @@ Utilities.prototype.stats = function() {
     .addField("Created By", bot.users.get("260397381856526337").tag)
     .addField("Server Count", Array.from(bot.guilds.keys()).length)
     .addField("Ram Usage", `Approximately ${Math.round(process.memoryUsage().heapUsed / 1024 / 1024 * 100) / 100} MB`)
-    .addField("Uptime", $.formatSeconds(Math.floor(bot.uptime)))
+    .addField("Uptime", $.formatSeconds(Math.floor(bot.uptime / 1000)))
   )
 }
 
