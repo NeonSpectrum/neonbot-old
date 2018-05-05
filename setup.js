@@ -12,7 +12,9 @@ module.exports = (db, callback) => {
         googleapi: "",
         ownerid: ""
       }
-
+      readline.emitKeypressEvents(process.stdin);
+      process.stdin.setRawMode(true);
+      process.stdin.on('keypress', console.log);
       const rl = readline.createInterface({
         input: process.stdin,
         output: process.stdout,
@@ -21,13 +23,10 @@ module.exports = (db, callback) => {
       rl.on('line', (input) => {});
       rl.question('Enter bot token: ', (answer) => {
         config.token = answer.trim()
-        rl.close();
         rl.question('Enter bot prefix: ', (answer) => {
           config.prefix = answer.trim()
-          rl.close();
           rl.question('Enter bot google api: ', (answer) => {
             config.googleapi = answer.trim()
-            rl.close();
             rl.question('Enter bot owner: ', (answer) => {
               config.ownerid = answer.trim()
               rl.close();
