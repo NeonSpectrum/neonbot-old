@@ -21,12 +21,16 @@ module.exports = (db, callback) => {
       rl.on('line', (input) => {});
       rl.question('Enter bot token: ', (answer) => {
         config.token = answer.trim()
+        outside()
         rl.question('Enter bot prefix: ', (answer) => {
           config.prefix = answer.trim()
+          outside()
           rl.question('Enter bot google api: ', (answer) => {
             config.googleapi = answer.trim()
+            outside()
             rl.question('Enter bot owner: ', (answer) => {
               config.ownerid = answer.trim()
+              outside()
               rl.close();
               db.collection('settings').insert({
                 token: config.token,
@@ -60,4 +64,8 @@ module.exports = (db, callback) => {
       })
     }
   })
+}
+
+function outside() {
+  console.log()
 }
