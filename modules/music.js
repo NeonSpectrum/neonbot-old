@@ -37,9 +37,9 @@ class Music {
       }
       this.server = servers[message.guild.id]
       this.message = message
-    }
-    this.log = (content) => {
-      $.log(content, message)
+      this.log = (content) => {
+        $.log(content, message)
+      }
     }
   }
 }
@@ -242,7 +242,7 @@ Music.prototype.repeat = async function(args) {
   }
 }
 
-Music.prototype.pause = function() {
+Music.prototype.pause = async function() {
   var message = this.message,
     server = this.server
 
@@ -250,14 +250,15 @@ Music.prototype.pause = function() {
     server.dispatcher.pause()
     if (message.channel) {
       message.channel.send($.embed(`Player paused ${server.config.prefix}resume to unpause.`))
+      this.log("Player paused!")
     } else {
-      bot.channels.get(servers[message.guild.id].currentChannel).send($.embed(`Player has automatically paused because there are no users connected.`))
+      var msg = await bot.channels.get(servers[message.guild.id].currentChannel).send($.embed(`Player has automatically paused because there are no users connected.`))
+      $.log("Player has automatically paused because there are no users connected.", msg)
     }
-    this.log("Player paused!")
   }
 }
 
-Music.prototype.resume = function() {
+Music.prototype.resume = async function() {
   var message = this.message,
     server = this.server
 
@@ -265,10 +266,11 @@ Music.prototype.resume = function() {
     server.dispatcher.resume()
     if (message.channel) {
       message.channel.send($.embed(`Player resumed ${server.config.prefix}pause to pause.`))
+      this.log("Player resumed!")
     } else {
-      bot.channels.get(servers[message.guild.id].currentChannel).send($.embed(`Player has automatically resumed.`))
+      var msg = await bot.channels.get(servers[message.guild.id].currentChannel).send($.embed(`Player has automatically resumed.`))
+      $.log("Player has automatically resumed.", msg)
     }
-    this.log("Player resumed!")
   }
 }
 
@@ -315,7 +317,7 @@ Music.prototype.restartplayer = function() {
     server = this.server
 
   if (message.guild.voiceConnection) {
-    if (server.dispatcher) server.dispatcher.end("stop")
+    if (server.dispatcher) server.dispatcher.end()
     message.guild.voiceConnection.disconnect()
     message.member.voiceChannel.join()
       .then((connection) => {

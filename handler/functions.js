@@ -5,7 +5,9 @@ const colors = require('colors/safe')
 
 var servers, config, db, currentGuild
 
-module.exports.log = (content, message) => {
+var $ = {}
+
+$.log = (content, message) => {
   const guild = currentGuild
   if (message) {
     console.log(`${colors.yellow("------ "+moment().format('YYYY-MM-DD hh:mm:ss A')+" ------")}
@@ -18,15 +20,15 @@ module.exports.log = (content, message) => {
   }
 }
 
-module.exports.warn = (message, send = true) => {
+$.warn = (message, send = true) => {
   const bot = require('../bot')
   console.log(`${colors.yellow(moment().format('YYYY-MM-DD hh:mm:ss A'))}${typeof message == "object" ? ` | ${message.channel.guild.name}` : ""} | ${colors.red(message)}`)
   if (send) {
     var guilds = Array.from(bot.guilds.keys())
     for (var i = 0; i < guilds.length; i++) {
-      var conf = module.exports.getServerConfig(guilds[i])
+      var conf = $.getServerConfig(guilds[i])
       if (conf.channel.debug) {
-        bot.channels.get(conf.channel.debug).send(module.exports.embed()
+        bot.channels.get(conf.channel.debug).send($.embed()
           .setAuthor("Error", "https://i.imgur.com/1vOMHlr.png")
           .setDescription(message)
           .setFooter(bot.user.tag, `https://cdn.discordapp.com/avatars/${bot.user.id}/${bot.user.avatar}.png?size=16`)
@@ -36,25 +38,25 @@ module.exports.warn = (message, send = true) => {
   }
 }
 
-module.exports.embed = (message) => {
+$.embed = (message) => {
   var e = new Discord.MessageEmbed().setColor("#59ABE3")
   if (message !== undefined)
     e.setDescription(message)
   return e
 }
 
-module.exports.isOwner = (id) => {
+$.isOwner = (id) => {
   return id == config.ownerid
 }
 
-module.exports.isInArray = (arr, value) => {
+$.isInArray = (arr, value) => {
   for (var i = 0; i < arr.length; i++) {
     if (arr[i] == value) return true
   }
   return false
 }
 
-module.exports.addIfNotExists = (arr, value) => {
+$.addIfNotExists = (arr, value) => {
   for (var i = 0; i < arr.length; i++) {
     if (arr[i] == value) return arr
   }
@@ -62,7 +64,7 @@ module.exports.addIfNotExists = (arr, value) => {
   return arr
 }
 
-module.exports.processDatabase = (arr, items) => {
+$.processDatabase = (arr, items) => {
   return new Promise((resolve, reject) => {
     var i = 0
     var loop = async () => {
@@ -98,7 +100,7 @@ module.exports.processDatabase = (arr, items) => {
           loop()
         }
       } else {
-        await module.exports.refreshServerConfig()
+        await $.refreshServerConfig()
         resolve()
       }
     }
@@ -106,22 +108,22 @@ module.exports.processDatabase = (arr, items) => {
   })
 }
 
-module.exports.setDB = (x) => {
+$.setDB = (x) => {
   db = x
 }
 
-module.exports.getDB = () => {
+$.getDB = () => {
   return db
 }
-module.exports.setConfig = (x) => {
+$.setConfig = (x) => {
   config = x
 }
 
-module.exports.getConfig = () => {
+$.getConfig = () => {
   return config
 }
 
-module.exports.refreshConfig = () => {
+$.refreshConfig = () => {
   return new Promise((resolve, reject) => {
     db.collection("settings").find({}).toArray(async (err, items) => {
       config = items[0]
@@ -130,7 +132,7 @@ module.exports.refreshConfig = () => {
   })
 }
 
-module.exports.getServerConfig = (id) => {
+$.getServerConfig = (id) => {
   for (var i = 0; i < servers.length; i++) {
     if (servers[i].server_id == id) {
       return servers[i]
@@ -138,7 +140,7 @@ module.exports.getServerConfig = (id) => {
   }
 }
 
-module.exports.refreshServerConfig = () => {
+$.refreshServerConfig = () => {
   return new Promise((resolve, reject) => {
     db.collection("servers").find({}).toArray(async (err, items) => {
       servers = items
@@ -147,33 +149,33 @@ module.exports.refreshServerConfig = () => {
   })
 }
 
-module.exports.updateConfig = (options) => {
+$.updateConfig = (options) => {
   return new Promise((resolve, reject) => {
     db.collection("settings").update({}, {
       $set: options
     }, async (err, res) => {
-      if (err) module.exports.log("Updating to database: " + err)
-      await module.exports.refreshConfig()
-      resolve(module.exports.getConfig())
+      if (err) $.log("Updating to database: " + err)
+      await $.refreshConfig()
+      resolve($.getConfig())
     })
   })
 }
 
-module.exports.updateServerConfig = (id, options) => {
+$.updateServerConfig = (id, options) => {
   return new Promise((resolve, reject) => {
     db.collection("servers").update({
       server_id: id
     }, {
       $set: options
     }, async (err, res) => {
-      if (err) module.exports.log("Updating to database: " + err)
-      await module.exports.refreshServerConfig()
-      resolve(module.exports.getServerConfig(id))
+      if (err) $.log("Updating to database: " + err)
+      await $.refreshServerConfig()
+      resolve($.getServerConfig(id))
     })
   })
 }
 
-module.exports.formatSeconds = (secs, format) => {
+$.formatSeconds = (secs, format) => {
   var sec_num = parseInt(secs, 10)
   var hours = Math.floor(sec_num / 3600)
   var minutes = Math.floor((sec_num - (hours * 3600)) / 60)
@@ -206,8 +208,10 @@ module.exports.formatSeconds = (secs, format) => {
   }
 }
 
-module.exports.wait = async (ms) => {
+$.wait = async (ms) => {
   return new Promise((resolve, reject) => {
     setTimeout(resolve, ms)
   })
 }
+
+module.exports = $
