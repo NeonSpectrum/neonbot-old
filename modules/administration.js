@@ -96,14 +96,7 @@ Administration.prototype.clear = async function(args) {
     }))
   } else if (Number.isInteger(+args[0])) {
     if (args[0] > 100 && args[0] < 1) return message.reply("Parameters must be `1-100`.")
-    if (args[0] == 1) {
-      var arr = await message.channel.messages.fetch({
-        limit: 1
-      })
-      arr.first().delete()
-    } else {
-      message.channel.bulkDelete(+args[0])
-    }
+    message.channel.bulkDelete(+args[0])
   } else {
     var msg = await message.channel.send($.embed("Please wait while I'm deleting 10 bot messages..."))
     await bulkDeleteMessagesFrom(bot.user.id, message.channel, 10, {
