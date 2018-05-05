@@ -1,4 +1,5 @@
 const fs = require('fs')
+const Discord = require('discord.js')
 const exec = require('child_process').exec
 const bot = require("../bot")
 const errors = require("../handler/errors.js")
@@ -315,14 +316,49 @@ Administration.prototype.update = function() {
   var message = this.message
 
   if (!$.isOwner(message.member.id)) return message.reply("You don't have a permission to update the bot.")
-  exec("git remote show origin", (err, stdout, stderr) => {
+  exec("git remote show origin", async (err, stdout, stderr) => {
     if (stdout.indexOf("(fast-forwardable)") > -1 || stdout.indexOf("(up to date)") > -1) {
       message.channel.send($.embed().setFooter(bot.user.tag, `https://cdn.discordapp.com/avatars/${bot.user.id}/${bot.user.avatar}.png?size=16`)
         .setAuthor("GitHub Update", "https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png")
         .setDescription("Already up to date.")
       )
     } else {
-      process.exit(1641)
+      var msg = await message.channel.send($.embed()
+        .setFooter(bot.user.tag, `https://cdn.discordapp.com/avatars/${bot.user.id}/${bot.user.avatar}.png?size=16`)
+        .setAuthor("GitHub Update", "https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png")
+        .setDescription("There is an update available. Update? (yes | no)")
+      )
+      var collector = new Discord.MessageCollector(message.channel, m => m.author.id === message.author.id)
+      collector.on("collect", async (m) => {
+        if (m.content.toLowerCase() == "yes") {
+          m.delete()
+          msg.delete()
+          msg = null
+          var ghmsg = await message.channel.send($.embed()
+            .setFooter(bot.user.tag, `https://cdn.discordapp.com/avatars/${bot.user.id}/${bot.user.avatar}.png?size=16`)
+            .setAuthor("GitHub Update", "https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png")
+            .setDescription("Updating...")
+          )
+          exec("git pull origin master", async (err, stdout, stderr) => {
+            await ghmsg.edit($.embed()
+              .setFooter(bot.user.tag, `https://cdn.discordapp.com/avatars/${bot.user.id}/${bot.user.avatar}.png?size=16`)
+              .setAuthor("GitHub Update", "https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png")
+              .setDescription("Now restarting the bot to apply changes.")
+            )
+            process.exit(1641)
+          })
+        } else if (m.content.toLowerCase() == "no") {
+          m.delete()
+          msg.delete()
+          collector.emit("end")
+        }
+      })
+      setTimeout(() => {
+        if (msg != null) {
+          collector.emit("end")
+          msg.delete()
+        }
+      }, 20000)
     }
   })
 }

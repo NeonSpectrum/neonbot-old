@@ -72,9 +72,9 @@ bot.on('ready', async () => {
       if (process.env.message == "crashed") {
         temp.setAuthor("Error", "https://i.imgur.com/1vOMHlr.png")
           .setDescription("Server Crashed. Restarted.")
-      } else {
+      } else if (process.env.message == "updated") {
         temp.setAuthor("GitHub Update", "https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png")
-          .setDescription(process.env.message)
+          .setDescription("Updated!")
       }
       bot.channels.get(conf.channel.debug).send(temp)
     }
