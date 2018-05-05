@@ -314,7 +314,6 @@ Administration.prototype.restart = function() {
 
 Administration.prototype.update = function() {
   var message = this.message
-  process.exit("hi")
 
   if (!$.isOwner(message.member.id)) return message.reply("You don't have a permission to update the bot.")
   exec("git remote show origin", async (err, stdout, stderr) => {
@@ -346,6 +345,7 @@ Administration.prototype.update = function() {
               .setAuthor("GitHub Update", "https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png")
               .setDescription("Now restarting the bot to apply changes.")
             )
+            process.exit(2)
           })
         } else if (m.content.toLowerCase() == "no") {
           m.delete()
