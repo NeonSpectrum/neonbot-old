@@ -66,10 +66,7 @@ module.exports.processDatabase = (arr, items) => {
   return new Promise((resolve, reject) => {
     var i = 0
     var loop = async () => {
-      if (i == arr.length) {
-        await module.exports.refreshServerConfig()
-        resolve()
-      } else {
+      if (i != arr.length) {
         var isExists = false
         for (var j = 0; j < items.length; j++) {
           if (items[j].server_id == arr[i]) {
@@ -82,10 +79,11 @@ module.exports.processDatabase = (arr, items) => {
             server_id: arr[i],
             prefix: config.default_prefix,
             deleteoncmd: false,
-            voicetts: false,
-            voicettsch: "",
-            userlog: "",
-            debugchannel: "",
+            channel: {
+              log: null,
+              voicetts: null,
+              debugchannel: null
+            },
             music: {
               volume: 100,
               autoplay: false,
@@ -99,6 +97,9 @@ module.exports.processDatabase = (arr, items) => {
           i++
           loop()
         }
+      } else {
+        await module.exports.refreshServerConfig()
+        resolve()
       }
     }
     loop()

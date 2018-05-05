@@ -256,8 +256,10 @@ Administration.prototype.deleteoncmd = async function() {
     server = this.server
 
   if (!$.isOwner(message.member.id)) return message.reply("You don't have a permission to set delete on cmd.")
+  if (args[0] != "enable" && args[0] != "disable") return message.reply("Invalid Parameters (enable | disable).")
+
   server.config = await $.updateServerConfig(message.guild.id, {
-    deleteoncmd: !server.config.deleteoncmd
+    deleteoncmd: args[0] == "enable" ? true : false
   })
   message.channel.send($.embed("Delete On Cmd is now " + (server.config.deleteoncmd ? "enabled" : "disabled") + "."))
 }
@@ -266,12 +268,13 @@ Administration.prototype.voicetts = async function() {
   var message = this.message,
     server = this.server
 
-  if (!$.isOwner(message.member.id)) return message.reply("You don't have a permission to set voice tts.")
+  if (!$.isOwner(message.member.id)) return message.reply("You don't have a permission to set voice tts channel.")
+  if (args[0] != "enable" && args[0] != "disable") return message.reply("Invalid Parameters (enable | disable).")
+
   server.config = await $.updateServerConfig(message.guild.id, {
-    voicetts: !server.config.voicetts,
-    voicettsch: !server.config.voicetts ? message.channel.id : ""
+    "channel.voicetts": args[0] == "enable" ? message.channel.id : null
   })
-  message.channel.send($.embed("Voice TTS is now " + (server.config.voicetts ? "enabled" : "disabled") + "."))
+  message.channel.send($.embed(`Voice TTS Channel is now ${args[0] != "enable" ? "disabled" : "changed to this channel"}.`))
 }
 
 Administration.prototype.logchannel = async function(args) {
@@ -279,10 +282,10 @@ Administration.prototype.logchannel = async function(args) {
     server = this.server
 
   if (!$.isOwner(message.member.id)) return message.reply("You don't have a permission to set log channel.")
-  if (!args[0]) return message.reply("Invalid Parameters. (enable | disable)")
+  if (args[0] != "enable" && args[0] != "disable") return message.reply("Invalid Parameters (enable | disable).")
 
   server.config = await $.updateServerConfig(message.guild.id, {
-    logchannel: args[0] == "enable" ? message.channel.id : ""
+    "channel.log": args[0] == "enable" ? message.channel.id : null
   })
   message.channel.send($.embed(`Log Channel is now ${args[0] != "enable" ? "disabled" : "changed to this channel"}.`))
 }
@@ -290,10 +293,12 @@ Administration.prototype.logchannel = async function(args) {
 Administration.prototype.debug = async function(args) {
   var message = this.message,
     server = this.server
-  if (!args[0]) return message.reply("Invalid Parameters. (enable | disable)")
+
+  if (!$.isOwner(message.member.id)) return message.reply("You don't have a permission to set debug channel.")
+  if (args[0] != "enable" && args[0] != "disable") return message.reply("Invalid Parameters (enable | disable).")
 
   server.config = await $.updateServerConfig(message.guild.id, {
-    debugchannel: args[0] == "enable" ? message.channel.id : ""
+    "channel.debug": args[0] == "enable" ? message.channel.id : null
   })
   message.channel.send($.embed(`Debug Channel is now ${args[0] != "enable" ? "disabled" : "changed to this channel"}.`))
 }
