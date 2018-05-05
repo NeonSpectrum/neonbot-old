@@ -3,10 +3,37 @@ const Discord = require('discord.js')
 const moment = require('moment')
 const colors = require('colors/safe')
 
-var servers, config, db
+var servers, config, db, currentGuild
 
-module.exports.log = (message) => {
-  console.log(colors.yellow(moment().format('YYYY-MM-DD hh:mm:ss A')) + " | " + colors.cyan(message))
+module.exports.log = (content, message) => {
+  const guild = currentGuild
+  if (message) {
+    console.log(`${colors.yellow("------ "+moment().format('YYYY-MM-DD hh:mm:ss A')+" ------")}
+   ${colors.cyan("Guild")}: ${message.channel.guild.name}
+   ${colors.cyan("Channel")}: ${message.channel.name}
+   ${colors.cyan("Message")}: ${content}
+`)
+  } else {
+    console.log(`${colors.yellow(moment().format('YYYY-MM-DD hh:mm:ss A'))} | ${colors.cyan(content)}`)
+  }
+}
+
+module.exports.warn = (message, send = true) => {
+  const bot = require('../bot')
+  console.log(`${colors.yellow(moment().format('YYYY-MM-DD hh:mm:ss A'))}${typeof message == "object" ? ` | ${message.channel.guild.name}` : ""} | ${colors.red(message)}`)
+  if (send) {
+    var guilds = Array.from(bot.guilds.keys())
+    for (var i = 0; i < guilds.length; i++) {
+      var conf = module.exports.getServerConfig(guilds[i])
+      if (conf.debugchannel != "") {
+        bot.channels.get(conf.debugchannel).send(module.exports.embed()
+          .setAuthor("Error", "https://i.imgur.com/1vOMHlr.png")
+          .setDescription(message)
+          .setFooter(bot.user.tag, `https://cdn.discordapp.com/avatars/${bot.user.id}/${bot.user.avatar}.png?size=16`)
+        )
+      }
+    }
+  }
 }
 
 module.exports.embed = (message) => {
@@ -58,6 +85,7 @@ module.exports.processDatabase = (arr, items) => {
             voicetts: false,
             voicettsch: "",
             userlog: "",
+            debugchannel: "",
             music: {
               volume: 100,
               autoplay: false,

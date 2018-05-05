@@ -23,6 +23,9 @@ class Games {
       this.server = servers[message.guild.id]
       this.message = message
     }
+    this.log = (content) => {
+      $.log(content, message)
+    }
   }
 }
 
@@ -60,7 +63,7 @@ Games.prototype.pokemon = async function(args) {
     name = pokemon.random()
   } while (name == "Type: Null")
 
-  $.log(`Pokemon correct answer: ${name}`)
+  this.log(`Pokemon correct answer: ${name}`)
 
   var url = `https://gearoid.me/pokemon/images/artwork/${pokemon.getId(name)}.png`
 

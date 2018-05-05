@@ -38,12 +38,16 @@ class Music {
       this.server = servers[message.guild.id]
       this.message = message
     }
+    this.log = (content) => {
+      $.log(content, message)
+    }
   }
 }
 
 Music.prototype.play = async function(args) {
   var message = this.message,
-    server = this.server
+    server = this.server,
+    self = this
 
   if (!message.member.voiceChannel) return message.reply("You must be in a voice channel!")
   if (!args[0]) return message.reply("Please provide a keyword or link.")
@@ -61,43 +65,32 @@ Music.prototype.play = async function(args) {
 
     for (var i = 0; i < videos.length; i++) {
       try {
-        $.log("Processing " + "https://www.youtube.com/watch?v=" + videos[i].id)
+        this.log("Processing " + "https://www.youtube.com/watch?v=" + videos[i].id)
         var info = await ytdl.getInfo(videos[i].id)
-        $.log("Done Processing " + "https://www.youtube.com/watch?v=" + videos[i].id)
-
+        this.log("Done Processing " + "https://www.youtube.com/watch?v=" + videos[i].id)
         server.queue.push({
           title: info.title,
           url: info.video_url,
           requested: message.author,
           info: info
         })
-
-        if (!message.guild.voiceConnection) {
-          message.member.voiceChannel.join()
-            .then(connection => {
-              this.execute(connection)
-            })
-        }
+        connect()
       } catch (err) {
         error++
       }
     }
     return msg.edit($.embed(`Done! Loaded ${videos.length} songs.` + (error > 0 ? ` ${error} failed to load.` : "")))
   } else if (args[0].match(/^(https?\:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+$/g)) {
-    $.log("Processing " + args[0])
+    this.log("Processing " + args[0])
     var info = await ytdl.getInfo(args[0])
-    $.log("Done Processing " + args[0])
+    this.log("Done Processing " + args[0])
     server.queue.push({
       title: info.title,
       url: info.video_url,
       requested: message.author,
       info: info
     })
-    if (!message.guild.voiceConnection)
-      message.member.voiceChannel.join()
-      .then(connection => {
-        this.execute(connection)
-      })
+    connect()
   } else {
     try {
       var videos = await yt.searchVideos(args.join(" "))
@@ -130,11 +123,7 @@ Music.prototype.play = async function(args) {
         requested: message.author
       })
       server.queue[index - 1].info = await ytdl.getInfo(songSearchList[i - 1].url)
-      if (!message.guild.voiceConnection)
-        message.member.voiceChannel.join()
-        .then((connection) => {
-          this.execute(connection)
-        })
+      connect()
     })
     setTimeout(() => {
       if (msg != null) msg.delete()
@@ -146,6 +135,17 @@ Music.prototype.play = async function(args) {
         break
       }
     }
+
+  }
+
+  function connect() {
+    if (!message.guild.voiceConnection) {
+      message.member.voiceChannel.join()
+        .then((connection) => {
+          self.execute(connection)
+        })
+      self.log("Connected to " + message.member.voiceChannel.name)
+    }
   }
 }
 
@@ -156,8 +156,10 @@ Music.prototype.stop = function() {
     server.dispatcher.end()
     if (message.guild.voiceConnection) message.guild.voiceConnection.disconnect()
     server.autoplayid = []
-    message.channel.send($.embed("Player stopped!"))
-    $.log("Player stopped!")
+    message.channel.send($.embed("Player stopped!")).then(s => s.delete({
+      timeout: 3000
+    }))
+    this.log("Player stopped!")
   }
 }
 
@@ -167,7 +169,7 @@ Music.prototype.skip = function() {
   if (server.dispatcher) {
     if (server.config.music.repeat == "single") server.currentQueue += 1
     server.dispatcher.end()
-    $.log("Player skipped!")
+    this.log("Player skipped!")
   }
 }
 
@@ -251,7 +253,7 @@ Music.prototype.pause = function() {
     } else {
       bot.channels.get(servers[message.guild.id].currentChannel).send($.embed(`Player has automatically paused because there are no users connected.`))
     }
-    $.log("Player paused!")
+    this.log("Player paused!")
   }
 }
 
@@ -266,7 +268,7 @@ Music.prototype.resume = function() {
     } else {
       bot.channels.get(servers[message.guild.id].currentChannel).send($.embed(`Player has automatically resumed.`))
     }
-    $.log("Player resumed!")
+    this.log("Player resumed!")
   }
 }
 
@@ -278,7 +280,7 @@ Music.prototype.autoplay = async function() {
     "music.autoplay": !server.config.music.autoplay
   })
   message.channel.send($.embed("Autoplay is now " + (server.config.music.autoplay ? "enabled" : "disabled") + "."))
-  $.log("Autoplay " + (server.config.music.autoplay ? "enabled" : "disabled") + ".")
+  this.log("Autoplay " + (server.config.music.autoplay ? "enabled" : "disabled") + ".")
 }
 
 Music.prototype.nowplaying = function() {
@@ -377,7 +379,7 @@ Music.prototype.execute = async function(connection) {
       .setFooter(footer.join(" | "), `https://cdn.discordapp.com/avatars/${requested.id}/${requested.avatar}.png?size=16`)
       .setDescription(`[**${server.queue[server.currentQueue].title}**](${server.queue[server.currentQueue].url})`)
     )
-    $.log("Now playing " + server.queue[server.currentQueue].title)
+    this.log("Now playing " + server.queue[server.currentQueue].title)
   })
 
   server.dispatcher.on("finish", async () => {

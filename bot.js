@@ -55,7 +55,7 @@ bot.on('ready', async () => {
     Searches = require('./modules/searches')
     Games = require('./modules/games')
   } catch (err) {
-    $.log(err)
+    $.warn(err)
   }
 
   $.log(`Loaded Modules in ${((Date.now() - modulesTime) / 1000).toFixed(2)} secs.\n`)
@@ -75,7 +75,7 @@ bot.on('ready', async () => {
   loaded = true
 })
 
-bot.on('message', async message => {
+bot.on('message', message => {
   if (!loaded) return
   if (message.author.bot) return
   if (message.channel.type === "dm") {
@@ -87,38 +87,46 @@ bot.on('message', async message => {
     }
     return
   }
-  var server = await $.getServerConfig(message.guild.id)
+  var server = $.getServerConfig(message.guild.id)
   if (!message.content.startsWith(server.prefix)) return
 
   var messageArray = message.content.trim().split(/\s/g)
   var cmd = messageArray[0].substring(server.prefix.length).toLowerCase()
   var args = messageArray.slice(1)
 
-  if (server.deleteoncmd) {
-    message.delete()
-  }
-
   switch (getModule(cmd)) {
     case 'admin':
+      processBeforeCommand()
       var admin = new Administration(message)
       admin[cmd](args)
       break
     case 'music':
+      processBeforeCommand()
       var music = new Music(message)
       music[cmd](args)
       break
     case "util":
+      processBeforeCommand()
       var utils = new Utilities(message)
       utils[cmd](args)
       break
     case "search":
+      processBeforeCommand()
       var search = new Searches(message)
       search[cmd](args)
       break
     case "games":
+      processBeforeCommand()
       var games = new Games(message)
       games[cmd](args)
       break
+  }
+
+  function processBeforeCommand() {
+    if (server.deleteoncmd) {
+      message.delete()
+    }
+    $.log("Command Executed " + message.content.trim(), message)
   }
 })
 
@@ -179,11 +187,11 @@ bot.on('presenceUpdate', (oldMember, newMember) => {
 })
 
 bot.on('error', (err) => {
-  $.log("Bot Error: " + err)
+  $.warn("Bot Error: " + err)
 })
 
 process.on('uncaughtException', (err) => {
-  $.log("Uncaught Exception: " + (err.stack || err))
+  $.warn("Uncaught Exception: " + (err.stack || err))
 });
 
 function getModule(command) {

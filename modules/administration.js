@@ -13,6 +13,9 @@ class Administration {
       this.server = server
       this.message = message
     }
+    this.log = (content) => {
+      $.log(content, message)
+    }
   }
 }
 
@@ -75,14 +78,57 @@ Administration.prototype.ban = function(args) {
   )
 }
 
-Administration.prototype.clear = function(args) {
+Administration.prototype.clear = async function(args) {
   var message = this.message,
     server = this.server
 
-  if (args > 100) return message.reply("Parameters must not be greater than 100.")
   if (!message.member.hasPermission("MANAGE_MESSAGES")) return errors.noPerms(message, "MANAGE_MESSAGES")
+  if (!server.config.deleteoncmd) message.delete()
+  if (message.mentions.users.first()) {
+    if (!args[1] || !Number.isInteger(+args[1])) return message.reply(`Invalid Parameters ${server.config.prefix}clear <user> <1-100>`)
+    else if (args[1] > 100 && args[1] < 1) return message.reply("Parameters must be `1-100`.")
 
-  message.channel.bulkDelete((+args[0] || 1) + (!server.config.deleteoncmd ? 1 : 0))
+    var msg = await message.channel.send($.embed(`Please wait while I'm deleting ${args[1]} ${message.mentions.users.first().username}'s ${args[0] == 1 ? "message" : "messages"}...`))
+    await bulkDeleteMessagesFrom(message.mentions.users.first().id, message.channel, +args[1])
+    msg.edit($.embed(`Done deleting ${message.mentions.users.first().username}'s ${args[0] == 1 ? "message" : "messages"}.`)).then(s => s.delete({
+      timeout: 3000
+    }))
+  } else if (Number.isInteger(+args[0])) {
+    if (args[0] > 100 && args[0] < 1) return message.reply("Parameters must be `1-100`.")
+    if (args[0] == 1) {
+      var arr = await message.channel.messages.fetch({
+        limit: 1
+      })
+      arr.first().delete()
+    } else {
+      message.channel.bulkDelete(+args[0])
+    }
+  } else {
+    var msg = await message.channel.send($.embed("Please wait while I'm deleting 10 bot messages..."))
+    await bulkDeleteMessagesFrom(bot.user.id, message.channel, 10, {
+      filter: msg.id
+    })
+    msg.edit($.embed("Done deleting bot messages.")).then(s => s.delete({
+      timeout: 3000
+    }))
+  }
+
+  async function bulkDeleteMessagesFrom(user, channel, length, options) {
+    return new Promise(async (resolve, reject) => {
+      var arr = [],
+        count = 0
+      do {
+        var temp = await channel.messages.fetch({
+          limit: 100
+        })
+        temp = temp.filter(s => s.author.id == user && (options && options.filter ? s.id != options.filter : true))
+        temp = Array.from(temp.keys()).slice(0, length - count)
+        await channel.bulkDelete(temp)
+        count += temp.length
+      } while (count != length)
+      resolve(count)
+    })
+  }
 }
 
 Administration.prototype.kick = function(args) {
@@ -114,7 +160,7 @@ Administration.prototype.prefix = async function(args) {
   var message = this.message,
     server = this.server
 
-  if (!message.member.hasPermission("MANAGE_SERVER")) return message.reply("No no no.")
+  if (!$.isOwner(message.member.id)) return message.reply("You don't have a permission to set prefix.")
   if (!args[0]) return message.reply(`Usage: ${config.prefix}prefix <desired prefix here>`)
 
   server.config = await $.updateServerConfig(message.guild.id, {
@@ -167,7 +213,7 @@ Administration.prototype.setname = async function(args) {
   bot.user.setUsername(args.join(" "))
     .then(() => {
       message.channel.send($.embed(`Username set to ${args.join(" ")}.`))
-      $.log(`Username set to ${args.join(" ")}`)
+      this.log(`Username set to ${args.join(" ")}`)
     })
 }
 
@@ -187,7 +233,7 @@ Administration.prototype.setgame = function(args) {
       "game.name": args.slice(1).join(" ")
     })
     message.channel.send($.embed(`Game set to ${args[0]}, ${args.slice(1).join(" ")}.`))
-    $.log(`Game set to ${args.slice(1).join(" ")}`)
+    this.log(`Game set to ${args.slice(1).join(" ")}`)
 
   })
 }
@@ -195,12 +241,12 @@ Administration.prototype.setgame = function(args) {
 Administration.prototype.setavatar = function(args) {
   var message = this.message
 
-  if (!$.isOwner(message.member.id)) return
+  if (!$.isOwner(message.member.id)) return message.reply("You don't have a permission to set avatar.")
   if (!args[0].match(/[-a-zA-Z0-9@:%_\+.~#?&//=]{2,256}\.[a-z]{2,4}\b(\/[-a-zA-Z0-9@:%_\+.~#?&//=]*)?/gi)) return message.reply("Invalid URL.")
 
   bot.user.setAvatar(args[0])
     .then(() => {
-      $.log("Avatar changed.")
+      this.log("Avatar changed.")
       message.channel.send($.embed(args[0]).setTitle("Avatar changed to"))
     })
 }
@@ -209,6 +255,7 @@ Administration.prototype.deleteoncmd = async function() {
   var message = this.message,
     server = this.server
 
+  if (!$.isOwner(message.member.id)) return message.reply("You don't have a permission to set delete on cmd.")
   server.config = await $.updateServerConfig(message.guild.id, {
     deleteoncmd: !server.config.deleteoncmd
   })
@@ -219,6 +266,7 @@ Administration.prototype.voicetts = async function() {
   var message = this.message,
     server = this.server
 
+  if (!$.isOwner(message.member.id)) return message.reply("You don't have a permission to set voice tts.")
   server.config = await $.updateServerConfig(message.guild.id, {
     voicetts: !server.config.voicetts,
     voicettsch: !server.config.voicetts ? message.channel.id : ""
@@ -229,12 +277,25 @@ Administration.prototype.voicetts = async function() {
 Administration.prototype.logchannel = async function(args) {
   var message = this.message,
     server = this.server
+
+  if (!$.isOwner(message.member.id)) return message.reply("You don't have a permission to set log channel.")
   if (!args[0]) return message.reply("Invalid Parameters. (enable | disable)")
 
   server.config = await $.updateServerConfig(message.guild.id, {
     logchannel: args[0] == "enable" ? message.channel.id : ""
   })
   message.channel.send($.embed(`Log Channel is now ${args[0] != "enable" ? "disabled" : "changed to this channel"}.`))
+}
+
+Administration.prototype.debug = async function(args) {
+  var message = this.message,
+    server = this.server
+  if (!args[0]) return message.reply("Invalid Parameters. (enable | disable)")
+
+  server.config = await $.updateServerConfig(message.guild.id, {
+    debugchannel: args[0] == "enable" ? message.channel.id : ""
+  })
+  message.channel.send($.embed(`Debug Channel is now ${args[0] != "enable" ? "disabled" : "changed to this channel"}.`))
 }
 
 module.exports = Administration

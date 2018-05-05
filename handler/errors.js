@@ -1,7 +1,7 @@
-var Discord = require("discord.js")
+var $ = require("./functions")
 
 module.exports.noPerms = (message, perm) => {
-  var embed = new Discord.RichEmbed()
+  var embed = $.embed()
     .setAuthor(message.author.username)
     .setTitle("Insufficient Permission")
     .setColor("#FF0000")
@@ -13,7 +13,7 @@ module.exports.noPerms = (message, perm) => {
 
 module.exports.equalPerms = (message, user, perms) => {
 
-  var embed = new Discord.RichEmbed()
+  var embed = $.embed()
     .setAuthor(message.author.username)
     .setColor("#FF0000")
     .setTitle("Error")
@@ -24,7 +24,7 @@ module.exports.equalPerms = (message, user, perms) => {
 }
 
 module.exports.botuser = (message) => {
-  var embed = new Discord.RichEmbed()
+  var embed = $.embed()
     .setTitle("Error")
     .setDescription("You cannot ban a bot.")
     .setColor("#FF0000")
@@ -34,7 +34,7 @@ module.exports.botuser = (message) => {
 }
 
 module.exports.cantfindUser = (channel) => {
-  var embed = new Discord.RichEmbed()
+  var embed = $.embed()
     .setTitle("Error")
     .setDescription("Could not find that user.")
     .setColor("#FF0000")
@@ -44,7 +44,7 @@ module.exports.cantfindUser = (channel) => {
 }
 
 module.exports.noReason = (channel) => {
-  var embed = new Discord.RichEmbed()
+  var embed = $.embed()
     .setTitle("Error")
     .setDescription("Please supply a reason.")
     .setColor("#FF0000")
