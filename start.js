@@ -1,3 +1,4 @@
+require('dotenv').config()
 var {
   spawn,
   exec
@@ -6,7 +7,7 @@ var {
 var env = {}
 
 function loop() {
-  var child = spawn('node', ['bot'], {
+  var child = spawn(`${process.env.NODE_PATH}node`, ['bot'], {
     env: env
   });
 

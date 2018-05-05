@@ -339,7 +339,7 @@ Administration.prototype.update = function() {
             .setAuthor("GitHub Update", "https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png")
             .setDescription("Updating...")
           )
-          exec("git pull origin master", async (err, stdout, stderr) => {
+          exec(`${process.env.GIT_PATH}git pull origin master`, async (err, stdout, stderr) => {
             await ghmsg.edit($.embed()
               .setFooter(bot.user.tag, `https://cdn.discordapp.com/avatars/${bot.user.id}/${bot.user.avatar}.png?size=16`)
               .setAuthor("GitHub Update", "https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png")
