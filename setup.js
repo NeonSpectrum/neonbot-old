@@ -12,7 +12,8 @@ module.exports = (db, callback) => {
         googleapi: "",
         ownerid: ""
       }
-
+      readline.emitKeypressEvents(process.stdin);
+      process.stdin.setRawMode(true);
       const rl = readline.createInterface({
         input: process.stdin,
         output: process.stdout,
