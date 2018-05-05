@@ -14,8 +14,8 @@ const config = $.getConfig()
 const Youtube = require('simple-youtube-api')
 const yt = new Youtube(config.google_api)
 
-const servers = []
 const reaction_numbers = ["\u0030\u20E3", "\u0031\u20E3", "\u0032\u20E3", "\u0033\u20E3", "\u0034\u20E3", "\u0035\u20E3", "\u0036\u20E3", "\u0037\u20E3", "\u0038\u20E3", "\u0039\u20E3"]
+var servers = []
 
 class Music {
   constructor(message) {
@@ -29,7 +29,9 @@ class Music {
           previnfo: null,
           config: $.getServerConfig(message.guild.id),
           lastPlayingMessage: null,
-          lastFinishedMessage: null
+          lastFinishedMessage: null,
+          lastAutoMessage: null,
+          lastPauseMessage: null
         }
       } else {
         servers[message.guild.id].currentChannel = (message.channel && message.channel.id) || servers[message.guild.id].currentChannel
@@ -249,11 +251,12 @@ Music.prototype.pause = async function() {
   if (server && server.dispatcher && !server.dispatcher.paused && server.queue.length > 0) {
     server.dispatcher.pause()
     if (message.channel) {
-      message.channel.send($.embed(`Player paused ${server.config.prefix}resume to unpause.`))
+      server.lastPauseMessage = await message.channel.send($.embed(`Player paused. \`${server.config.prefix}resume\` to resume.`))
       this.log("Player paused!")
     } else {
-      var msg = await bot.channels.get(servers[message.guild.id].currentChannel).send($.embed(`Player has automatically paused because there are no users connected.`))
-      $.log("Player has automatically paused because there are no users connected.", msg)
+      if (server.lastAutoMessage) server.lastAutoMessage.delete()
+      server.lastAutoMessage = await bot.channels.get(server.currentChannel).send($.embed(`Player has automatically paused because there are no users connected.`))
+      $.log("Player has automatically paused because there are no users connected.", server.lastAutoMessage)
     }
   }
 }
@@ -265,11 +268,18 @@ Music.prototype.resume = async function() {
   if (server && server.dispatcher && server.dispatcher.paused && server.queue.length > 0) {
     server.dispatcher.resume()
     if (message.channel) {
-      message.channel.send($.embed(`Player resumed ${server.config.prefix}pause to pause.`))
+      if (server.lastPauseMessage) {
+        server.lastPauseMessage.delete()
+        server.lastPauseMessage = null
+      }
+      message.channel.send($.embed(`Player resumed.`)).then(s => s.delete({
+        timeout: 5000
+      }))
       this.log("Player resumed!")
     } else {
-      var msg = await bot.channels.get(servers[message.guild.id].currentChannel).send($.embed(`Player has automatically resumed.`))
-      $.log("Player has automatically resumed.", msg)
+      if (server.lastAutoMessage) server.lastAutoMessage.delete()
+      server.lastAutoMessage = await bot.channels.get(server.currentChannel).send($.embed(`Player has automatically resumed.`))
+      $.log("Player has automatically resumed.", server.lastAutoMessage)
     }
   }
 }

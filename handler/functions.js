@@ -208,7 +208,7 @@ $.formatSeconds = (secs, format) => {
   }
 }
 
-$.wait = async (ms) => {
+$.wait = (ms) => {
   return new Promise((resolve, reject) => {
     setTimeout(resolve, ms)
   })
