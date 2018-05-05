@@ -185,8 +185,8 @@ bot.on('presenceUpdate', (oldMember, newMember) => {
     msg
   if (oldMember.presence.status != newMember.presence.status) {
     msg = `**${newMember.user.username}** is now **${newMember.presence.status}**`
-  } else if (oldMember.presence.activity.name != newMember.presence.activity.name) {
-    msg = `**${newMember.user.username}** is now ${newMember.presence.activity.type.toLowerCase()} **${newMember.presence.activity.name == "" ? "nothing" : newMember.presence.activity.name}**`
+  } else if (oldMember.presence.activity != newMember.presence.activity) {
+    msg = `**${newMember.user.username}** is now ${newMember.presence.activity ? newMember.presence.activity.type.toLowerCase() : "playing"} **${!newMember.presence.activity ? "nothing" : newMember.presence.activity.name}**`
   }
   if (msg && config.channel.log) {
     bot.channels.get(config.channel.log).send($.embed()
