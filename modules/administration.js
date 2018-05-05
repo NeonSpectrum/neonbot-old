@@ -1,9 +1,9 @@
 const fs = require('fs')
+const exec = require('child_process').exec
 const bot = require("../bot")
 const errors = require("../handler/errors.js")
 const $ = require('../handler/functions')
 const config = $.getConfig()
-
 class Administration {
   constructor(message) {
     if (typeof message == "object") {
@@ -305,11 +305,26 @@ Administration.prototype.debug = async function(args) {
 }
 
 Administration.prototype.restart = function() {
+  var message = this.message
+
+  if (!$.isOwner(message.member.id)) return message.reply("You don't have a permission to restart the bot.")
   process.exit(0)
 }
 
 Administration.prototype.update = function() {
-  process.exit(1641)
+  var message = this.message
+
+  if (!$.isOwner(message.member.id)) return message.reply("You don't have a permission to update the bot.")
+  exec("git remote show origin", (err, stdout, stderr) => {
+    if (stdout.includes("(fast-forwardable)")) {
+      message.channel.send($.embed().setFooter(bot.user.tag, `https://cdn.discordapp.com/avatars/${bot.user.id}/${bot.user.avatar}.png?size=16`)
+        .setAuthor("GitHub Update", "https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png")
+        .setDescription("Already up to date.")
+      )
+    } else {
+      process.exit(1641)
+    }
+  })
 }
 
 module.exports = Administration
