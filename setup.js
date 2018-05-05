@@ -3,7 +3,7 @@ var $ = require('./handler/functions')
 
 module.exports = (db, callback) => {
   return new Promise(resolve => {
-    if (!process.env.HEROKU) {
+    if (!process.env.TOKEN) {
       const readline = require('readline');
 
       var config = {
@@ -12,8 +12,7 @@ module.exports = (db, callback) => {
         googleapi: "",
         ownerid: ""
       }
-      readline.emitKeypressEvents(process.stdin);
-      process.stdin.setRawMode(true);
+
       const rl = readline.createInterface({
         input: process.stdin,
         output: process.stdout,
