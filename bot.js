@@ -7,10 +7,6 @@ const bot = new Discord.Client()
 const MongoClient = require('mongodb').MongoClient;
 const $ = require('./handler/functions');
 
-const {
-  Embeds: EmbedsMode
-} = require('discord-paginationembed')
-
 var Admin, Util, Music, Search, Games;
 var db, guildlist, config
 
