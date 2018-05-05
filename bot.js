@@ -174,7 +174,7 @@ bot.on('voiceStateUpdate', (oldMember, newMember) => {
     if (config.channel.log) {
       bot.channels.get(config.channel.log).send($.embed()
         .setAuthor("Voice Presence Update", `https://cdn.discordapp.com/avatars/${bot.user.id}/${bot.user.avatar}.png?size=16`)
-        .setDescription(`\`${moment().format('YYYY-MM-DD hh:mm:ss A')}\` ${msg}.`)
+        .setDescription(`\`${moment().format('YYYY-MM-DD hh:mm:ss A')}\`:bust_in_silhouette:${msg}.`)
       )
     }
   }
@@ -192,7 +192,7 @@ bot.on('presenceUpdate', (oldMember, newMember) => {
   if (msg && config.channel.log) {
     bot.channels.get(config.channel.log).send($.embed()
       .setAuthor("User Presence Update", `https://cdn.discordapp.com/avatars/${bot.user.id}/${bot.user.avatar}.png?size=16`)
-      .setDescription(`\`${moment().format('YYYY-MM-DD hh:mm:ss A')}\` ${msg}.`)
+      .setDescription(`\`${moment().format('YYYY-MM-DD hh:mm:ss A')}\`:bust_in_silhouette:${msg}.`)
     )
   }
 })
