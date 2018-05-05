@@ -71,6 +71,9 @@ bot.on('ready', async () => {
       } else if (process.env.message == "updated") {
         temp.setAuthor("GitHub Update", "https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png")
           .setDescription("Updated!")
+      } else if (process.env.message == "restarted") {
+        temp.setAuthor("GitHub Update", "https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png")
+          .setDescription("Restarted!")
       }
       bot.channels.get(conf.channel.debug).send(temp)
     }

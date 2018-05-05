@@ -24,7 +24,7 @@ function loop() {
     } else if (code == 1) {
       env.message = "crashed"
     } else {
-      env = {}
+      env.message = "restarted"
     }
     loop()
   });
