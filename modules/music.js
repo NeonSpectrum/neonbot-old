@@ -310,7 +310,7 @@ Music.prototype.leave = function() {
   if (message.guild.voiceConnection) message.guild.voiceConnection.disconnect()
 }
 
-Music.prototype.restart = function() {
+Music.prototype.restartplayer = function() {
   var message = this.message,
     server = this.server
 

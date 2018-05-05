@@ -11,6 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "bufferutil": "^3.0.4",
+    "child_process": "^1.0.2",
     "colors": "^1.2.1",
     "discord-paginationembed": "github:gazmull/discord-paginationembed",
     "discord.js": "github:discordjs/discord.js#master",

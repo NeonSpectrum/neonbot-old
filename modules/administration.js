@@ -291,6 +291,7 @@ Administration.prototype.logchannel = async function(args) {
 }
 
 Administration.prototype.debug = async function(args) {
+  throw "hi"
   var message = this.message,
     server = this.server
 
@@ -301,6 +302,14 @@ Administration.prototype.debug = async function(args) {
     "channel.debug": args[0] == "enable" ? message.channel.id : null
   })
   message.channel.send($.embed(`Debug Channel is now ${args[0] != "enable" ? "disabled" : "changed to this channel"}.`))
+}
+
+Administration.prototype.restart = function() {
+  process.exit(0)
+}
+
+Administration.prototype.update = function() {
+  process.exit(1641)
 }
 
 module.exports = Administration

@@ -25,8 +25,8 @@ module.exports.warn = (message, send = true) => {
     var guilds = Array.from(bot.guilds.keys())
     for (var i = 0; i < guilds.length; i++) {
       var conf = module.exports.getServerConfig(guilds[i])
-      if (conf.debugchannel != "") {
-        bot.channels.get(conf.debugchannel).send(module.exports.embed()
+      if (conf.channel.debug != "") {
+        bot.channels.get(conf.channel.debug).send(module.exports.embed()
           .setAuthor("Error", "https://i.imgur.com/1vOMHlr.png")
           .setDescription(message)
           .setFooter(bot.user.tag, `https://cdn.discordapp.com/avatars/${bot.user.id}/${bot.user.avatar}.png?size=16`)
@@ -82,7 +82,7 @@ module.exports.processDatabase = (arr, items) => {
             channel: {
               log: null,
               voicetts: null,
-              debugchannel: null
+              debug: null
             },
             music: {
               volume: 100,

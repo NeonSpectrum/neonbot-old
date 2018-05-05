@@ -66,6 +66,22 @@ bot.on('ready', async () => {
     var channelsize = bot.guilds.get(guilds[i]).channels.filter(s => s.type != "category").size
     var usersize = bot.guilds.get(guilds[i]).members.size
     $.log(`Connected to "${bot.guilds.get(guilds[i]).name}" with ${channelsize} ${channelsize == 1 ? "channel" : "channels"} and ${usersize} ${usersize == 1 ? "user" : "users"}${i == bot.guilds.size - 1 ? "\n" : ""}`)
+    var conf = $.getServerConfig(guilds[i])
+    if (conf.channel.debug) {
+      if (process.env.message == "crashed") {
+        bot.channels.get(conf.channel.debug).send($.embed()
+          .setAuthor("Error", "https://i.imgur.com/1vOMHlr.png")
+          .setDescription("Server Crashed. Restarted.")
+          .setFooter(bot.user.tag, `https://cdn.discordapp.com/avatars/${bot.user.id}/${bot.user.avatar}.png?size=16`)
+        )
+      } else if (process.env.message) {
+        bot.channels.get(conf.channel.debug).send($.embed()
+          .setAuthor("Bot Update", `https://cdn.discordapp.com/avatars/${bot.user.id}/${bot.user.avatar}.png?size=16`)
+          .setDescription(process.env.message)
+          .setFooter("Github", "https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png")
+        )
+      }
+    }
   }
 
   bot.user.setActivity(config.game.name, {
