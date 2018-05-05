@@ -14,7 +14,6 @@ module.exports = (db, callback) => {
       }
       readline.emitKeypressEvents(process.stdin);
       process.stdin.setRawMode(true);
-      process.stdin.on('keypress', console.log);
       const rl = readline.createInterface({
         input: process.stdin,
         output: process.stdout,
