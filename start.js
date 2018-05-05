@@ -6,17 +6,14 @@ var {
 var env = {}
 
 function loop() {
-  //kick off process of listing files
   var child = spawn('node', ['bot'], {
     env: env
   });
 
-  //spit stdout to screen
   child.stdout.on('data', function(data) {
     process.stdout.write(data.toString());
   });
 
-  //spit stderr to screen
   child.stderr.on('data', function(data) {
     process.stdout.write(data.toString());
   });
