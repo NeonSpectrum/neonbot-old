@@ -265,12 +265,12 @@ Administration.prototype.deleteoncmd = async function() {
   message.channel.send($.embed("Delete On Cmd is now " + (server.config.deleteoncmd ? "enabled" : "disabled") + "."))
 }
 
-Administration.prototype.voicetts = async function() {
+Administration.prototype.voicetts = async function(args) {
   var message = this.message,
     server = this.server
 
   if (!$.isOwner(message.member.id)) return message.reply("You don't have a permission to set voice tts channel.")
-  if (args[0] != "enable" && args[0] != "disable") return message.reply("Invalid Parameters (enable | disable).")
+  if (args[0] && args[0] != "enable" && args[0] != "disable") return message.reply("Invalid Parameters (enable | disable).")
 
   server.config = await $.updateServerConfig(message.guild.id, {
     "channel.voicetts": args[0] == "enable" ? message.channel.id : null
