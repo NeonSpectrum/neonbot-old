@@ -7,11 +7,10 @@ bot.on('voiceStateUpdate', (oldMember, newMember) => {
   if (newMember.user.bot) return
 
   var msg, config
-  console.log(newMember)
+
   if (oldMember.voiceChannelID != null && newMember.voiceChannelID == null) {
     var music = new Music(oldMember)
     config = $.getServerConfig(oldMember.guild.id)
-    if (config.channel.log == "" || config.channel.log == undefined) return
 
     msg = `**${oldMember.user.username}** has disconnected from **${bot.channels.get(oldMember.voiceChannelID).name}**`
 
@@ -43,6 +42,7 @@ bot.on('voiceStateUpdate', (oldMember, newMember) => {
 
 bot.on('presenceUpdate', (oldMember, newMember) => {
   if (newMember.user.bot) return
+
   var config = $.getServerConfig(newMember.guild.id),
     msg
   if (oldMember.presence.status != newMember.presence.status) {
@@ -60,6 +60,7 @@ bot.on('presenceUpdate', (oldMember, newMember) => {
 
 bot.on('guildMemberAdd', (member) => {
   var config = $.getServerConfig(member.guild.id)
+
   guild.channels.first().send($.embed()
     .setAuthor("New Member", `https://cdn.discordapp.com/avatars/${bot.user.id}/${bot.user.avatar}.png?size=16`)
     .setDescription(`Welcome to ${member.guild.name}, ${member.user.toString()}!`)
@@ -76,6 +77,7 @@ bot.on('guildMemberAdd', (member) => {
 
 bot.on('guildMemberRemove', (member) => {
   var config = $.getServerConfig(member.guild.id)
+
   guild.channels.first().send($.embed()
     .setAuthor("Member Left", `https://cdn.discordapp.com/avatars/${bot.user.id}/${bot.user.avatar}.png?size=16`)
     .setDescription(`${member.user.tag} left the server!`)
