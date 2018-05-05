@@ -252,7 +252,7 @@ Administration.prototype.setavatar = function(args) {
     })
 }
 
-Administration.prototype.deleteoncmd = async function() {
+Administration.prototype.deleteoncmd = async function(args) {
   var message = this.message,
     server = this.server
 
