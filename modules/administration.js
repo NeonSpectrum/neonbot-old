@@ -84,7 +84,7 @@ Administration.prototype.clear = async function(args) {
     server = this.server
 
   if (!message.member.hasPermission("MANAGE_MESSAGES")) return errors.noPerms(message, "MANAGE_MESSAGES")
-  if (!server.config.deleteoncmd) message.delete()
+  if (!server.config.deleteoncmd) await message.delete()
   if (message.mentions.users.first()) {
     if (!args[1] || !Number.isInteger(+args[1])) return message.reply(`Invalid Parameters ${server.config.prefix}clear <user> <1-100>`)
     else if (args[1] > 100 && args[1] < 1) return message.reply("Parameters must be `1-100`.")
