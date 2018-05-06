@@ -39,13 +39,17 @@
     "info": "Enables or Disables delete on cmd.",
     "usage": "{0}deleteoncmd"
   },
-  "voicetts": {
-    "info": "Enables or Disables Voice TTS in this channel.",
-    "usage": "{0}voicetts <enable | disable>"
+  "vcrole": {
+    "info": "Adds a role if joining or leaving the voice channel.",
+    "usage": "{0}vcrole <role name>"
   },
   "logchannel": {
     "info": "Enables or Disables Logs in this channel.",
     "usage": "{0}logchannel <enable | disable>"
+  },
+  "logmsgdelete": {
+    "info": "Enables or Disables Message Deleted in this channel.",
+    "usage": "{0}logmsgdelete <enable | disable>"
   },
   "debug": {
     "info": "Enables or Disables Debug Messages in this channel.",

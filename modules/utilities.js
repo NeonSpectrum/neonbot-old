@@ -33,11 +33,9 @@ Utilities.prototype.help = function(args) {
 Utilities.prototype.cmds = function(args) {
   var message = this.message,
     server = this.server
-  try {
-    if (!bot.modules[args[0]]) return message.channel.send($.embed(`Invalid Module. (${Object.keys(bot.modules).join(" | ")})`))
-  } catch (err) {
-    console.log(err)
-  }
+
+  if (!bot.modules[args[0]]) return message.channel.send($.embed(`Invalid Module. (${Object.keys(bot.modules).join(" | ")})`))
+
   var command = bot.modules[args[0]],
     module
   switch (args[0]) {
@@ -60,19 +58,9 @@ Utilities.prototype.cmds = function(args) {
   }
   var temp = $.embed().setAuthor("📘 Command list for " + modules)
   for (var i = 0; i < command.length; i++) {
-    temp.addField(`${command[i]} - ${help[command[i]].info}`, `\`Usage:\` \`${help[command[i]].usage.replace("{0}", server.config.prefix)}\``)
+    temp.addField(`${command[i]} - ${help[command[i]] && help[command[i]].info || "N/A"}`, `\`Usage:\` \`${help[command[i]] && help[command[i]].usage.replace("{0}", server.config.prefix) || "N/A"}\``)
   }
   message.channel.send(temp)
-}
-
-Utilities.prototype.speak = function(args) {
-  var message = this.message
-
-  if (!message.member.hasPermission("MANAGE_MESSAGES")) return errors.noPerms(message, "MANAGE_MESSAGES")
-    .catch(console.error)
-  message.channel.send(args.join(" "), {
-    tts: true
-  })
 }
 
 Utilities.prototype.ping = function() {
@@ -103,8 +91,18 @@ Utilities.prototype.say = function(args) {
   var message = this.message
 
   if (!message.member.hasPermission("MANAGE_MESSAGES")) return errors.noPerms(message, "MANAGE_MESSAGES")
-    .catch(console.error)
+
   message.channel.send(args.join(" "))
+}
+
+Utilities.prototype.speak = function(args) {
+  var message = this.message
+
+  if (!message.member.hasPermission("MANAGE_MESSAGES")) return errors.noPerms(message, "MANAGE_MESSAGES")
+
+  message.channel.send(args.join(" "), {
+    tts: true
+  })
 }
 
 Utilities.prototype.serverinfo = function() {
