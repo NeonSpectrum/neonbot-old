@@ -284,7 +284,7 @@ Administration.prototype.voicetts = async function(args) {
     server = this.server
 
   if (!$.isOwner(message.member.id)) return message.channel.send($.embed("You don't have a permission to set voice tts channel."))
-  if (args[0] && args[0] != "enable" && args[0] != "disable") return message.channel.send($.embed("Invalid Parameters (enable | disable)."))
+  if (args[0] != "enable" && args[0] != "disable") return message.channel.send($.embed("Invalid Parameters (enable | disable)."))
 
   server.config = await $.updateServerConfig(message.guild.id, {
     "channel.voicetts": args[0] == "enable" ? message.channel.id : null
