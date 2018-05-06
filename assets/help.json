@@ -43,6 +43,10 @@
     "info": "Adds a role if joining or leaving the voice channel.",
     "usage": "{0}vcrole <role name>"
   },
+  "voicetts": {
+    "info": "Enables or Disables Voice TTS in this channel.",
+    "usage": "{0}voicetts <enable | disable>"
+  },
   "logchannel": {
     "info": "Enables or Disables Logs in this channel.",
     "usage": "{0}logchannel <enable | disable>"
