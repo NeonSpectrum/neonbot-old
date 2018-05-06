@@ -48,6 +48,34 @@ Administration.prototype.addrole = function(args) {
   )
 }
 
+Administration.prototype.removerole = function(args) {
+  var message = this.message
+
+  if (!message.member.hasPermission("MANAGE_ROLES")) return errors.noPerms(message, "MANAGE_ROLES")
+
+  var rMember = message.guild.member(message.mentions.users.first()) || message.guild.members.get(args[0])
+
+  if (!rMember) return message.channel.send($.embed("Couldn't find that user, yo."))
+
+  var role = args.join(" ")
+    .slice(22)
+
+  if (!role) return message.channel.send($.embed("Specify a role!"))
+
+  var gRole = message.guild.roles.find(`name`, role)
+
+  if (!gRole) return message.channel.send($.embed("Couldn't find that role."))
+
+  if (!rMember.roles.has(gRole.id)) return message.channel.send($.embed("They don't have that role."))
+
+  await (rMember.role.remove(gRole.id))
+
+  message.channel.send($.embed()
+    .setTitle("Removed Role")
+    .setDescription(`<@${rMember.id}>, We removed ${gRole.name} from them.`)
+  )
+}
+
 Administration.prototype.ban = function(args) {
   var message = this.message
 
@@ -163,34 +191,6 @@ Administration.prototype.prefix = async function(args) {
 
   message.channel.send($.embed(`Set to ${args[0]}`)
     .setTitle("Prefix Set!")
-  )
-}
-
-Administration.prototype.removerole = function(args) {
-  var message = this.message
-
-  if (!message.member.hasPermission("MANAGE_ROLES")) return errors.noPerms(message, "MANAGE_ROLES")
-
-  var rMember = message.guild.member(message.mentions.users.first()) || message.guild.members.get(args[0])
-
-  if (!rMember) return message.channel.send($.embed("Couldn't find that user, yo."))
-
-  var role = args.join(" ")
-    .slice(22)
-
-  if (!role) return message.channel.send($.embed("Specify a role!"))
-
-  var gRole = message.guild.roles.find(`name`, role)
-
-  if (!gRole) return message.channel.send($.embed("Couldn't find that role."))
-
-  if (!rMember.roles.has(gRole.id)) return message.channel.send($.embed("They don't have that role."))
-
-  await (rMember.removeRole(gRole.id))
-
-  message.channel.send($.embed()
-    .setTitle("Removed Role")
-    .setDescription(`<@${rMember.id}>, We removed ${gRole.name} from them.`)
   )
 }
 
