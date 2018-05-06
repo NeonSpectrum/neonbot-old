@@ -13,6 +13,7 @@ $.log = (content, message) => {
     console.log(`${colors.yellow("------ " + moment().format('YYYY-MM-DD hh:mm:ss A') + " ------")}
    ${colors.cyan("Guild")}: ${message.channel.guild.name}
    ${colors.cyan("Channel")}: ${message.channel.name}
+   ${colors.cyan("User")}: ${message.author.tag}
    ${colors.cyan("Message")}: ${content}
 `)
   } else {
