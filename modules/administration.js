@@ -352,11 +352,11 @@ Administration.prototype.update = function() {
       var msg = await message.channel.send($.embed()
         .setFooter(bot.user.tag, bot.user.displayAvatarURL())
         .setAuthor("GitHub Update", "https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png")
-        .setDescription("There is an update available. Update? (yes | no)")
+        .setDescription("There is an update available. Update? (y | n)")
       )
       var collector = new Discord.MessageCollector(message.channel, m => m.author.id === message.author.id)
       collector.on("collect", async (m) => {
-        if (m.content.toLowerCase() == "yes") {
+        if (m.content.toLowerCase() == "y") {
           m.delete().catch(() => {})
           msg.delete().catch(() => {})
           msg = null
@@ -373,7 +373,7 @@ Administration.prototype.update = function() {
             ).catch(() => {})
             process.exit(2)
           })
-        } else if (m.content.toLowerCase() == "no") {
+        } else if (m.content.toLowerCase() == "n") {
           m.delete().catch(() => {})
           msg.delete().catch(() => {})
           collector.emit("end")
