@@ -7,9 +7,9 @@
     "info": "Bans the user.",
     "usage": "{0}ban <user> <reason>"
   },
-  "clear": {
+  "prune": {
     "info": "Cleans up messages.",
-    "usage": "{0}clear <number of messages>"
+    "usage": "{0}prune <number of messages>"
   },
   "kick": {
     "info": "Kicks the user.",

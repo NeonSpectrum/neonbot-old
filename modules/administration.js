@@ -107,7 +107,7 @@ Administration.prototype.ban = function(args) {
   )
 }
 
-Administration.prototype.clear = async function(args) {
+Administration.prototype.prune = async function(args) {
   var message = this.message,
     server = this.server
 
