@@ -49,21 +49,6 @@ $.isOwner = (id) => {
   return id == config.ownerid
 }
 
-$.isInArray = (arr, value) => {
-  for (var i = 0; i < arr.length; i++) {
-    if (arr[i] == value) return true
-  }
-  return false
-}
-
-$.addIfNotExists = (arr, value) => {
-  for (var i = 0; i < arr.length; i++) {
-    if (arr[i] == value) return arr
-  }
-  arr.push(value)
-  return arr
-}
-
 $.processDatabase = (arr, items) => {
   return new Promise((resolve, reject) => {
     var i = 0

@@ -100,7 +100,7 @@ Games.prototype.pokemon = async function(args) {
       }
     })
     collector.on("end", async (collection, reason) => {
-      msg.delete()
+      msg.delete().catch(() => {})
       msg = null
       await message.channel.send($.embed()
         .attachFiles([real])

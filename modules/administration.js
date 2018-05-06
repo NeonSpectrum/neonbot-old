@@ -40,7 +40,7 @@ Administration.prototype.addrole = function(args) {
 
   if (rMember.roles.has(gRole.id)) return message.channel.send($.embed("They already have that role."))
 
-  await (rMember.addRole(gRole.id))
+  await (rMember.roles.add(gRole.id))
 
   message.channel.send($.embed()
     .setDescription("Role Added")
@@ -84,7 +84,7 @@ Administration.prototype.clear = async function(args) {
     server = this.server
 
   if (!message.member.hasPermission("MANAGE_MESSAGES")) return errors.noPerms(message, "MANAGE_MESSAGES")
-  if (!server.config.deleteoncmd) await message.delete()
+  if (!server.config.deleteoncmd) await message.delete().catch(() => {})
   if (message.mentions.users.first()) {
     if (!args[1] || !Number.isInteger(+args[1])) return message.channel.send($.embed(`Invalid Parameters ${server.config.prefix}clear <user> <1-100>`))
     else if (args[1] > 100 && args[1] < 1) return message.channel.send($.embed("Parameters must be `1-100`."))
@@ -93,10 +93,10 @@ Administration.prototype.clear = async function(args) {
     await bulkDeleteMessagesFrom(message.mentions.users.first().id, message.channel, +args[1])
     msg.edit($.embed(`Done deleting ${message.mentions.users.first().username}'s ${args[0] == 1 ? "message" : "messages"}.`)).then(s => s.delete({
       timeout: 3000
-    }))
+    }).catch(() => {}))
   } else if (Number.isInteger(+args[0])) {
     if (args[0] > 100 && args[0] < 1) return message.channel.send($.embed("Parameters must be `1-100`."))
-    message.channel.bulkDelete(+args[0])
+    message.channel.bulkDelete(+args[0]).catch(() => {})
   } else {
     var msg = await message.channel.send($.embed("Please wait while I'm deleting 10 bot messages..."))
     await bulkDeleteMessagesFrom(bot.user.id, message.channel, 10, {
@@ -104,7 +104,7 @@ Administration.prototype.clear = async function(args) {
     })
     msg.edit($.embed("Done deleting bot messages.")).then(s => s.delete({
       timeout: 3000
-    }))
+    }).catch(() => {})).catch(() => {})
   }
 
   async function bulkDeleteMessagesFrom(user, channel, length, options) {
@@ -117,7 +117,7 @@ Administration.prototype.clear = async function(args) {
         })
         temp = temp.filter(s => s.author.id == user && (options && options.filter ? s.id != options.filter : true))
         temp = Array.from(temp.keys()).slice(0, length - count)
-        await channel.bulkDelete(temp)
+        await channel.bulkDelete(temp).catch(() => {})
         count += temp.length
       } while (count != length)
       resolve(count)
@@ -258,6 +258,27 @@ Administration.prototype.deleteoncmd = async function(args) {
   message.channel.send($.embed("Delete On Cmd is now " + (server.config.deleteoncmd ? "enabled" : "disabled") + "."))
 }
 
+Administration.prototype.vcrole = async function(args) {
+  var message = this.message,
+    server = this.server
+  try {
+    if (!$.isOwner(message.member.id)) return message.channel.send($.embed("You don't have a permission to set voice channel role."))
+    if (args[0] && !message.guild.roles.exists("name", args[0])) return message.channel.send($.embed("Invalid Role Name."))
+    if (!message.member.voiceChannel) return message.channel.send($.embed("You must be in a voice channel."))
+
+    server.config = await $.updateServerConfig(message.guild.id, {
+      ["music.roles." + message.member.voiceChannel.id]: args[0] ? message.guild.roles.find("name", args[0]).id : null
+    })
+    if (args[0]) {
+      message.channel.send($.embed(`Connecting to ${message.member.voiceChannel.name} will have a role ${args[0]}.`))
+    } else {
+      message.channel.send($.embed(`Voice channel role has been removed.`))
+    }
+  } catch (err) {
+    console.log(err)
+  }
+}
+
 Administration.prototype.voicetts = async function(args) {
   var message = this.message,
     server = this.server
@@ -282,6 +303,19 @@ Administration.prototype.logchannel = async function(args) {
     "channel.log": args[0] == "enable" ? message.channel.id : null
   })
   message.channel.send($.embed(`Log Channel is now ${args[0] != "enable" ? "disabled" : "changed to this channel"}.`))
+}
+
+Administration.prototype.logmsgdelete = async function(args) {
+  var message = this.message,
+    server = this.server
+
+  if (!$.isOwner(message.member.id)) return message.channel.send($.embed("You don't have a permission to set message deleted channel."))
+  if (args[0] != "enable" && args[0] != "disable") return message.channel.send($.embed("Invalid Parameters (enable | disable)."))
+
+  server.config = await $.updateServerConfig(message.guild.id, {
+    "channel.msgdelete": args[0] == "enable" ? message.channel.id : null
+  })
+  message.channel.send($.embed(`Message Deleted Channel is now ${args[0] != "enable" ? "disabled" : "changed to this channel"}.`))
 }
 
 Administration.prototype.debug = async function(args) {
@@ -323,8 +357,8 @@ Administration.prototype.update = function() {
       var collector = new Discord.MessageCollector(message.channel, m => m.author.id === message.author.id)
       collector.on("collect", async (m) => {
         if (m.content.toLowerCase() == "yes") {
-          m.delete()
-          msg.delete()
+          m.delete().catch(() => {})
+          msg.delete().catch(() => {})
           msg = null
           var ghmsg = await message.channel.send($.embed()
             .setFooter(bot.user.tag, bot.user.displayAvatarURL())
@@ -336,19 +370,19 @@ Administration.prototype.update = function() {
               .setFooter(bot.user.tag, bot.user.displayAvatarURL())
               .setAuthor("GitHub Update", "https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png")
               .setDescription("Now restarting the bot to apply changes.")
-            )
+            ).catch(() => {})
             process.exit(2)
           })
         } else if (m.content.toLowerCase() == "no") {
-          m.delete()
-          msg.delete()
+          m.delete().catch(() => {})
+          msg.delete().catch(() => {})
           collector.emit("end")
         }
       })
       setTimeout(() => {
         if (msg != null) {
           collector.emit("end")
-          msg.delete()
+          msg.delete().catch(() => {})
         }
       }, 20000)
     }

@@ -58,7 +58,7 @@ Utilities.prototype.cmds = function(args) {
       modules = "Utilities"
       break
   }
-  var temp = $.embed().setAuthor("📔 Command list for " + modules)
+  var temp = $.embed().setAuthor("📘 Command list for " + modules)
   for (var i = 0; i < command.length; i++) {
     temp.addField(`${command[i]} - ${help[command[i]].info}`, `\`Usage:\` \`${help[command[i]].usage.replace("{0}", server.config.prefix)}\``)
   }

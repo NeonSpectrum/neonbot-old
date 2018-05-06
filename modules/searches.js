@@ -38,7 +38,7 @@ Searches.prototype.google = async function(args) {
     for (var i = 0; i < items.length; i++) {
       temp.push(`[**${items[i].title}**](${items[i].link})\n${items[i].snippet.replace(/<\/?[^>]+(>|$)/g, "")}\n`)
     }
-    msg.delete();
+    msg.delete().catch(() => {})
     message.channel.send($.embed()
       .setAuthor(`Google Search for ${args.join(" ")}`, "http://i.imgur.com/G46fm8J.png")
       .setDescription(temp.join("\n"))

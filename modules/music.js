@@ -81,7 +81,7 @@ Music.prototype.play = async function(args) {
         error++
       }
     }
-    return msg.edit($.embed(`Done! Loaded ${videos.length} songs.` + (error > 0 ? ` ${error} failed to load.` : "")))
+    return msg.edit($.embed(`Done! Loaded ${videos.length} songs.` + (error > 0 ? ` ${error} failed to load.` : ""))).catch(() => {})
   } else if (args[0].match(/^(https?\:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+$/g)) {
     this.log("Processing " + args[0])
     var info = await ytdl.getInfo(args[0])
@@ -112,13 +112,13 @@ Music.prototype.play = async function(args) {
     var msg = await message.channel.send(temp)
     var collector = msg.createReactionCollector((reaction, user) => user.id === message.author.id);
     collector.on('collect', async react => {
-      react.message.delete()
+      react.message.delete().catch(() => {})
       msg = null;
       var i = reaction_numbers.indexOf(react._emoji.name)
       message.channel.send($.embed(songSearchList[i - 1].title).setTitle(`You have selected #${i}. `))
         .then(msg => msg.delete({
           timeout: 5000
-        }))
+        }).catch(() => {}))
       var index = server.queue.push({
         title: songSearchList[i - 1].title,
         url: songSearchList[i - 1].url,
@@ -128,7 +128,7 @@ Music.prototype.play = async function(args) {
       connect()
     })
     setTimeout(() => {
-      if (msg != null) msg.delete()
+      if (msg != null) msg.delete().catch(() => {})
     }, 30000)
     for (var i = 1; i <= 5; i++) {
       try {
@@ -160,7 +160,7 @@ Music.prototype.stop = function() {
     server.autoplayid = []
     message.channel.send($.embed("Player stopped!")).then(s => s.delete({
       timeout: 3000
-    }))
+    })).catch(() => {})
     this.log("Player stopped!")
   }
 }
@@ -254,7 +254,7 @@ Music.prototype.pause = async function() {
       server.lastPauseMessage = await message.channel.send($.embed(`Player paused. \`${server.config.prefix}resume\` to resume.`))
       this.log("Player paused!")
     } else {
-      if (server.lastAutoMessage) server.lastAutoMessage.delete()
+      if (server.lastAutoMessage) server.lastAutoMessage.delete().catch(() => {})
       server.lastAutoMessage = await bot.channels.get(server.currentChannel).send($.embed(`Player has automatically paused because there are no users connected.`))
       $.log("Player has automatically paused because there are no users connected.", server.lastAutoMessage)
     }
@@ -274,10 +274,10 @@ Music.prototype.resume = async function() {
       }
       message.channel.send($.embed(`Player resumed.`)).then(s => s.delete({
         timeout: 5000
-      }))
+      }).catch(() => {}))
       this.log("Player resumed!")
     } else {
-      if (server.lastAutoMessage) server.lastAutoMessage.delete()
+      if (server.lastAutoMessage) server.lastAutoMessage.delete().catch(() => {})
       server.lastAutoMessage = await bot.channels.get(server.currentChannel).send($.embed(`Player has automatically resumed.`))
       $.log("Player has automatically resumed.", server.lastAutoMessage)
     }
@@ -345,10 +345,10 @@ Music.prototype.execute = async function(connection) {
     if (server.config.music.repeat == "off") {
       server.queue = []
       if (server.config.music.autoplay) {
-        server.autoplayid = $.addIfNotExists(server.autoplayid, server.previnfo.video_id)
+        if (server.autoplayid.indexOf(server.previnfo.video_id) == -1) server.autoplayid.push(server.previnfo.video_id)
         for (var i = 0; i < server.previnfo.related_videos.length; i++) {
           var id = server.previnfo.related_videos[i].id || server.previnfo.related_videos[i].video_id
-          if (!$.isInArray(server.autoplayid, id)) {
+          if (server.autoplayid.indexOf(id) == -1) {
             server.autoplayid.push(id)
             server.previnfo = await ytdl.getInfo(id)
             break
@@ -385,7 +385,7 @@ Music.prototype.execute = async function(connection) {
   server.dispatcher.on("start", async () => {
     var requested = server.queue[server.currentQueue].requested
     var footer = [requested.tag, $.formatSeconds(server.queue[server.currentQueue].info.length_seconds), `Volume: ${server.config.music.volume}%`, `Repeat: ${server.config.music.repeat}`, `Autoplay: ${server.config.music.autoplay ? "on" : "off"}`]
-    if (server.lastPlayingMessage) server.lastPlayingMessage.delete()
+    if (server.lastPlayingMessage) server.lastPlayingMessage.delete().catch(() => {})
     server.lastPlayingMessage = await message.channel.send($.embed()
       .setAuthor("Now Playing #" + (server.currentQueue + 1), "https://i.imgur.com/SBMH84I.png")
       .setFooter(footer.join(" | "), requested.displayAvatarURL())
@@ -398,7 +398,7 @@ Music.prototype.execute = async function(connection) {
     var requested = server.queue[server.currentQueue].requested
     var footer = [requested.tag, $.formatSeconds(server.queue[server.currentQueue].info.length_seconds), `Volume: ${server.config.music.volume}%`, `Repeat: ${server.config.music.repeat}`, `Autoplay: ${server.config.music.autoplay ? "on" : "off"}`]
 
-    if (server.lastFinishedMessage) server.lastFinishedMessage.delete()
+    if (server.lastFinishedMessage) server.lastFinishedMessage.delete().catch(() => {})
     server.lastFinishedMessage = await message.channel.send($.embed()
       .setAuthor("Finished Playing #" + (server.currentQueue + 1), "https://i.imgur.com/SBMH84I.png")
       .setFooter(footer.join(" | "), requested.displayAvatarURL())

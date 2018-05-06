@@ -3,33 +3,50 @@ const moment = require('moment')
 const $ = require('../assets/functions')
 const Music = require('./music')
 
-bot.on('voiceStateUpdate', (oldMember, newMember) => {
+var members = []
+bot.on('voiceStateUpdate', async (oldMember, newMember) => {
   if (newMember.user.bot) return
-
-  var msg, config
+  if (!members[newMember.user.id]) {
+    members[newMember.user.id] = {
+      roleid: null
+    }
+  }
+  var msg, config = $.getServerConfig(newMember.guild.id),
+    member = members[newMember.user.id]
 
   if (oldMember.voiceChannelID != null && newMember.voiceChannelID == null) {
     var music = new Music(oldMember)
-    config = $.getServerConfig(oldMember.guild.id)
 
     msg = `**${oldMember.user.username}** has disconnected from **${bot.channels.get(oldMember.voiceChannelID).name}**`
 
     if (newMember.guild.channels.get(oldMember.voiceChannelID).members.filter(s => !s.user.bot).size == 0) music.pause()
+
+    if (member.roleid) {
+      oldMember.roles.remove(member.roleid).then(() => {
+        member.roleid = null
+      }).catch(() => {})
+    }
   } else if (oldMember.voiceChannelID == null && newMember.voiceChannelID != null) {
     var music = new Music(newMember)
-    config = $.getServerConfig(newMember.guild.id)
 
     msg = `**${newMember.user.username}** has connected to **${bot.channels.get(newMember.voiceChannelID).name}**`
 
     if (newMember.guild.channels.get(newMember.voiceChannelID).members.filter(s => !s.user.bot).size > 0) music.resume()
+
+    if (config.music.roles[newMember.voiceChannelID]) {
+      newMember.roles.add(config.music.roles[newMember.voiceChannelID]).then(() => {
+        member.roleid = config.music.roles[newMember.voiceChannelID]
+      }).catch(() => {})
+    }
   }
+
   if (msg) {
     if (config.channel.voicetts) {
       bot.channels.get(config.channel.voicetts).send(msg, {
         tts: true
       }).then(msg => msg.delete({
         timeout: 5000
-      }))
+      }).catch(() => {}))
     }
     if (config.channel.log) {
       bot.channels.get(config.channel.log).send($.embed()
@@ -38,6 +55,7 @@ bot.on('voiceStateUpdate', (oldMember, newMember) => {
       )
     }
   }
+
 })
 
 bot.on('presenceUpdate', (oldMember, newMember) => {
@@ -66,7 +84,7 @@ bot.on('guildMemberAdd', (member) => {
     .setDescription(`Welcome to ${member.guild.name}, ${member.user.toString()}!`)
   ).then(s => s.delete({
     timeout: 30000
-  }))
+  }).catch(() => {}))
   if (config.channel.log) {
     bot.channels.get(config.channel.log).send($.embed()
       .setAuthor("Guild Member Update", `https://cdn.discordapp.com/avatars/${bot.user.id}/${bot.user.avatar}.png?size=16`)
@@ -83,7 +101,7 @@ bot.on('guildMemberRemove', (member) => {
     .setDescription(`${member.user.tag} left the server!`)
   ).then(s => s.delete({
     timeout: 30000
-  }))
+  }).catch(() => {}))
   if (config.channel.log) {
     bot.channels.get(config.channel.log).send($.embed()
       .setAuthor("Guild Member Update", `https://cdn.discordapp.com/avatars/${bot.user.id}/${bot.user.avatar}.png?size=16`)
@@ -96,6 +114,19 @@ bot.on('guildCreate', (guild) => {
   var guilds = Array.from(bot.guilds.keys())
   $.processDatabase(guilds, guildlist)
   guild.channels.first().send($.embed(`Thanks for inviting me on this server! <3`))
+})
+
+bot.on('messageDelete', (message) => {
+  var config = $.getServerConfig(message.guild.id)
+
+  if (config.channel.msgdelete) {
+    bot.channels.get(config.channel.msgdelete).send($.embed()
+      .setAuthor("✉ Message Deleted")
+      .addField("User: ", message.author.tag)
+      .addField("Content: ", message.content || "-")
+      .setFooter(moment().format('YYYY-MM-DD hh:mm:ss A'))
+    )
+  }
 })
 
 module.exports = bot
