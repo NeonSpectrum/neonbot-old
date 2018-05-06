@@ -119,11 +119,11 @@ bot.on('guildCreate', (guild) => {
 bot.on('messageDelete', (message) => {
   var config = $.getServerConfig(message.guild.id)
 
-  if (config.channel.msgdelete) {
+  if (config.channel.msgdelete && message.content) {
     bot.channels.get(config.channel.msgdelete).send($.embed()
       .setAuthor("✉ Message Deleted")
       .addField("User: ", message.author.tag)
-      .addField("Content: ", message.content || "-")
+      .addField("Content: ", message.content)
       .setFooter(moment().format('YYYY-MM-DD hh:mm:ss A'))
     )
   }

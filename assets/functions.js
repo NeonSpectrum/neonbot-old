@@ -51,46 +51,25 @@ $.isOwner = (id) => {
 }
 
 $.processDatabase = (arr, items) => {
-  return new Promise((resolve, reject) => {
-    var i = 0
-    var loop = async () => {
-      if (i != arr.length) {
-        var isExists = false
-        for (var j = 0; j < items.length; j++) {
-          if (items[j].server_id == arr[i]) {
-            isExists = true
-            break
+  return new Promise(async (resolve, reject) => {
+    for (var i = 0; i < arr.length; i++) {
+      if (!items.find((x) => x.server_id == arr[i])) {
+        await db.collection("servers").insert({
+          server_id: arr[i],
+          prefix: config.default_prefix,
+          channel: {},
+          music: {
+            volume: 100,
+            autoplay: false,
+            repeat: "off",
+            roles: {}
           }
-        }
-        if (!isExists) {
-          db.collection("servers").insert({
-            server_id: arr[i],
-            prefix: config.default_prefix,
-            deleteoncmd: false,
-            channel: {
-              log: null,
-              voicetts: null,
-              debug: null
-            },
-            music: {
-              volume: 100,
-              autoplay: false,
-              repeat: "off"
-            }
-          }, (err, items) => {
-            i++
-            loop()
-          })
-        } else {
-          i++
-          loop()
-        }
-      } else {
-        await $.refreshServerConfig()
-        resolve()
+        })
       }
     }
-    loop()
+    $.refreshServerConfig().then(() => {
+      resolve()
+    })
   })
 }
 

@@ -1,4 +1,3 @@
-const Discord = require('discord.js')
 const bot = require('../bot')
 const $ = require('../assets/functions')
 const config = $.getConfig()
@@ -22,9 +21,9 @@ class Games {
       }
       this.server = servers[message.guild.id]
       this.message = message
-    }
-    this.log = (content) => {
-      $.log(content, message)
+      this.log = (content) => {
+        $.log(content, message)
+      }
     }
   }
 }
@@ -54,6 +53,7 @@ Games.prototype.pokemon = async function(args) {
     return
   } else if (server.pokemonTimeout == 5) {
     message.channel.send($.embed(`Pokemon game has stopped due to 5 consecutive lose.`))
+    showScoreboard(true)
     reset()
     return
   }
@@ -87,21 +87,20 @@ Games.prototype.pokemon = async function(args) {
       .setImage("attachment://file.jpg")
       .setFooter(guessString(name))
     )
-    var collector = new Discord.MessageCollector(message.channel, () => true)
     var winner
-    collector.on("collect", (m) => {
-      if (!server.score[m.author.id] && !m.author.bot) {
-        server.score[m.author.id] = 0
+    message.channel.awaitMessages((m) => m.content.toLowerCase() == name.toLowerCase(), {
+      max: 1,
+      time: 20000,
+      errors: ['time']
+    }).then((m) => {
+      winner = m.first().author.id
+      if (!server.score[winner] && !m.first().author.bot) {
+        server.score[winner] = 0
       }
-      if (m.content.toLowerCase() == name.toLowerCase()) {
-        winner = m.author.id
-        server.score[winner] += 1
-        collector.emit("end")
-      }
-    })
-    collector.on("end", async (collection, reason) => {
+      server.score[winner] += 1
+      throw "done"
+    }).catch(async (err) => {
       msg.delete().catch(() => {})
-      msg = null
       await message.channel.send($.embed()
         .attachFiles([real])
         .setAuthor("Who's that pokemon?", "https://i.imgur.com/3sQh8aN.png")
@@ -111,9 +110,6 @@ Games.prototype.pokemon = async function(args) {
       if (!winner) server.pokemonTimeout += 1
       self.pokemon("loop")
     })
-    setTimeout(() => {
-      if (msg != null) collector.emit("end")
-    }, 20000)
   })
 
   function showScoreboard(final) {

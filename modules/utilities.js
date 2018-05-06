@@ -12,9 +12,9 @@ class Utilities {
       }
       this.server = server
       this.message = message
-    }
-    this.log = (content) => {
-      $.log(content, message)
+      this.log = (content) => {
+        $.log(content, message)
+      }
     }
   }
 }

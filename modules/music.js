@@ -14,7 +14,6 @@ const config = $.getConfig()
 const Youtube = require('simple-youtube-api')
 const yt = new Youtube(config.google_api)
 
-const reaction_numbers = ["\u0030\u20E3", "\u0031\u20E3", "\u0032\u20E3", "\u0033\u20E3", "\u0034\u20E3", "\u0035\u20E3", "\u0036\u20E3", "\u0037\u20E3", "\u0038\u20E3", "\u0039\u20E3"]
 var servers = []
 
 class Music {
@@ -25,7 +24,7 @@ class Music {
           queue: [],
           autoplayid: [],
           currentQueue: 0,
-          currentChannel: "",
+          currentChannel: null,
           previnfo: null,
           config: $.getServerConfig(message.guild.id),
           lastPlayingMessage: null,
@@ -67,9 +66,7 @@ Music.prototype.play = async function(args) {
 
     for (var i = 0; i < videos.length; i++) {
       try {
-        this.log("Processing " + "https://www.youtube.com/watch?v=" + videos[i].id)
         var info = await ytdl.getInfo(videos[i].id)
-        this.log("Done Processing " + "https://www.youtube.com/watch?v=" + videos[i].id)
         server.queue.push({
           title: info.title,
           url: info.video_url,
@@ -83,9 +80,7 @@ Music.prototype.play = async function(args) {
     }
     return msg.edit($.embed(`Done! Loaded ${videos.length} songs.` + (error > 0 ? ` ${error} failed to load.` : ""))).catch(() => {})
   } else if (args[0].match(/^(https?\:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+$/g)) {
-    this.log("Processing " + args[0])
     var info = await ytdl.getInfo(args[0])
-    this.log("Done Processing " + args[0])
     server.queue.push({
       title: info.title,
       url: info.video_url,
@@ -109,44 +104,49 @@ Music.prototype.play = async function(args) {
         requested: message.author
       })
     }
+
+    var reactionlist = ["\u0031\u20E3", "\u0032\u20E3", "\u0033\u20E3", "\u0034\u20E3", "\u0035\u20E3", "🗑"]
     var msg = await message.channel.send(temp)
-    var collector = msg.createReactionCollector((reaction, user) => user.id === message.author.id);
-    collector.on('collect', async react => {
-      react.message.delete().catch(() => {})
-      msg = null;
-      var i = reaction_numbers.indexOf(react._emoji.name)
-      message.channel.send($.embed(songSearchList[i - 1].title).setTitle(`You have selected #${i}. `))
+    msg.awaitReactions((reaction, user) => reactionlist.indexOf(reaction.emoji.name) > -1 && user.id === message.author.id, {
+      max: 1,
+      time: 15000,
+      errors: ['time']
+    }).then(async (collected) => {
+      collected.first().message.delete().catch(() => {})
+      if (collected.first().emoji.name == "🗑") return
+      var i = reactionlist.indexOf(collected.first().emoji.name)
+      message.channel.send($.embed(songSearchList[i].title).setTitle(`You have selected #${i+1}. `))
         .then(msg => msg.delete({
           timeout: 5000
         }).catch(() => {}))
       var index = server.queue.push({
-        title: songSearchList[i - 1].title,
-        url: songSearchList[i - 1].url,
+        title: songSearchList[i].title,
+        url: songSearchList[i].url,
         requested: message.author
       })
-      server.queue[index - 1].info = await ytdl.getInfo(songSearchList[i - 1].url)
+      server.queue[index - 1].info = await ytdl.getInfo(songSearchList[i].url)
       connect()
-    })
-    setTimeout(() => {
-      if (msg != null) msg.delete().catch(() => {})
-    }, 30000)
-    for (var i = 1; i <= 5; i++) {
+    }).catch(() => {
+      msg.delete().catch(() => {})
+    });
+    for (var i = 0; i < reactionlist.length; i++) {
       try {
-        await msg.react(reaction_numbers[i])
+        await msg.react(reactionlist[i])
       } catch (err) {
         break
       }
     }
-
   }
 
   function connect() {
     if (!message.guild.voiceConnection) {
       message.member.voiceChannel.join()
         .then((connection) => {
+          self.log("Connected to " + message.member.voiceChannel.name)
           self.execute(connection)
+        }).catch(() => {
+          message.channel.send("I can't join the voice channel.")
         })
-      self.log("Connected to " + message.member.voiceChannel.name)
     }
   }
 }

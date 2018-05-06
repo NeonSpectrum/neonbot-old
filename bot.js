@@ -45,12 +45,12 @@ bot.on('ready', async () => {
 
   var modulesTime = new Date()
   try {
-    require('./modules/events')
     Administration = require('./modules/administration')
     Utilities = require('./modules/utilities')
     Music = require('./modules/music')
     Searches = require('./modules/searches')
     Games = require('./modules/games')
+    require('./modules/events')
   } catch (err) {
     $.warn(err)
   }
@@ -94,7 +94,7 @@ bot.on('ready', async () => {
   loaded = true
 })
 
-bot.on('message', async message => {
+bot.on('message', message => {
   if (!loaded) return
   if (message.author.bot) return
   if (message.channel.type === "dm") {
@@ -115,40 +115,37 @@ bot.on('message', async message => {
 
   switch (getModule(cmd)) {
     case 'admin':
-      await processBeforeCommand()
+      processBeforeCommand()
       var admin = new Administration(message)
       admin[cmd](args)
       break
     case 'music':
-      await processBeforeCommand()
+      processBeforeCommand()
       var music = new Music(message)
       music[cmd](args)
       break
     case "util":
-      await processBeforeCommand()
+      processBeforeCommand()
       var utils = new Utilities(message)
       utils[cmd](args)
       break
     case "search":
-      await processBeforeCommand()
+      processBeforeCommand()
       var search = new Searches(message)
       search[cmd](args)
       break
     case "games":
-      await processBeforeCommand()
+      processBeforeCommand()
       var games = new Games(message)
       games[cmd](args)
       break
   }
 
-  async function processBeforeCommand() {
-    return new Promise(async (resolve, reject) => {
-      if (server.deleteoncmd) {
-        await message.delete()
-      }
-      $.log("Command Executed " + message.content.trim(), message)
-      resolve()
-    })
+  function processBeforeCommand() {
+    if (server.deleteoncmd) {
+      message.delete().catch(() => {})
+    }
+    $.log("Command Executed " + message.content.trim(), message)
   }
 })
 
