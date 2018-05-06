@@ -90,6 +90,7 @@ Utilities.prototype.stats = function() {
   message.channel.send($.embed()
     .setThumbnail(bot.user.displayAvatarURL())
     .addField("Bot Name", bot.user.tag)
+    .addField("Version", require("../package.json").version)
     .addField("Created On", bot.user.createdAt)
     .addField("Created By", bot.users.get("260397381856526337").tag)
     .addField("Server Count", Array.from(bot.guilds.keys()).length)
