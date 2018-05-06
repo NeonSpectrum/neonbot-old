@@ -367,11 +367,11 @@ Music.prototype.execute = async function(connection) {
     }
   }
 
-  const stream = ytdl(server.queue[server.currentQueue].url, process.env.HEROKU ? {
+  const stream = ytdl(server.queue[server.currentQueue].url, process.env.DEVELOPMENT ? {
+    filter: "audioonly"
+  } : {
     quality: "highestaudio",
     highWaterMark: 1024 * 1024 * 5
-  } : {
-    filter: "audioonly"
   })
   // await $.wait(500)
   server.dispatcher = connection.play(stream, {
