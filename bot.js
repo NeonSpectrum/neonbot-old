@@ -54,6 +54,15 @@ bot.on('ready', async () => {
   } catch (err) {
     $.warn(err)
   }
+
+  bot.modules = {
+    "admin": getAllFuncs(new Administration()),
+    "music": getAllFuncs(new Music()),
+    "util": getAllFuncs(new Utilities()),
+    "search": getAllFuncs(new Searches()),
+    "games": getAllFuncs(new Games())
+  }
+
   $.log(`Loaded Modules in ${((Date.now() - modulesTime) / 1000).toFixed(2)} secs.\n`)
 
   $.log(`Logged in as ${bot.user.tag}\n`)
@@ -152,16 +161,7 @@ process.on('uncaughtException', (err) => {
 });
 
 function getModule(command) {
-  var modules = {
-    "admin": getAllFuncs(new Administration()),
-    "music": getAllFuncs(new Music()),
-    "util": getAllFuncs(new Utilities()),
-    "search": getAllFuncs(new Searches()),
-    "games": getAllFuncs(new Games())
-  }
-
-  bot.modules = modules
-
+  var modules = bot.modules
   var modulekeys = Object.keys(modules)
   for (var i = 0; i < modulekeys.length; i++) {
     var commandkeys = modules[Object.keys(modules)[i]]
