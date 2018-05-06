@@ -1,6 +1,6 @@
 const Discord = require('discord.js')
 const bot = require('../bot')
-const $ = require('../handler/functions')
+const $ = require('../assets/functions')
 const config = $.getConfig()
 const pokemon = require('pokemon')
 const jimp = require('jimp')

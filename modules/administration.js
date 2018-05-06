@@ -2,8 +2,8 @@ const fs = require('fs')
 const Discord = require('discord.js')
 const exec = require('child_process').exec
 const bot = require("../bot")
-const errors = require("../handler/errors.js")
-const $ = require('../handler/functions')
+const errors = require("../assets/errors.js")
+const $ = require('../assets/functions')
 const config = $.getConfig()
 class Administration {
   constructor(message) {
@@ -32,13 +32,13 @@ Administration.prototype.addrole = function(args) {
   var role = args.join(" ")
     .slice(22)
 
-  if (!role) return message.reply("Specify a role!")
+  if (!role) return message.channel.send($.embed("Specify a role!"))
 
   var gRole = message.guild.roles.find(`name`, role)
 
-  if (!gRole) return message.reply("Couldn't find that role.")
+  if (!gRole) return message.channel.send($.embed("Couldn't find that role."))
 
-  if (rMember.roles.has(gRole.id)) return message.reply("They already have that role.")
+  if (rMember.roles.has(gRole.id)) return message.channel.send($.embed("They already have that role."))
 
   await (rMember.addRole(gRole.id))
 
@@ -86,8 +86,8 @@ Administration.prototype.clear = async function(args) {
   if (!message.member.hasPermission("MANAGE_MESSAGES")) return errors.noPerms(message, "MANAGE_MESSAGES")
   if (!server.config.deleteoncmd) await message.delete()
   if (message.mentions.users.first()) {
-    if (!args[1] || !Number.isInteger(+args[1])) return message.reply(`Invalid Parameters ${server.config.prefix}clear <user> <1-100>`)
-    else if (args[1] > 100 && args[1] < 1) return message.reply("Parameters must be `1-100`.")
+    if (!args[1] || !Number.isInteger(+args[1])) return message.channel.send($.embed(`Invalid Parameters ${server.config.prefix}clear <user> <1-100>`))
+    else if (args[1] > 100 && args[1] < 1) return message.channel.send($.embed("Parameters must be `1-100`."))
 
     var msg = await message.channel.send($.embed(`Please wait while I'm deleting ${args[1]} ${message.mentions.users.first().username}'s ${args[0] == 1 ? "message" : "messages"}...`))
     await bulkDeleteMessagesFrom(message.mentions.users.first().id, message.channel, +args[1])
@@ -95,7 +95,7 @@ Administration.prototype.clear = async function(args) {
       timeout: 3000
     }))
   } else if (Number.isInteger(+args[0])) {
-    if (args[0] > 100 && args[0] < 1) return message.reply("Parameters must be `1-100`.")
+    if (args[0] > 100 && args[0] < 1) return message.channel.send($.embed("Parameters must be `1-100`."))
     message.channel.bulkDelete(+args[0])
   } else {
     var msg = await message.channel.send($.embed("Please wait while I'm deleting 10 bot messages..."))
@@ -154,8 +154,8 @@ Administration.prototype.prefix = async function(args) {
   var message = this.message,
     server = this.server
 
-  if (!$.isOwner(message.member.id)) return message.reply("You don't have a permission to set prefix.")
-  if (!args[0]) return message.reply(`Usage: ${config.prefix}prefix <desired prefix here>`)
+  if (!$.isOwner(message.member.id)) return message.channel.send($.embed("You don't have a permission to set prefix."))
+  if (!args[0]) return message.channel.send($.embed(`Usage: ${config.prefix}prefix <desired prefix here>`))
 
   server.config = await $.updateServerConfig(message.guild.id, {
     prefix: args[0]
@@ -173,18 +173,18 @@ Administration.prototype.removerole = function(args) {
 
   var rMember = message.guild.member(message.mentions.users.first()) || message.guild.members.get(args[0])
 
-  if (!rMember) return message.reply("Couldn't find that user, yo.")
+  if (!rMember) return message.channel.send($.embed("Couldn't find that user, yo."))
 
   var role = args.join(" ")
     .slice(22)
 
-  if (!role) return message.reply("Specify a role!")
+  if (!role) return message.channel.send($.embed("Specify a role!"))
 
   var gRole = message.guild.roles.find(`name`, role)
 
-  if (!gRole) return message.reply("Couldn't find that role.")
+  if (!gRole) return message.channel.send($.embed("Couldn't find that role."))
 
-  if (!rMember.roles.has(gRole.id)) return message.reply("They don't have that role.")
+  if (!rMember.roles.has(gRole.id)) return message.channel.send($.embed("They don't have that role."))
 
   await (rMember.removeRole(gRole.id))
 
@@ -198,8 +198,8 @@ Administration.prototype.setname = async function(args) {
   var message = this.message,
     server = this.server
 
-  if (!$.isOwner(message.member.id)) return message.reply("You don't have a permission to set name.")
-  if (args.join(" ").length > 32 || args.join(" ").length < 3) return message.reply("Username must be greater than 2 and less than 32")
+  if (!$.isOwner(message.member.id)) return message.channel.send($.embed("You don't have a permission to set name."))
+  if (args.join(" ").length > 32 || args.join(" ").length < 3) return message.channel.send($.embed("Username must be greater than 2 and less than 32"))
   await bot.user.setUsername(args.slice(1).join(" "), {
     type: args[0].toUpperCase()
   })
@@ -215,9 +215,9 @@ Administration.prototype.setgame = function(args) {
   var message = this.message,
     server = this.server
 
-  if (!$.isOwner(message.member.id)) return message.reply("You don't have a permission to set game.")
+  if (!$.isOwner(message.member.id)) return message.channel.send($.embed("You don't have a permission to set game."))
   if (!(args[0].toUpperCase() == "PLAYING" || args[0].toUpperCase() == "LISTENING" || args[0].toUpperCase() == "WATCHING"))
-    return message.reply("Invalid Parameters. Not a valid game type. (PLAYING, WATCHING, LISTENING)")
+    return message.channel.send($.embed("Invalid Parameters. Not a valid game type. (PLAYING, WATCHING, LISTENING)"))
 
   bot.user.setActivity(args.slice(1).join(" "), {
     type: args[0].toUpperCase()
@@ -235,8 +235,8 @@ Administration.prototype.setgame = function(args) {
 Administration.prototype.setavatar = function(args) {
   var message = this.message
 
-  if (!$.isOwner(message.member.id)) return message.reply("You don't have a permission to set avatar.")
-  if (!args[0].match(/[-a-zA-Z0-9@:%_\+.~#?&//=]{2,256}\.[a-z]{2,4}\b(\/[-a-zA-Z0-9@:%_\+.~#?&//=]*)?/gi)) return message.reply("Invalid URL.")
+  if (!$.isOwner(message.member.id)) return message.channel.send($.embed("You don't have a permission to set avatar."))
+  if (!args[0].match(/[-a-zA-Z0-9@:%_\+.~#?&//=]{2,256}\.[a-z]{2,4}\b(\/[-a-zA-Z0-9@:%_\+.~#?&//=]*)?/gi)) return message.channel.send($.embed("Invalid URL."))
 
   bot.user.setAvatar(args[0])
     .then(() => {
@@ -249,8 +249,8 @@ Administration.prototype.deleteoncmd = async function(args) {
   var message = this.message,
     server = this.server
 
-  if (!$.isOwner(message.member.id)) return message.reply("You don't have a permission to set delete on cmd.")
-  if (args[0] != "enable" && args[0] != "disable") return message.reply("Invalid Parameters (enable | disable).")
+  if (!$.isOwner(message.member.id)) return message.channel.send($.embed("You don't have a permission to set delete on cmd."))
+  if (args[0] != "enable" && args[0] != "disable") return message.channel.send($.embed("Invalid Parameters (enable | disable)."))
 
   server.config = await $.updateServerConfig(message.guild.id, {
     deleteoncmd: args[0] == "enable" ? true : false
@@ -262,8 +262,8 @@ Administration.prototype.voicetts = async function(args) {
   var message = this.message,
     server = this.server
 
-  if (!$.isOwner(message.member.id)) return message.reply("You don't have a permission to set voice tts channel.")
-  if (args[0] && args[0] != "enable" && args[0] != "disable") return message.reply("Invalid Parameters (enable | disable).")
+  if (!$.isOwner(message.member.id)) return message.channel.send($.embed("You don't have a permission to set voice tts channel."))
+  if (args[0] && args[0] != "enable" && args[0] != "disable") return message.channel.send($.embed("Invalid Parameters (enable | disable)."))
 
   server.config = await $.updateServerConfig(message.guild.id, {
     "channel.voicetts": args[0] == "enable" ? message.channel.id : null
@@ -275,8 +275,8 @@ Administration.prototype.logchannel = async function(args) {
   var message = this.message,
     server = this.server
 
-  if (!$.isOwner(message.member.id)) return message.reply("You don't have a permission to set log channel.")
-  if (args[0] != "enable" && args[0] != "disable") return message.reply("Invalid Parameters (enable | disable).")
+  if (!$.isOwner(message.member.id)) return message.channel.send($.embed("You don't have a permission to set log channel."))
+  if (args[0] != "enable" && args[0] != "disable") return message.channel.send($.embed("Invalid Parameters (enable | disable)."))
 
   server.config = await $.updateServerConfig(message.guild.id, {
     "channel.log": args[0] == "enable" ? message.channel.id : null
@@ -288,8 +288,8 @@ Administration.prototype.debug = async function(args) {
   var message = this.message,
     server = this.server
 
-  if (!$.isOwner(message.member.id)) return message.reply("You don't have a permission to set debug channel.")
-  if (args[0] != "enable" && args[0] != "disable") return message.reply("Invalid Parameters (enable | disable).")
+  if (!$.isOwner(message.member.id)) return message.channel.send($.embed("You don't have a permission to set debug channel."))
+  if (args[0] != "enable" && args[0] != "disable") return message.channel.send($.embed("Invalid Parameters (enable | disable)."))
 
   server.config = await $.updateServerConfig(message.guild.id, {
     "channel.debug": args[0] == "enable" ? message.channel.id : null
@@ -300,14 +300,14 @@ Administration.prototype.debug = async function(args) {
 Administration.prototype.restart = function() {
   var message = this.message
 
-  if (!$.isOwner(message.member.id)) return message.reply("You don't have a permission to restart the bot.")
+  if (!$.isOwner(message.member.id)) return message.channel.send($.embed("You don't have a permission to restart the bot."))
   process.exit(0)
 }
 
 Administration.prototype.update = function() {
   var message = this.message
 
-  if (!$.isOwner(message.member.id)) return message.reply("You don't have a permission to update the bot.")
+  if (!$.isOwner(message.member.id)) return message.channel.send($.embed("You don't have a permission to update the bot."))
   exec("git remote show origin", async (err, stdout, stderr) => {
     if (stdout.indexOf("(fast-forwardable)") > -1 || stdout.indexOf("(up to date)") > -1) {
       message.channel.send($.embed().setFooter(bot.user.tag, bot.user.displayAvatarURL())

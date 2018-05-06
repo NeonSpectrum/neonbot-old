@@ -8,7 +8,7 @@ const {
 
 const ytdl = require('ytdl-core')
 
-const $ = require('../handler/functions')
+const $ = require('../assets/functions')
 const config = $.getConfig()
 
 const Youtube = require('simple-youtube-api')
@@ -51,8 +51,8 @@ Music.prototype.play = async function(args) {
     server = this.server,
     self = this
 
-  if (!message.member.voiceChannel) return message.reply("You must be in a voice channel!")
-  if (!args[0]) return message.reply("Please provide a keyword or link.")
+  if (!message.member.voiceChannel) return message.channel.send($.embed("You must be in a voice channel!"))
+  if (!args[0]) return message.channel.send($.embed("Please provide a keyword or link."))
 
   if (args[0].match(/^.*(youtu.be\/|list=)([^#\&\?]*).*/g)) {
     try {
@@ -97,7 +97,7 @@ Music.prototype.play = async function(args) {
     try {
       var videos = await yt.searchVideos(args.join(" "))
     } catch (err) {
-      return message.reply("Cannot find any videos")
+      return message.channel.send($.embed("Cannot find any videos"))
     }
     var temp = $.embed().setAuthor("Choose 1-5 below.", "https://i.imgur.com/SBMH84I.png")
     var songSearchList = []

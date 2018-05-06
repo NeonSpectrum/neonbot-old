@@ -1,5 +1,5 @@
 const bot = require('../bot')
-const $ = require('../handler/functions')
+const $ = require('../assets/functions')
 const config = $.getConfig()
 const GoogleSearch = require('google-search');
 const googleSearch = new GoogleSearch({

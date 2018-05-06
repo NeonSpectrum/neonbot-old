@@ -1,6 +1,6 @@
 const bot = require('../bot')
 const moment = require('moment')
-const $ = require('../handler/functions')
+const $ = require('../assets/functions')
 const Music = require('./music')
 
 bot.on('voiceStateUpdate', (oldMember, newMember) => {

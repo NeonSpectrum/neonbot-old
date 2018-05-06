@@ -1,7 +1,7 @@
 const bot = require('../bot')
-const errors = require("../handler/errors.js")
-const help = require("../help.json")
-const $ = require('../handler/functions')
+const errors = require("../assets/errors.js")
+const help = require("../assets/help.json")
+const $ = require('../assets/functions')
 const config = $.getConfig()
 
 class Utilities {
@@ -23,12 +23,46 @@ Utilities.prototype.help = function(args) {
   var message = this.message,
     server = this.server
 
-  var ser
-  if (help[args]) {
-    message.reply(help[args[0]].replace("{0}", server.config.prefix))
+  if (help[args[0]]) {
+    message.channel.send($.embed().addField(`${args[0]} - ${help[args[0]].info}`, `\`Usage:\` \`${help[args[0]].usage.replace("{0}", server.config.prefix)}\``))
   } else {
-    message.reply("Cannot find command")
+    message.channel.send($.embed("Cannot find command"))
   }
+}
+
+Utilities.prototype.cmds = function(args) {
+  var message = this.message,
+    server = this.server
+  try {
+    if (!bot.modules[args[0]]) return message.channel.send($.embed(`Invalid Module. (${Object.keys(bot.modules).join(" | ")})`))
+  } catch (err) {
+    console.log(err)
+  }
+  var command = bot.modules[args[0]],
+    module
+  switch (args[0]) {
+    case 'admin':
+      modules = "Administration"
+      break
+    case 'music':
+      modules = "Music"
+      command = command.filter((x) => x != "execute")
+      break
+    case "util":
+      modules = "Utilities"
+      break
+    case "search":
+      modules = "Searches"
+      break
+    case "games":
+      modules = "Utilities"
+      break
+  }
+  var temp = $.embed().setAuthor("Command list for " + modules, bot.user.displayAvatarURL())
+  for (var i = 0; i < command.length; i++) {
+    temp.addField(`${command[i]} - ${help[command[i]].info}`, `\`Usage:\` \`${help[command[i]].usage.replace("{0}", server.config.prefix)}\``)
+  }
+  message.channel.send(temp)
 }
 
 Utilities.prototype.speak = function(args) {

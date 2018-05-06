@@ -5,7 +5,7 @@ const colors = require('colors/safe')
 const Discord = require("discord.js")
 const bot = new Discord.Client()
 const MongoClient = require('mongodb').MongoClient
-const $ = require('./handler/functions')
+const $ = require('./assets/functions')
 
 var Admin, Util, Music, Search, Games;
 var db, guildlist, config
@@ -160,6 +160,8 @@ function getModule(command) {
     "games": getAllFuncs(new Games())
   }
 
+  bot.modules = modules
+
   var modulekeys = Object.keys(modules)
   for (var i = 0; i < modulekeys.length; i++) {
     var commandkeys = modules[Object.keys(modules)[i]]
@@ -171,12 +173,7 @@ function getModule(command) {
 }
 
 function getAllFuncs(obj) {
-  let methods = new Set();
-  while (obj = Reflect.getPrototypeOf(obj)) {
-    let keys = Reflect.ownKeys(obj)
-    keys.forEach((k) => methods.add(k));
-  }
-  return Array.from(methods);
+  return Object.getOwnPropertyNames(Object.getPrototypeOf(obj)).filter((x) => x != "constructor")
 }
 
 function displayAscii() {

@@ -1,0 +1,154 @@
+{
+  "addrole": {
+    "info": "Add Role to the user.",
+    "usage": "{0}addrole <user> <role>"
+  },
+  "ban": {
+    "info": "Bans the user.",
+    "usage": "{0}ban <user> <reason>"
+  },
+  "clear": {
+    "info": "Cleans up messages.",
+    "usage": "{0}clear <number of messages>"
+  },
+  "kick": {
+    "info": "Kicks the user.",
+    "usage": "{0}kick <user> <reason>"
+  },
+  "prefix": {
+    "info": "Changes the prefix of the server.",
+    "usage": "{0}prefix <prefix>"
+  },
+  "removerole": {
+    "info": "Remove a role of the user.",
+    "usage": "{0}removerole <user> <role>"
+  },
+  "setname": {
+    "info": "Set the username of the bot.",
+    "usage": "{0}setname <name>"
+  },
+  "setgame": {
+    "info": "Set the game of the bot.",
+    "usage": "{0}setgame <type> <name>"
+  },
+  "setavatar": {
+    "info": "Set the avatar of the bot.",
+    "usage": "{0}setavatar <url>"
+  },
+  "deleteoncmd": {
+    "info": "Enables or Disables delete on cmd.",
+    "usage": "{0}deleteoncmd"
+  },
+  "voicetts": {
+    "info": "Enables or Disables Voice TTS in this channel.",
+    "usage": "{0}voicetts <enable | disable>"
+  },
+  "logchannel": {
+    "info": "Enables or Disables Logs in this channel.",
+    "usage": "{0}logchannel <enable | disable>"
+  },
+  "debug": {
+    "info": "Enables or Disables Debug Messages in this channel.",
+    "usage": "{0}debug <enable | disable>"
+  },
+  "restart": {
+    "info": "Restarts the bot.",
+    "usage": "{0}restart"
+  },
+  "update": {
+    "info": "Updates the bot with GitHub.",
+    "usage": "{0}update"
+  },
+  "pokemon": {
+    "info": "Start, stop, and show score of the Pokemon Game.",
+    "usage": "{0}pokemon <start | stop | score>"
+  },
+  "play": {
+    "info": "Plays a music.",
+    "usage": "{0}play <url | keyword>"
+  },
+  "stop": {
+    "info": "Stops the player.",
+    "usage": "{0}stop"
+  },
+  "skip": {
+    "info": "Skips the queue.",
+    "usage": "{0}skip"
+  },
+  "list": {
+    "info": "Shows the list of queue.",
+    "usage": "{0}list"
+  },
+  "volume": {
+    "info": "Adjusts the volume of the player.",
+    "usage": "{0}volume <0-200>"
+  },
+  "repeat": {
+    "info": "Changes the repeat mode.",
+    "usage": "{0}repeat <off | single | all>"
+  },
+  "pause": {
+    "info": "Pauses the player.",
+    "usage": "{0}pause"
+  },
+  "resume": {
+    "info": "Resumes the player",
+    "usage": "{0}resume"
+  },
+  "autoplay": {
+    "info": "Enables of disables autoplay.",
+    "usage": "{0}autoplay"
+  },
+  "nowplaying": {
+    "info": "Shows the current song information.",
+    "usage": "{0}nowplaying"
+  },
+  "leave": {
+    "info": "Leaves the voice channel.",
+    "usage": "{0}leave"
+  },
+  "restartplayer": {
+    "info": "Force restart the player.",
+    "usage": "{0}restartplayer"
+  },
+  "google": {
+    "info": "Searches the keyword in Google.",
+    "usage": "{0}google <keyword>"
+  },
+  "image": {
+    "info": "Searches and display the first image in Google",
+    "usage": "{0}image <keyword>"
+  },
+  "ud": {
+    "info": "Searches the word in Urban Dictionary.",
+    "usage": "{0}ud <keyword>"
+  },
+  "help": {
+    "info": "Shows usage of the command.",
+    "usage": "{0}help <command>"
+  },
+  "cmds": {
+    "info": "Shows list of commands in a module.",
+    "usage": "{0}cmds <module>"
+  },
+  "speak": {
+    "info": "Makes the bot speak the message.",
+    "usage": "{0}speak <message>"
+  },
+  "ping": {
+    "info": "Pings the bot.",
+    "usage": "{0}ping"
+  },
+  "stats": {
+    "info": "Shows the bot information.",
+    "usage": "{0}stats"
+  },
+  "say": {
+    "info": "Make the bot says the message.",
+    "usage": "{0}say <message>"
+  },
+  "serverinfo": {
+    "info": "Shows the server information.",
+    "usage": "{0}serverinfo"
+  }
+}

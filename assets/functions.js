@@ -10,7 +10,7 @@ var $ = {}
 $.log = (content, message) => {
   const guild = currentGuild
   if (message) {
-    console.log(`${colors.yellow("------ "+moment().format('YYYY-MM-DD hh:mm:ss A')+" ------")}
+    console.log(`${colors.yellow("------ " + moment().format('YYYY-MM-DD hh:mm:ss A') + " ------")}
    ${colors.cyan("Guild")}: ${message.channel.guild.name}
    ${colors.cyan("Channel")}: ${message.channel.name}
    ${colors.cyan("Message")}: ${content}
