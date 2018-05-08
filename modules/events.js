@@ -79,7 +79,7 @@ bot.on('presenceUpdate', (oldMember, newMember) => {
 bot.on('guildMemberAdd', (member) => {
   var config = $.getServerConfig(member.guild.id)
 
-  guild.channels.first().send($.embed()
+  member.guild.channels.first().send($.embed()
     .setAuthor("New Member", `https://cdn.discordapp.com/avatars/${bot.user.id}/${bot.user.avatar}.png?size=16`)
     .setDescription(`Welcome to ${member.guild.name}, ${member.user.toString()}!`)
   ).then(s => s.delete({
@@ -111,9 +111,13 @@ bot.on('guildMemberRemove', (member) => {
 })
 
 bot.on('guildCreate', (guild) => {
-  var guilds = Array.from(bot.guilds.keys())
-  $.processDatabase(guilds, guildlist)
-  guild.channels.first().send($.embed(`Thanks for inviting me on this server! <3`))
+  try {
+    var guilds = Array.from(bot.guilds.keys())
+    $.processDatabase(guilds, guildlist)
+    guild.channels.first().send($.embed(`Thanks for inviting me on this server! <3`))
+  } catch (err) {
+    console.log(err)
+  }
 })
 
 bot.on('messageDelete', (message) => {
