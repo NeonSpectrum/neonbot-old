@@ -3,11 +3,11 @@ const $ = require('../assets/functions')
 const config = $.getConfig()
 const GoogleSearch = require('google-search');
 const googleSearch = new GoogleSearch({
-  key: config.google_api,
+  key: config.env.GOOGLE_API,
   cx: '010420937032738550228:8287l8l_wec'
 });
 const GoogleImages = require('google-images');
-const googleImages = new GoogleImages('010420937032738550228:8287l8l_wec', config.google_api);
+const googleImages = new GoogleImages('010420937032738550228:8287l8l_wec', config.env.GOOGLE_API);
 const ud = require('urban-dictionary')
 
 class Searches {

@@ -20,12 +20,17 @@ function loop() {
   });
 
   child.on('close', function(code) {
-    if (code == 2) {
-      env.message = "updated"
-    } else if (code == 1) {
-      env.message = "crashed"
-    } else {
-      env.message = "restarted"
+    switch (code) {
+      case 10:
+        return
+      case 2:
+        env.message = "updated"
+        break
+      case 1:
+        env.message = "crashed"
+        break
+      case 0:
+        env.message = "restarted"
     }
     loop()
   });

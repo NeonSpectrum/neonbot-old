@@ -12,7 +12,13 @@ const $ = require('../assets/functions')
 const config = $.getConfig()
 
 const Youtube = require('simple-youtube-api')
-const yt = new Youtube(config.google_api)
+const yt = new Youtube(config.env.GOOGLE_API)
+
+const SpotifyWebApi = require('spotify-web-api-node');
+const spotify = new SpotifyWebApi({
+  clientId: config.env.SPOTIFY_ID,
+  clientSecret: config.env.SPOTIFY_SECRET
+});
 
 var servers = []
 

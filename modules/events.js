@@ -96,7 +96,7 @@ bot.on('guildMemberAdd', (member) => {
 bot.on('guildMemberRemove', (member) => {
   var config = $.getServerConfig(member.guild.id)
 
-  guild.channels.first().send($.embed()
+  member.guild.channels.first().send($.embed()
     .setAuthor("Member Left", `https://cdn.discordapp.com/avatars/${bot.user.id}/${bot.user.avatar}.png?size=16`)
     .setDescription(`${member.user.tag} left the server!`)
   ).then(s => s.delete({

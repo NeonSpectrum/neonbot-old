@@ -8,42 +8,42 @@ const MongoClient = require('mongodb').MongoClient
 const $ = require('./assets/functions')
 
 var Admin, Util, Music, Search, Games;
-var db, guildlist, config
+var db, guildlist, config = {
+  env: process.env
+}
 
 var loaded = false,
-  settingsTime
+  time = new Date()
+
+if (!config.env.TOKEN || !config.env.PREFIX || !config.env.OWNERID) {
+  console.log(colors.red("Missing Credentials in environment..."))
+  process.exit(10)
+}
 
 displayAscii()
-MongoClient.connect(`mongodb://${process.env.DB_USER}:${process.env.DB_PASS}@${process.env.DB_HOST}/${process.env.DB_NAME}`, (err, client) => {
-  if (!err) {
-    $.log(`MongoDB connection established on ${process.env.DB_HOST}\n`)
-    db = client.db(process.env.DB_NAME)
-    $.setDB(db)
-    settingsTime = new Date()
-    db.collection("settings").find({}).toArray(async (err, items) => {
-      if (items.length == 0) {
-        items = await require('./setup.js')(db)
-      }
-      config = items[0]
-      $.setConfig(config)
+MongoClient.connect(`mongodb://${process.env.DB_USER}:${process.env.DB_PASS}@${process.env.DB_HOST}/${process.env.DB_NAME}`, async (err, client) => {
+  if (err) throw `${err}\nFailed to establish connection to ${process.env.DB_HOST}`
+  $.log(`MongoDB connection established on ${process.env.DB_HOST} in ${((Date.now() - time) / 1000).toFixed(2)} secs.\n`)
+  db = client.db(process.env.DB_NAME)
+  $.setDB(db)
 
-      db.collection("servers").find({}).toArray((err, items) => {
-        guildlist = items
-        bot.login(config.token)
-      })
-    })
-  } else {
-    throw `${err}\nFailed to establish connection to ${process.env.DB_HOST}`
-  }
+  var items = await db.collection("settings").find({}).toArray()
+  guildlist = await db.collection("servers").find({}).toArray()
+  config.settings = items[0]
+
+  $.setConfig(config)
+
+  bot.login(config.env.TOKEN)
 })
 
 bot.on('ready', async () => {
   var guilds = Array.from(bot.guilds.keys())
   await $.processDatabase(guilds, guildlist)
 
-  $.log(`Loaded Settings in ${((Date.now() - settingsTime) / 1000).toFixed(2)} secs.`)
+  $.log(`Loaded Settings in ${((Date.now() - time) / 1000).toFixed(2)} secs.`)
 
-  var modulesTime = new Date()
+  time = new Date()
+
   try {
     Administration = require('./modules/administration')
     Utilities = require('./modules/utilities')
@@ -63,7 +63,7 @@ bot.on('ready', async () => {
     "games": getAllFuncs(new Games())
   }
 
-  $.log(`Loaded Modules in ${((Date.now() - modulesTime) / 1000).toFixed(2)} secs.\n`)
+  $.log(`Loaded Modules in ${((Date.now() - time) / 1000).toFixed(2)} secs.\n`)
 
   $.log(`Logged in as ${bot.user.tag}\n`)
 
@@ -87,8 +87,8 @@ bot.on('ready', async () => {
     }
   }
 
-  bot.user.setActivity(config.game.name, {
-    type: config.game.type.toUpperCase()
+  bot.user.setActivity(config.settings.game.name, {
+    type: config.settings.game.type.toUpperCase()
   })
 
   loaded = true

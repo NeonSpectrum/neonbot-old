@@ -4,7 +4,7 @@ const exec = require('child_process').exec
 const bot = require("../bot")
 const errors = require("../assets/errors.js")
 const $ = require('../assets/functions')
-const config = $.getConfig()
+
 class Administration {
   constructor(message) {
     if (typeof message == "object") {
@@ -183,7 +183,7 @@ Administration.prototype.prefix = async function(args) {
     server = this.server
 
   if (!$.isOwner(message.member.id)) return message.channel.send($.embed("You don't have a permission to set prefix."))
-  if (!args[0]) return message.channel.send($.embed(`Usage: ${config.prefix}prefix <desired prefix here>`))
+  if (!args[0]) return message.channel.send($.embed(`Usage: ${server.config.prefix}prefix <desired prefix here>`))
 
   server.config = await $.updateServerConfig(message.guild.id, {
     prefix: args[0]

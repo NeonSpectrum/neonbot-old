@@ -50,8 +50,8 @@ module.exports = (db, callback) => {
       db.collection('settings').insert({
         token: process.env.TOKEN,
         default_prefix: process.env.PREFIX,
-        google_api: process.env.GOOGLEAPI,
-        ownerid: process.env.OWNERID,
+        google_api: process.env.GOOGLE_API,
+        ownerid: process.env.OWNER_ID,
         game: {
           type: "",
           name: ""

@@ -47,7 +47,7 @@ $.embed = (message) => {
 }
 
 $.isOwner = (id) => {
-  return id == config.ownerid
+  return id == config.env.OWNER_ID
 }
 
 $.processDatabase = (arr, items) => {
@@ -56,7 +56,7 @@ $.processDatabase = (arr, items) => {
       if (!items.find((x) => x.server_id == arr[i])) {
         await db.collection("servers").insert({
           server_id: arr[i],
-          prefix: config.default_prefix,
+          prefix: config.env.PREFIX,
           channel: {},
           music: {
             volume: 100,
@@ -80,6 +80,7 @@ $.setDB = (x) => {
 $.getDB = () => {
   return db
 }
+
 $.setConfig = (x) => {
   config = x
 }
@@ -90,8 +91,9 @@ $.getConfig = () => {
 
 $.refreshConfig = () => {
   return new Promise((resolve, reject) => {
+    config = process.env
     db.collection("settings").find({}).toArray(async (err, items) => {
-      config = items[0]
+      config.settings = items[0]
       resolve()
     })
   })
@@ -156,7 +158,7 @@ $.formatSeconds = (secs, format) => {
     seconds = "0" + seconds
   }
 
-  if (format == undefined) {
+  if (!format) {
     var time = hours + ':' + minutes + ':' + seconds
     if (hours == "00") {
       time = time.substring(3)

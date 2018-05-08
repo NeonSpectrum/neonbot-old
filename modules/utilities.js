@@ -2,7 +2,6 @@ const bot = require('../bot')
 const errors = require("../assets/errors.js")
 const help = require("../assets/help.json")
 const $ = require('../assets/functions')
-const config = $.getConfig()
 
 class Utilities {
   constructor(message) {
