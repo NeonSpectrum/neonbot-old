@@ -79,8 +79,9 @@ bot.on('presenceUpdate', (oldMember, newMember) => {
 
 bot.on('guildMemberAdd', (member) => {
   var config = $.getServerConfig(member.guild.id)
+  var channel = member.guild.channels.find((x) => x.rawPosition == 0 && x.type == "text")
 
-  member.guild.channels.first().send($.embed()
+  bot.channels.get(channel.id).send($.embed()
     .setAuthor("New Member", `https://cdn.discordapp.com/avatars/${bot.user.id}/${bot.user.avatar}.png?size=16`)
     .setDescription(`Welcome to ${member.guild.name}, ${member.user.toString()}!`)
   ).then(s => s.delete({
@@ -96,8 +97,9 @@ bot.on('guildMemberAdd', (member) => {
 
 bot.on('guildMemberRemove', (member) => {
   var config = $.getServerConfig(member.guild.id)
+  var channel = member.guild.channels.find((x) => x.rawPosition == 0 && x.type == "text")
 
-  member.guild.channels.first().send($.embed()
+  bot.channels.get(channel.id).first().send($.embed()
     .setAuthor("Member Left", `https://cdn.discordapp.com/avatars/${bot.user.id}/${bot.user.avatar}.png?size=16`)
     .setDescription(`${member.user.tag} left the server!`)
   ).then(s => s.delete({
@@ -109,6 +111,12 @@ bot.on('guildMemberRemove', (member) => {
       .setDescription(`\`${moment().format('YYYY-MM-DD hh:mm:ss A')}\` ${member.user.username} left the server.`)
     )
   }
+})
+
+bot.on('guildCreate', async (guild) => {
+  var guilds = Array.from(bot.guilds.keys())
+  var guildlist = await db.collection("servers").find({}).toArray()
+  $.processDatabase(guilds, guildlist)
 })
 
 bot.on('messageDelete', (message) => {
