@@ -113,6 +113,7 @@ bot.on('guildMemberRemove', (member) => {
 bot.on('guildCreate', (guild) => {
   try {
     var guilds = Array.from(bot.guilds.keys())
+    var guildlist = await db.collection("servers").find({}).toArray()
     $.processDatabase(guilds, guildlist)
     guild.channels.first().send($.embed(`Thanks for inviting me on this server! <3`))
   } catch (err) {
