@@ -15,7 +15,7 @@ var db, guildlist, config = {
 var loaded = false,
   time = new Date()
 
-if (!config.env.TOKEN || !config.env.PREFIX || !config.env.OWNERID) {
+if (!config.env.TOKEN || !config.env.PREFIX || !config.env.OWNER_ID) {
   console.log(colors.red("Missing Credentials in environment..."))
   process.exit(10)
 }
