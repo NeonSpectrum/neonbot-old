@@ -4,6 +4,7 @@ const $ = require('../assets/functions')
 const Music = require('./music')
 
 var members = []
+
 bot.on('voiceStateUpdate', async (oldMember, newMember) => {
   if (newMember.user.bot) return
   if (!members[newMember.user.id]) {
@@ -108,13 +109,6 @@ bot.on('guildMemberRemove', (member) => {
       .setDescription(`\`${moment().format('YYYY-MM-DD hh:mm:ss A')}\` ${member.user.username} left the server.`)
     )
   }
-})
-
-bot.on('guildCreate', async (guild) => {
-  var guilds = Array.from(bot.guilds.keys())
-  var guildlist = await db.collection("servers").find({}).toArray()
-  $.processDatabase(guilds, guildlist)
-  guild.channels.first().send($.embed(`Thanks for inviting me on this server! <3`))
 })
 
 bot.on('messageDelete', (message) => {
