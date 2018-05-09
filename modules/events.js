@@ -2,6 +2,7 @@ const bot = require('../bot')
 const moment = require('moment')
 const $ = require('../assets/functions')
 const Music = require('./music')
+const db = $.getDB()
 
 var members = []
 
