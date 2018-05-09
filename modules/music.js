@@ -373,14 +373,13 @@ Music.prototype.execute = async function(connection) {
     }
   }
 
-  const stream = ytdl(server.queue[server.currentQueue].url, process.env.DEVELOPMENT ? {
+  // await $.wait(500)
+  server.dispatcher = connection.play(ytdl(server.queue[server.currentQueue].url, process.env.DEVELOPMENT ? {
     filter: "audioonly"
   } : {
     quality: "highestaudio",
     highWaterMark: 1024 * 1024 * 5
-  })
-  // await $.wait(500)
-  server.dispatcher = connection.play(stream, {
+  }), {
     volume: server.config.music.volume / 100,
     highWaterMark: 1,
     bitrate: "auto"
@@ -411,7 +410,6 @@ Music.prototype.execute = async function(connection) {
       .setDescription(`[**${server.queue[server.currentQueue].title}**](${server.queue[server.currentQueue].url})`)
     )
 
-    stream.destroy()
     if (!server.dispatcher._writableState.destroyed) {
       if (server.config.music.repeat != "single") server.currentQueue += 1
       this.execute(connection)
