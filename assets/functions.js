@@ -57,6 +57,7 @@ $.processDatabase = (arr, items) => {
         await db.collection("servers").insert({
           server_id: arr[i],
           prefix: config.env.PREFIX,
+          deleteoncmd: false,
           channel: {},
           music: {
             volume: 100,
