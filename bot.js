@@ -29,12 +29,13 @@ MongoClient.connect(`mongodb://${process.env.DB_USER}:${process.env.DB_PASS}@${p
 
   var items = await db.collection("settings").find({}).toArray()
   if (items.length == 0) {
-    await db.collection('settings').insert({
+    var insert = await db.collection('settings').insert({
       game: {
         type: "",
         name: ""
       }
     })
+    items = insert.ops
   }
   guildlist = await db.collection("servers").find({}).toArray()
   config.settings = items[0]
