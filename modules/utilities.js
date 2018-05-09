@@ -79,7 +79,7 @@ Utilities.prototype.stats = function() {
     .addField("Bot Name", bot.user.tag)
     .addField("Version", require("../package.json").version)
     .addField("Created On", bot.user.createdAt)
-    .addField("Created By", bot.users.get("260397381856526337").tag)
+    .addField("Created By", "NeonSpectrum")
     .addField("Server Count", Array.from(bot.guilds.keys()).length)
     .addField("Ram Usage", `Approximately ${Math.round(process.memoryUsage().heapUsed / 1024 / 1024 * 100) / 100} MB`)
     .addField("Uptime", $.formatSeconds(Math.floor(bot.uptime / 1000)))
