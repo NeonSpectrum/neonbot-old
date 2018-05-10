@@ -52,7 +52,7 @@ Utilities.prototype.cmds = function(args) {
       modules = "Searches"
       break
     case "games":
-      modules = "Utilities"
+      modules = "Games"
       break
   }
   var temp = $.embed().setAuthor("📘 Command list for " + modules)
