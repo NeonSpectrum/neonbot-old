@@ -47,7 +47,7 @@ $.embed = (message) => {
 }
 
 $.isOwner = (id) => {
-  return id == config.env.OWNER_ID
+  return config.env.OWNER_ID.split(",").indexOf(id) > -1
 }
 
 $.processDatabase = (arr, items) => {
