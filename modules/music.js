@@ -36,7 +36,8 @@ class Music {
           lastPlayingMessage: null,
           lastFinishedMessage: null,
           lastAutoMessage: null,
-          lastPauseMessage: null
+          lastPauseMessage: null,
+          requestRestart: false
         }
       } else {
         servers[message.guild.id].currentChannel = (message.channel && message.channel.id) || servers[message.guild.id].currentChannel
@@ -332,9 +333,9 @@ Music.prototype.restartsong = function() {
   var message = this.message,
     server = this.server
 
-  if (message.guild.voiceConnection) {
-    if (server.config.music.repeat != "single") server.currentQueue -= 1
-    if (server.dispatcher) server.dispatcher.end()
+  if (message.guild.voiceConnection && server.dispatcher) {
+    server.requestRestart = true
+    server.dispatcher.end()
   }
 }
 
@@ -370,16 +371,22 @@ Music.prototype.execute = async function(connection) {
   }
 
   // await $.wait(500)
-  server.dispatcher = connection.play(ytdl(server.queue[server.currentQueue].url, process.env.DEVELOPMENT ? {
-    filter: "audioonly"
-  } : {
-    quality: "highestaudio",
-    highWaterMark: 1024 * 1024 * 5
-  }), {
-    volume: server.config.music.volume / 100,
-    highWaterMark: 1,
-    bitrate: "auto"
-  })
+  try {
+    server.dispatcher = connection.play(ytdl(server.queue[server.currentQueue].url, process.env.DEVELOPMENT ? {
+      filter: "audioonly"
+    } : {
+      quality: "highestaudio",
+      highWaterMark: 1024 * 1024 * 5
+    }), {
+      volume: server.config.music.volume / 100,
+      highWaterMark: 1,
+      bitrate: "auto"
+    })
+  } catch (err) {
+    message.channel.send($.embed(`I can't play this song.`))
+    $.warn(err)
+    return
+  }
 
   server.previnfo = server.queue[server.currentQueue].info
 
@@ -407,7 +414,10 @@ Music.prototype.execute = async function(connection) {
     )
 
     if (!server.dispatcher._writableState.destroyed) {
-      if (server.config.music.repeat != "single") server.currentQueue += 1
+      if (server.config.music.repeat != "single" && !server.requestRestart) {
+        server.currentQueue += 1
+      }
+      server.requestRestart = false
       this.execute(connection)
     } else {
       server.queue = []
