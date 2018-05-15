@@ -337,6 +337,7 @@ Music.prototype.restartplayer = function() {
     message.guild.voiceConnection.disconnect()
     message.member.voiceChannel.join()
       .then((connection) => {
+        if (server.config.music.repeat != "single") server.currentQueue -= 1
         this.execute(connection)
       })
   }
@@ -415,6 +416,7 @@ Music.prototype.execute = async function(connection) {
       this.execute(connection)
     } else {
       server.queue = []
+      server.dispatcher == null
     }
   })
 }
