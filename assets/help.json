@@ -115,9 +115,9 @@
     "info": "Leaves the voice channel.",
     "usage": "{0}leave"
   },
-  "restartplayer": {
-    "info": "Force restart the player.",
-    "usage": "{0}restartplayer"
+  "restartsong": {
+    "info": "Force restart the song.",
+    "usage": "{0}restartsong"
   },
   "google": {
     "info": "Searches the keyword in Google.",

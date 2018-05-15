@@ -328,18 +328,13 @@ Music.prototype.leave = function() {
   if (message.guild.voiceConnection) message.guild.voiceConnection.disconnect()
 }
 
-Music.prototype.restartplayer = function() {
+Music.prototype.restartsong = function() {
   var message = this.message,
     server = this.server
 
   if (message.guild.voiceConnection) {
     if (server.config.music.repeat != "single") server.currentQueue -= 1
     if (server.dispatcher) server.dispatcher.end()
-    message.guild.voiceConnection.disconnect()
-    message.member.voiceChannel.join()
-      .then((connection) => {
-        this.execute(connection)
-      })
   }
 }
 
