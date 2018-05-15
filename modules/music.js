@@ -333,11 +333,11 @@ Music.prototype.restartplayer = function() {
     server = this.server
 
   if (message.guild.voiceConnection) {
+    if (server.config.music.repeat != "single") server.currentQueue -= 1
     if (server.dispatcher) server.dispatcher.end()
     message.guild.voiceConnection.disconnect()
     message.member.voiceChannel.join()
       .then((connection) => {
-        if (server.config.music.repeat != "single") server.currentQueue -= 1
         this.execute(connection)
       })
   }
