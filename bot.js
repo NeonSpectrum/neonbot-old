@@ -23,7 +23,7 @@ if (!config.env.TOKEN || !config.env.PREFIX || !config.env.OWNER_ID) {
 displayAscii()
 MongoClient.connect(`mongodb://${process.env.DB_USER}:${process.env.DB_PASS}@${process.env.DB_HOST}/${process.env.DB_NAME}`, async (err, client) => {
   if (err) {
-    console.log(`${err}\nFailed to establish connection to ${process.env.DB_HOST}`)
+    console.log(colors.red(`${err}\nFailed to establish connection to ${process.env.DB_HOST}`))
     process.exit(10)
   }
   $.log(`MongoDB connection established on ${process.env.DB_HOST} in ${((Date.now() - time) / 1000).toFixed(2)} secs.\n`)
