@@ -384,7 +384,7 @@ Music.prototype.execute = async function(connection) {
     })
   } catch (err) {
     message.channel.send($.embed(`I can't play this song.`))
-    $.warn(err)
+    console.log(err)
     return
   }
 
