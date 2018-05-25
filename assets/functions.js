@@ -58,6 +58,7 @@ $.processDatabase = (arr, items) => {
           server_id: arr[i],
           prefix: config.env.PREFIX,
           deleteoncmd: false,
+          strictmode: false,
           channel: {},
           music: {
             volume: 100,

@@ -107,6 +107,7 @@ bot.on('ready', async () => {
 })
 
 bot.on('message', message => {
+  var server = $.getServerConfig(message.guild.id)
   if (!loaded) return
   if (message.author.bot) return
   if (message.channel.type === "dm") {
@@ -118,7 +119,10 @@ bot.on('message', message => {
     }
     return
   }
-  var server = $.getServerConfig(message.guild.id)
+  if (message.member.roles.filter(s => s.name != "@everyone").size == 0 && server.strictmode) {
+    message.channel.send($.embed("You must have at least one role to command me."))
+    return
+  }
   if (!message.content.startsWith(server.prefix)) return
 
   var messageArray = message.content.trim().split(/\s/g)

@@ -245,6 +245,19 @@ Administration.prototype.setavatar = function(args) {
     })
 }
 
+Administration.prototype.strictmode = async function(args) {
+  var message = this.message,
+    server = this.server
+
+  if (!$.isOwner(message.member.id)) return message.channel.send($.embed("You don't have a permission to set delete on cmd."))
+  if (args[0] != "enable" && args[0] != "disable") return message.channel.send($.embed("Invalid Parameters (enable | disable)."))
+
+  server.config = await $.updateServerConfig(message.guild.id, {
+    strictmode: args[0] == "enable" ? true : false
+  })
+  message.channel.send($.embed("Strict Mode is now " + (server.config.strictmode ? "enabled" : "disabled") + ". The user must have at least one role to command me."))
+}
+
 Administration.prototype.deleteoncmd = async function(args) {
   var message = this.message,
     server = this.server
