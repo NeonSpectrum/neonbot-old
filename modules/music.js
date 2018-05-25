@@ -326,6 +326,7 @@ Music.prototype.nowplaying = function() {
 
 Music.prototype.leave = function() {
   var message = this.message
+  if (!$.isOwner(message.member.id)) return message.channel.send($.embed("You don't have a permission to make the bot leave."))
   if (message.guild.voiceConnection) message.guild.voiceConnection.disconnect()
 }
 
