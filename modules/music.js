@@ -37,7 +37,7 @@ class Music {
           lastFinishedMessage: null,
           lastAutoMessage: null,
           lastPauseMessage: null,
-          requestRestart: false
+          status: null
         }
       } else {
         servers[message.guild.id].currentChannel = (message.channel && message.channel.id) || servers[message.guild.id].currentChannel
@@ -161,10 +161,11 @@ Music.prototype.play = async function(args) {
 Music.prototype.stop = function() {
   var message = this.message,
     server = this.server
-  if (!$.isOwner(message.author.id) && server.requested.id != message.author.id) {
-    return message.channel.send($.embed("Please respect the one who queued the song."))
-  }
+
   if (server.dispatcher) {
+    if (!$.isOwner(message.author.id) && server.requested.id != message.author.id && !server.requested.bot) {
+      return message.channel.send($.embed("Please respect the one who queued the song."))
+    }
     server.dispatcher.end()
     if (message.guild.voiceConnection) message.guild.voiceConnection.disconnect()
     server.autoplayid = []
@@ -178,11 +179,14 @@ Music.prototype.stop = function() {
 Music.prototype.skip = function() {
   var message = this.message,
     server = this.server
-  if (!$.isOwner(message.author.id) && server.requested.id != message.author.id) {
-    return message.channel.send($.embed("Please respect the one who queued the song."))
-  }
   if (server.dispatcher) {
-    if (server.config.music.repeat == "single") server.currentQueue += 1
+    if (!$.isOwner(message.author.id) && server.requested.id != message.author.id && !server.requested.bot) {
+      return message.channel.send($.embed("Please respect the one who queued the song."))
+    }
+    if (server.config.music.repeat == "single") {
+      server.currentQueue += 1
+      server.status = "skip"
+    }
     server.dispatcher.end()
     this.log("Player skipped!")
   }
@@ -341,7 +345,7 @@ Music.prototype.restartsong = function() {
     server = this.server
 
   if (message.guild.voiceConnection && server.dispatcher) {
-    server.requestRestart = true
+    server.status = "restart"
     server.dispatcher.end()
   }
 }
@@ -399,7 +403,8 @@ Music.prototype.execute = async function(connection) {
       server.lastPlayingMessage = await message.channel.send($.embed()
         .setAuthor("Now Playing #" + (server.currentQueue + 1), "https://i.imgur.com/SBMH84I.png")
         .setFooter(footer.join(" | "), requested.displayAvatarURL())
-        .setDescription(`[**${server.queue[server.currentQueue].title}**](${server.queue[server.currentQueue].url})`)
+        .setTitle(server.queue[server.currentQueue].title)
+        .setURL(server.queue[server.currentQueue].url)
       )
       this.log("Now playing " + server.queue[server.currentQueue].title)
     })
@@ -412,15 +417,19 @@ Music.prototype.execute = async function(connection) {
       server.lastFinishedMessage = await message.channel.send($.embed()
         .setAuthor("Finished Playing #" + (server.currentQueue + 1), "https://i.imgur.com/SBMH84I.png")
         .setFooter(footer.join(" | "), requested.displayAvatarURL())
-        .setDescription(`[**${server.queue[server.currentQueue].title}**](${server.queue[server.currentQueue].url})`)
+        .setTitle(server.queue[server.currentQueue].title)
+        .setURL(server.queue[server.currentQueue].url)
       )
 
       stream.destroy()
       if (!server.dispatcher._writableState.destroyed) {
-        if (server.config.music.repeat != "single" && !server.requestRestart) {
+        if ((server.config.music.repeat != "single" && server.status == "restart") || server.status == "skip") {
           server.currentQueue += 1
         }
-        server.requestRestart = false
+        if (server.config.music.repeat == "single") {
+          server.queue.splice(currentQueue, 1)
+        }
+        server.status = null
         this.execute(connection)
       } else {
         server.queue = []
