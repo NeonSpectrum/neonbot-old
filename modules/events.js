@@ -44,7 +44,7 @@ bot.on('voiceStateUpdate', async (oldMember, newMember) => {
 
   if (msg) {
     if (config.channel.voicetts) {
-      bot.channels.get(config.channel.voicetts).send(msg, {
+      bot.channels.get(config.channel.voicetts).send(msg.replace(/\*\*/g, ""), {
         tts: true
       }).then(msg => msg.delete({
         timeout: 5000
