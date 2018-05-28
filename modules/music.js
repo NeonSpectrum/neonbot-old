@@ -161,7 +161,7 @@ Music.prototype.play = async function(args) {
 Music.prototype.stop = function() {
   var message = this.message,
     server = this.server
-  if (!$.isOwner(message.member.id) && server.requested.id != message.author.id) {
+  if (!$.isOwner(message.author.id) && server.requested.id != message.author.id) {
     return message.channel.send($.embed("Please respect the one who queued the song."))
   }
   if (server.dispatcher) {
@@ -178,7 +178,7 @@ Music.prototype.stop = function() {
 Music.prototype.skip = function() {
   var message = this.message,
     server = this.server
-  if (!$.isOwner(message.member.id) && server.requested.id != message.author.id) {
+  if (!$.isOwner(message.author.id) && server.requested.id != message.author.id) {
     return message.channel.send($.embed("Please respect the one who queued the song."))
   }
   if (server.dispatcher) {
