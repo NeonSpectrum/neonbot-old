@@ -389,49 +389,49 @@ Music.prototype.execute = async function(connection) {
       highWaterMark: 1,
       bitrate: "auto"
     })
+
+    server.previnfo = server.queue[server.currentQueue].info
+
+    server.dispatcher.on("start", async () => {
+      var requested = server.queue[server.currentQueue].requested
+      var footer = [requested.tag, $.formatSeconds(server.queue[server.currentQueue].info.length_seconds), `Volume: ${server.config.music.volume}%`, `Repeat: ${server.config.music.repeat}`, `Autoplay: ${server.config.music.autoplay ? "on" : "off"}`]
+      if (server.lastPlayingMessage) server.lastPlayingMessage.delete().catch(() => {})
+      server.lastPlayingMessage = await message.channel.send($.embed()
+        .setAuthor("Now Playing #" + (server.currentQueue + 1), "https://i.imgur.com/SBMH84I.png")
+        .setFooter(footer.join(" | "), requested.displayAvatarURL())
+        .setDescription(`[**${server.queue[server.currentQueue].title}**](${server.queue[server.currentQueue].url})`)
+      )
+      this.log("Now playing " + server.queue[server.currentQueue].title)
+    })
+
+    server.dispatcher.on("finish", async () => {
+      var requested = server.queue[server.currentQueue].requested
+      var footer = [requested.tag, $.formatSeconds(server.queue[server.currentQueue].info.length_seconds), `Volume: ${server.config.music.volume}%`, `Repeat: ${server.config.music.repeat}`, `Autoplay: ${server.config.music.autoplay ? "on" : "off"}`]
+
+      if (server.lastFinishedMessage) server.lastFinishedMessage.delete().catch(() => {})
+      server.lastFinishedMessage = await message.channel.send($.embed()
+        .setAuthor("Finished Playing #" + (server.currentQueue + 1), "https://i.imgur.com/SBMH84I.png")
+        .setFooter(footer.join(" | "), requested.displayAvatarURL())
+        .setDescription(`[**${server.queue[server.currentQueue].title}**](${server.queue[server.currentQueue].url})`)
+      )
+
+      stream.destroy()
+      if (!server.dispatcher._writableState.destroyed) {
+        if (server.config.music.repeat != "single" && !server.requestRestart) {
+          server.currentQueue += 1
+        }
+        server.requestRestart = false
+        this.execute(connection)
+      } else {
+        server.queue = []
+        server.dispatcher == null
+      }
+    })
   } catch (err) {
     message.channel.send($.embed(`I can't play this song.`))
     console.log(err)
     return
   }
-
-  server.previnfo = server.queue[server.currentQueue].info
-
-  server.dispatcher.on("start", async () => {
-    var requested = server.queue[server.currentQueue].requested
-    var footer = [requested.tag, $.formatSeconds(server.queue[server.currentQueue].info.length_seconds), `Volume: ${server.config.music.volume}%`, `Repeat: ${server.config.music.repeat}`, `Autoplay: ${server.config.music.autoplay ? "on" : "off"}`]
-    if (server.lastPlayingMessage) server.lastPlayingMessage.delete().catch(() => {})
-    server.lastPlayingMessage = await message.channel.send($.embed()
-      .setAuthor("Now Playing #" + (server.currentQueue + 1), "https://i.imgur.com/SBMH84I.png")
-      .setFooter(footer.join(" | "), requested.displayAvatarURL())
-      .setDescription(`[**${server.queue[server.currentQueue].title}**](${server.queue[server.currentQueue].url})`)
-    )
-    this.log("Now playing " + server.queue[server.currentQueue].title)
-  })
-
-  server.dispatcher.on("finish", async () => {
-    var requested = server.queue[server.currentQueue].requested
-    var footer = [requested.tag, $.formatSeconds(server.queue[server.currentQueue].info.length_seconds), `Volume: ${server.config.music.volume}%`, `Repeat: ${server.config.music.repeat}`, `Autoplay: ${server.config.music.autoplay ? "on" : "off"}`]
-
-    if (server.lastFinishedMessage) server.lastFinishedMessage.delete().catch(() => {})
-    server.lastFinishedMessage = await message.channel.send($.embed()
-      .setAuthor("Finished Playing #" + (server.currentQueue + 1), "https://i.imgur.com/SBMH84I.png")
-      .setFooter(footer.join(" | "), requested.displayAvatarURL())
-      .setDescription(`[**${server.queue[server.currentQueue].title}**](${server.queue[server.currentQueue].url})`)
-    )
-
-    stream.destroy()
-    if (!server.dispatcher._writableState.destroyed) {
-      if (server.config.music.repeat != "single" && !server.requestRestart) {
-        server.currentQueue += 1
-      }
-      server.requestRestart = false
-      this.execute(connection)
-    } else {
-      server.queue = []
-      server.dispatcher == null
-    }
-  })
 }
 
 module.exports = Music
