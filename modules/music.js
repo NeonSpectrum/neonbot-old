@@ -190,7 +190,7 @@ Music.prototype.stop = function() {
     server = this.server
 
   if (server.dispatcher) {
-    if (!$.isOwner(message.author.id) && server.requested.id != message.author.id && !server.requested.bot) {
+    if (!$.isOwner(message.author.id) && server.queue[currentQueue].requested.id != message.author.id && !server.queue[currentQueue].requested.bot) {
       return message.channel.send($.embed("Please respect the one who queued the song."))
     }
     server.dispatcher.end()
@@ -352,6 +352,7 @@ Music.prototype.resume = async function() {
 Music.prototype.autoplay = async function(args) {
   var message = this.message,
     server = this.server
+  if (!args[0]) return message.channel.send($.embed(`Autoplay is set to ${server.config.music.autoplay ? "on" : "off"}.`))
   if (args[0] != "on" && args[0] != "off") return message.channel.send($.embed("Invalid Parameters (on | off)."))
   server.config = await $.updateServerConfig(message.guild.id, {
     "music.autoplay": args[0] == "on" ? true : false
