@@ -467,7 +467,7 @@ Music.prototype.execute = async function(connection) {
       )
 
       if (!server.dispatcher._writableState.destroyed) {
-        if (server.config.music.repeat == "off" && server.currentQueue == server.queue.length - 1 && server.status != "skip" && !Number.isInteger(server.status)) {
+        if (server.config.music.repeat == "off" && !server.config.music.autoplay && server.currentQueue == server.queue.length - 1 && server.status != "skip" && !Number.isInteger(server.status)) {
           server.stopped = true
           return
         }
