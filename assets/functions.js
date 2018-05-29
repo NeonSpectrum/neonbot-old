@@ -47,7 +47,7 @@ $.embed = (message) => {
 }
 
 $.isOwner = (id) => {
-  return config.env.OWNER_ID.split(",").indexOf(id) > -1
+  return process.env.OWNER_ID.split(",").indexOf(id) > -1
 }
 
 $.processDatabase = (arr, items) => {
@@ -56,7 +56,7 @@ $.processDatabase = (arr, items) => {
       if (!items.find((x) => x.server_id == arr[i])) {
         await db.collection("servers").insert({
           server_id: arr[i],
-          prefix: config.env.PREFIX,
+          prefix: process.env.PREFIX,
           deleteoncmd: false,
           strictmode: false,
           channel: {},
@@ -95,7 +95,7 @@ $.refreshConfig = () => {
   return new Promise((resolve, reject) => {
     config = process.env
     db.collection("settings").find({}).toArray(async (err, items) => {
-      config.settings = items[0]
+      config = items[0]
       resolve()
     })
   })
@@ -175,6 +175,17 @@ $.formatSeconds = (secs, format) => {
     seconds = parseInt(hours) * 60 + parseInt(minutes) * 60 + parseInt(seconds)
     return seconds < 10 ? "0" + seconds : seconds
   }
+}
+
+$.convertToSeconds = (str) => {
+  var arr = str.split(":")
+  if (arr.length == 3) {
+    arr[0] = arr[0] * 3600
+    arr[1] = arr[1] * 60
+  } else if (arr.length == 2) {
+    arr[0] = arr[0] * 60
+  }
+  return +arr.reduce((x, y) => +x + +y)
 }
 
 $.wait = (ms) => {

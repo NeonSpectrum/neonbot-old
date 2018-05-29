@@ -33,7 +33,7 @@ bot.on('voiceStateUpdate', async (oldMember, newMember) => {
 
     msg = `**${newMember.user.username}** has connected to **${bot.channels.get(newMember.voiceChannelID).name}**`
 
-    if (newMember.guild.channels.get(newMember.voiceChannelID).members.filter(s => !s.user.bot).size > 0) music.resume()
+    if (newMember.guild.channels.get(newMember.voiceChannelID).members.filter(s => !s.user.bot).size == 1) music.resume()
 
     if (config.music.roles[newMember.voiceChannelID]) {
       newMember.roles.add(config.music.roles[newMember.voiceChannelID]).then(() => {

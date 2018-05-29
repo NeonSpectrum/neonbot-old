@@ -241,7 +241,14 @@ Administration.prototype.setavatar = function(args) {
   bot.user.setAvatar(args[0])
     .then(() => {
       this.log("Avatar changed.")
-      message.channel.send($.embed(args[0]).setTitle("Avatar changed to"))
+      message.channel.send($.embed()
+        .setTitle("Avatar changed to")
+        .setImage(args[0])
+      )
+    })
+    .catch((err) => {
+      this.log("Avatar error: " + err)
+      message.channel.send($.embed("There was an error changing the avatar."))
     })
 }
 

@@ -8,14 +8,12 @@ const MongoClient = require('mongodb').MongoClient
 const $ = require('./assets/functions')
 
 var Admin, Util, Music, Search, Games;
-var db, guildlist, config = {
-  env: process.env
-}
+var db, guildlist, config
 
 var loaded = false,
   time = new Date()
 
-if (!config.env.TOKEN || !config.env.PREFIX || !config.env.OWNER_ID) {
+if (!process.env.TOKEN || !process.env.PREFIX || !process.env.OWNER_ID) {
   console.log(colors.red("Missing Credentials in environment..."))
   process.exit(10)
 }
@@ -41,11 +39,11 @@ MongoClient.connect(`mongodb://${process.env.DB_USER}:${process.env.DB_PASS}@${p
     items = insert.ops
   }
   guildlist = await db.collection("servers").find({}).toArray()
-  config.settings = items[0]
+  config = items[0]
 
   $.setConfig(config)
 
-  bot.login(config.env.TOKEN)
+  bot.login(process.env.TOKEN)
 })
 
 bot.on('ready', async () => {
@@ -84,7 +82,7 @@ bot.on('ready', async () => {
     var usersize = bot.guilds.get(guilds[i]).members.size
     $.log(`Connected to "${bot.guilds.get(guilds[i]).name}" with ${channelsize} ${channelsize == 1 ? "channel" : "channels"} and ${usersize} ${usersize == 1 ? "user" : "users"}${i == bot.guilds.size - 1 ? "\n" : ""}`)
     var conf = $.getServerConfig(guilds[i])
-    if (conf.channel.debug && process.env.message != "updated") {
+    if (conf.channel.debug && process.env.message && process.env.message != "updated") {
       var temp = $.embed().setFooter(bot.user.tag, bot.user.displayAvatarURL())
       if (process.env.message == "crashed") {
         temp.setAuthor("Error", "https://i.imgur.com/1vOMHlr.png")
@@ -107,8 +105,8 @@ bot.on('ready', async () => {
     });
   }
 
-  bot.user.setActivity(config.settings.game.name, {
-    type: config.settings.game.type.toUpperCase()
+  bot.user.setActivity(config.game.name, {
+    type: config.game.type.toUpperCase()
   })
 
   loaded = true
@@ -127,7 +125,7 @@ bot.on('message', message => {
     }
     return
   }
-  if (message.member.roles.filter(s => s.name != "@everyone").size == 0 && server.strictmode) {
+  if (!$.isOwner(message.author.id) && message.member.roles.filter(s => s.name != "@everyone").size == 0 && server.strictmode) {
     message.channel.send($.embed("You must have at least one role to command me."))
     return
   }
