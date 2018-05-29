@@ -29,12 +29,9 @@ Administration.prototype.addrole = function(args) {
 
   if (!rMember) return errors.cantfindUser(message.channel)
 
-  var role = args.join(" ")
-    .slice(22)
+  if (!args.slice(1).join(" ")) return message.channel.send($.embed("Specify a role!"))
 
-  if (!role) return message.channel.send($.embed("Specify a role!"))
-
-  var gRole = message.guild.roles.find(`name`, role)
+  var gRole = message.guild.roles.find(`name`, args.slice(1).join(" "))
 
   if (!gRole) return message.channel.send($.embed("Couldn't find that role."))
 
@@ -55,14 +52,11 @@ Administration.prototype.removerole = function(args) {
 
   var rMember = message.guild.member(message.mentions.users.first()) || message.guild.members.get(args[0])
 
-  if (!rMember) return message.channel.send($.embed("Couldn't find that user, yo."))
+  if (!rMember) return message.channel.send($.embed("Couldn't find that user."))
 
-  var role = args.join(" ")
-    .slice(22)
+  if (!args.slice(1).join(" ")) return message.channel.send($.embed("Specify a role!"))
 
-  if (!role) return message.channel.send($.embed("Specify a role!"))
-
-  var gRole = message.guild.roles.find(`name`, role)
+  var gRole = message.guild.roles.find(`name`, args.slice(1).join(" "))
 
   if (!gRole) return message.channel.send($.embed("Couldn't find that role."))
 
@@ -87,15 +81,12 @@ Administration.prototype.ban = function(args) {
 
   if (bUser.id === bot.user.id) return errors.botuser(message)
 
-  var bReason = args.join(" ")
-    .slice(22)
-
-  if (!bReason) return errors.noReason(message.channel)
+  if (!args.slice(1).join(" ")) return errors.noReason(message.channel)
 
   if (bUser.hasPermission("MANAGE_MESSAGES")) return errors.equalPerms(message, bUser, "MANAGE_MESSAGES")
 
   message.guild.member(bUser)
-    .ban(bReason)
+    .ban(args.slice(1).join(" "))
 
   message.send($.embed()
     .setDescription("~Ban~")

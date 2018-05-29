@@ -190,7 +190,7 @@ Music.prototype.stop = function() {
     server = this.server
 
   if (server.dispatcher) {
-    if (!$.isOwner(message.author.id) && server.queue[currentQueue].requested.id != message.author.id && !server.queue[currentQueue].requested.bot) {
+    if (!$.isOwner(message.author.id) && server.queue[server.currentQueue].requested.id != message.author.id && !server.queue[server.currentQueue].requested.bot) {
       return message.channel.send($.embed("Please respect the one who queued the song."))
     }
     server.dispatcher.end()
@@ -208,7 +208,7 @@ Music.prototype.skip = function() {
   var message = this.message,
     server = this.server
   if (server.dispatcher) {
-    if (!$.isOwner(message.author.id) && server.queue[currentQueue].requested.id != message.author.id && !server.queue[currentQueue].requested.bot) {
+    if (!$.isOwner(message.author.id) && server.queue[server.currentQueue].requested.id != message.author.id && !server.queue[server.currentQueue].requested.bot) {
       return message.channel.send($.embed("Please respect the one who queued the song."))
     }
     if (server.config.music.repeat == "single") {
