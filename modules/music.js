@@ -396,38 +396,10 @@ Music.prototype.restartsong = function() {
   }
 }
 
-Music.prototype.execute = async function(connection) {
+Music.prototype.execute = function(connection) {
   var message = this.message,
     server = this.server
 
-  if (!server.queue[server.currentQueue]) {
-    server.currentQueue = 0
-    if (server.config.music.repeat == "off") {
-      server.queue = []
-      if (server.config.music.autoplay) {
-        if (server.autoplayid.indexOf(server.previnfo.video_id) == -1) server.autoplayid.push(server.previnfo.video_id)
-        for (var i = 0; i < server.previnfo.related_videos.length; i++) {
-          var id = server.previnfo.related_videos[i].id || server.previnfo.related_videos[i].video_id
-          if (server.autoplayid.indexOf(id) == -1) {
-            server.autoplayid.push(id)
-            server.previnfo = await ytdl.getInfo(id)
-            break
-          }
-        }
-        server.queue.push({
-          id: server.previnfo.video_id,
-          title: server.previnfo.title,
-          url: server.previnfo.video_url,
-          requested: bot.user,
-          info: server.previnfo
-        })
-      } else {
-        return message.guild.voiceConnection.disconnect()
-      }
-    }
-  }
-
-  // await $.wait(500)
   try {
     server.dispatcher = connection.play(ytdl(server.queue[server.currentQueue].url, process.env.DEVELOPMENT ? {
       filter: "audioonly"
@@ -438,8 +410,6 @@ Music.prototype.execute = async function(connection) {
       highWaterMark: 1,
       bitrate: "auto"
     })
-
-    server.previnfo = server.queue[server.currentQueue].info
 
     server.dispatcher.on("start", async () => {
       var requested = server.queue[server.currentQueue].requested
@@ -470,6 +440,24 @@ Music.prototype.execute = async function(connection) {
         if (server.config.music.repeat == "off" && !server.config.music.autoplay && server.currentQueue == server.queue.length - 1 && server.status != "skip" && !Number.isInteger(server.status)) {
           server.stopped = true
           return
+        } else if (server.currentQueue == server.queue.length - 1 && server.config.music.autoplay && server.config.music != "all") {
+          if (server.autoplayid.indexOf(server[currentQueue].info.video_id) == -1) server.autoplayid.push(server[currentQueue].info.video_id)
+          var info
+          for (var i = 0; i < server[currentQueue].info.related_videos.length; i++) {
+            var id = server[currentQueue].info.related_videos[i].id || server[currentQueue].info.related_videos[i].video_id
+            if (server.autoplayid.indexOf(id) == -1) {
+              server.autoplayid.push(id)
+              info = await ytdl.getInfo(id)
+              break
+            }
+          }
+          server.queue.push({
+            id: info.video_id,
+            title: info.title,
+            url: info.video_url,
+            requested: bot.user,
+            info: info
+          })
         }
         if (Number.isInteger(server.status)) {
           server.currentQueue = server.status
