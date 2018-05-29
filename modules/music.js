@@ -352,9 +352,9 @@ Music.prototype.resume = async function() {
 Music.prototype.autoplay = async function(args) {
   var message = this.message,
     server = this.server
-  if (args[0].toLowerCase() != "on" && args[0].toLowerCase() != "off") return message.channel.send($.embed("Invalid Parameters (on | off)."))
+  if (args[0] != "on" && args[0] != "off") return message.channel.send($.embed("Invalid Parameters (on | off)."))
   server.config = await $.updateServerConfig(message.guild.id, {
-    "music.autoplay": args[0].toLowerCase() == "on" ? true : false
+    "music.autoplay": args[0] == "on" ? true : false
   })
   message.channel.send($.embed("Autoplay is now " + (server.config.music.autoplay ? "enabled" : "disabled") + "."))
   this.log("Autoplay " + (server.config.music.autoplay ? "enabled" : "disabled") + ".")
