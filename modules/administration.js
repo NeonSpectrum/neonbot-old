@@ -378,6 +378,7 @@ Administration.prototype.update = function() {
             .setAuthor("GitHub Update", "https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png")
             .setDescription("Updating...")
           )
+          fs.writeFile('updateid.txt', message.channel.id, function(err) {})
           exec(`${process.env.GIT_PATH}git pull origin master`, async (err, stdout, stderr) => {
             await ghmsg.edit($.embed()
               .setFooter(bot.user.tag, bot.user.displayAvatarURL())

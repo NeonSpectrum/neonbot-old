@@ -84,19 +84,27 @@ bot.on('ready', async () => {
     var usersize = bot.guilds.get(guilds[i]).members.size
     $.log(`Connected to "${bot.guilds.get(guilds[i]).name}" with ${channelsize} ${channelsize == 1 ? "channel" : "channels"} and ${usersize} ${usersize == 1 ? "user" : "users"}${i == bot.guilds.size - 1 ? "\n" : ""}`)
     var conf = $.getServerConfig(guilds[i])
-    if (conf.channel.debug && process.env.message) {
-      var temp = $.embed().setFooter(bot.user.tag, `https://cdn.discordapp.com/avatars/${bot.user.id}/${bot.user.avatar}.png?size=16`)
+    if (conf.channel.debug && process.env.message != "updated") {
+      var temp = $.embed().setFooter(bot.user.tag, bot.user.displayAvatarURL())
       if (process.env.message == "crashed") {
         temp.setAuthor("Error", "https://i.imgur.com/1vOMHlr.png")
           .setDescription("Server Crashed. Restarted.")
-      } else if (process.env.message == "updated") {
-        temp.setAuthor("GitHub Update", "https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png")
-          .setDescription("Updated!")
       } else if (process.env.message == "restarted") {
         temp.setAuthor("Restarted!")
       }
       bot.channels.get(conf.channel.debug).send(temp)
     }
+  }
+
+  if (process.env.message == "updated") {
+    var temp = $.embed()
+      .setFooter(bot.user.tag, bot.user.displayAvatarURL())
+      .setAuthor("GitHub Update", "https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png")
+      .setDescription("Updated!")
+    fs.readFile('updateid.txt', "utf8", function(err, data) {
+      bot.channels.get(data).send(temp)
+      fs.unlink('updateid.txt', function() {})
+    });
   }
 
   bot.user.setActivity(config.settings.game.name, {
