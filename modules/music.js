@@ -441,24 +441,28 @@ Music.prototype.execute = function(connection) {
         if (server.config.music.repeat == "off" && !server.config.music.autoplay && server.currentQueue == server.queue.length - 1 && server.status != "skip" && !Number.isInteger(server.status)) {
           server.stopped = true
           return
-        } else if (server.currentQueue == server.queue.length - 1 && server.config.music.autoplay && server.config.music != "all") {
-          if (server.autoplayid.indexOf(server[currentQueue].info.video_id) == -1) server.autoplayid.push(server[currentQueue].info.video_id)
-          var info
-          for (var i = 0; i < server[currentQueue].info.related_videos.length; i++) {
-            var id = server[currentQueue].info.related_videos[i].id || server[currentQueue].info.related_videos[i].video_id
-            if (server.autoplayid.indexOf(id) == -1) {
-              server.autoplayid.push(id)
-              info = await ytdl.getInfo(id)
-              break
+        } else if (server.currentQueue == server.queue.length - 1 && server.config.music.autoplay && server.config.music.repeat != "all") {
+          try {
+            if (server.autoplayid.indexOf(server.queue[server.currentQueue].info.video_id) == -1) server.autoplayid.push(server.queue[server.currentQueue].info.video_id)
+            var info
+            for (var i = 0; i < server.queue[server.currentQueue].info.related_videos.length; i++) {
+              var id = server.queue[server.currentQueue].info.related_videos[i].id || server.queue[server.currentQueue].info.related_videos[i].video_id
+              if (server.autoplayid.indexOf(id) == -1) {
+                server.autoplayid.push(id)
+                info = await ytdl.getInfo(id)
+                break
+              }
             }
+            server.queue.push({
+              id: info.video_id,
+              title: info.title,
+              url: info.video_url,
+              requested: bot.user,
+              info: info
+            })
+          } catch (err) {
+            console.log(err)
           }
-          server.queue.push({
-            id: info.video_id,
-            title: info.title,
-            url: info.video_url,
-            requested: bot.user,
-            info: info
-          })
         }
         if (Number.isInteger(server.status)) {
           server.currentQueue = server.status
