@@ -193,9 +193,9 @@ Music.prototype.stop = function() {
     if (!$.isOwner(message.author.id) && server.queue[server.currentQueue].requested.id != message.author.id && !server.queue[server.currentQueue].requested.bot) {
       return message.channel.send($.embed("Please respect the one who queued the song."))
     }
-    server.dispatcher.end()
     server.stopped = false
     if (message.guild.voiceConnection) message.guild.voiceConnection.disconnect()
+    server.dispatcher.end()
     server.autoplayid = []
     message.channel.send($.embed("Player stopped!")).then(s => s.delete({
       timeout: 3000
@@ -476,6 +476,7 @@ Music.prototype.execute = function(connection) {
         server.status = null
         this.execute(connection)
       } else {
+        server.currentQueue = 0
         server.queue = []
         server.dispatcher == null
       }
