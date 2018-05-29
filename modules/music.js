@@ -184,7 +184,6 @@ Music.prototype.skip = function() {
       return message.channel.send($.embed("Please respect the one who queued the song."))
     }
     if (server.config.music.repeat == "single") {
-      server.currentQueue += 1
       server.status = "skip"
     }
     server.dispatcher.end()
@@ -203,7 +202,7 @@ Music.prototype.list = function() {
     var temp = []
     var totalseconds = 0
     for (var i = 0; i < server.queue.length && server.queue[i].info; i++) {
-      temp.push(`\`${server.currentQueue == i ? "*" : ""}${i+1}.\` [**${server.queue[i].title}**](${server.queue[i].url})\n\t  \`${$.formatSeconds(server.queue[i].info.length_seconds)} | ${server.queue[i].requested.tag}\``)
+      temp.push(`\`${server.currentQueue == i ? "*" : ""}${i+1}.\` [${server.queue[i].title}](${server.queue[i].url})\n\t  \`${$.formatSeconds(server.queue[i].info.length_seconds)} | ${server.queue[i].requested.tag}\``)
       totalseconds += +server.queue[i].info.length_seconds
       if (i != 0 && i % 9 == 0 || i == server.queue.length - 1) {
         embeds.push($.embed().setDescription(temp.join("\n")))
@@ -423,10 +422,10 @@ Music.prototype.execute = async function(connection) {
 
       stream.destroy()
       if (!server.dispatcher._writableState.destroyed) {
-        if ((server.config.music.repeat != "single" && server.status == "restart") || server.status == "skip") {
+        if ((server.config.music.repeat != "single" && server.status != "restart") || server.status == "skip") {
           server.currentQueue += 1
         }
-        if (server.config.music.repeat == "single") {
+        if (server.config.music.repeat == "off") {
           server.queue.splice(currentQueue, 1)
         }
         server.status = null
