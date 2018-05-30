@@ -559,9 +559,7 @@ async function checkPlaylist() {
         channel: bot.channels.get(playlist[1]),
         author: bot.user,
         member: {
-          voiceChannel: {
-            id: voiceChannel
-          }
+          voiceChannel: bot.channels.get(voiceChannel)
         }
       }
       var music = new Music(message)
