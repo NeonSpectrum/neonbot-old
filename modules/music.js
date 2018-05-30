@@ -183,13 +183,6 @@ Music.prototype.play = async function(args) {
       server.currentQueue += 1
       self.execute(server.connection)
     }
-    if (server.config.music.autoresume) {
-      $.storeMusicPlaylist({
-        guild: message.guild.id,
-        voice: message.member.voiceChannel.id,
-        msg: message.channel.id
-      }, server.queue.map(x => x.url))
-    }
   }
 }
 
@@ -452,6 +445,14 @@ Music.prototype.autoresume = async function(args) {
 Music.prototype.execute = function(connection, time) {
   var message = this.message,
     server = this.server
+
+  if (server.config.music.autoresume) {
+    $.storeMusicPlaylist({
+      guild: message.guild.id,
+      voice: message.member.voiceChannel.id,
+      msg: message.channel.id
+    }, server.queue.map(x => x.url))
+  }
 
   try {
     server.dispatcher = connection.play(ytdl(server.queue[server.currentQueue].url, process.env.DEVELOPMENT ? {
