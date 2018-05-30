@@ -138,8 +138,8 @@ bot.on('message', async message => {
     return
   }
 
-  if (message.content.startsWith(bot.user.toString())) {
-    var content = message.content.replace(bot.user.toString(), "").trim()
+  if (message.content.startsWith(bot.user.toString().replace("@", "@!"))) {
+    var content = message.content.replace(bot.user.toString().replace("@", "@!"), "").trim()
     if (content) {
       const response = await fetch(`https://program-o.com/v3/chat.php?say=${content}`);
       const json = await response.json();
