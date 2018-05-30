@@ -17,6 +17,7 @@
     "discord.js": "github:discordjs/discord.js#master",
     "dotenv": "^5.0.1",
     "erlpack": "github:discordapp/erlpack",
+    "ffmpeg-binaries": "^3.2.2-3",
     "fs-extra": "^6.0.1",
     "google-images": "^2.1.0",
     "google-search": "0.0.5",
