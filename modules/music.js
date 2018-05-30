@@ -559,7 +559,9 @@ async function checkPlaylist() {
         channel: bot.channels.get(playlist[1]),
         author: bot.user,
         member: {
-          voiceChannel: voiceChannel
+          voiceChannel: {
+            id: voiceChannel
+          }
         }
       }
       var music = new Music(message)
@@ -582,8 +584,7 @@ async function checkPlaylist() {
               .then((connection) => {
                 server.connection = connection
                 music.execute(connection)
-              }).catch((err) => {
-                console.log(err)
+              }).catch(() => {
                 message.channel.send("I can't join the voice channel.")
               })
           }
