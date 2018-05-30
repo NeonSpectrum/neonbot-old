@@ -1,4 +1,4 @@
-const fs = require('fs')
+const fs = require('fs-extra')
 const Discord = require('discord.js')
 const moment = require('moment')
 const colors = require('colors/safe')
@@ -64,6 +64,7 @@ $.processDatabase = (arr, items) => {
             volume: 100,
             autoplay: false,
             repeat: "off",
+            autoresume: false,
             roles: {}
           }
         })
@@ -111,7 +112,7 @@ $.getServerConfig = (id) => {
 
 $.refreshServerConfig = () => {
   return new Promise((resolve, reject) => {
-    db.collection("servers").find({}).toArray(async (err, items) => {
+    db.collection("servers").find({}).toArray((err, items) => {
       servers = items
       resolve()
     })
@@ -142,6 +143,30 @@ $.updateServerConfig = (id, options) => {
       resolve($.getServerConfig(id))
     })
   })
+}
+
+$.storeMusicPlaylist = (id, arr) => {
+  var content = [id.voice, id.msg].concat(arr)
+  fs.outputFile(`musiclist/${id.guild}.txt`, content.join("\r\n"), function() {})
+}
+
+$.getMusicPlaylist = (id) => {
+  return new Promise((resolve, reject) => {
+    var file = `musiclist/${id}.txt`
+    if (fs.existsSync(file)) {
+      fs.readFile(file, 'utf8', function(err, data) {
+        resolve(data.split("\r\n"))
+      })
+    } else {
+      resolve(null)
+    }
+  })
+}
+$.removeMusicPlaylist = (id) => {
+  var file = `musiclist/${id}.txt`
+  if (fs.existsSync(file)) {
+    fs.unlink(file, function() {})
+  }
 }
 
 $.formatSeconds = (secs, format) => {

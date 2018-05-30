@@ -72,8 +72,8 @@
     "usage": "{0}pokemon <start | stop | score>"
   },
   "play": {
-    "info": "Plays a music.",
-    "usage": "{0}play <url | keyword>"
+    "info": "Plays a music or a specific index.",
+    "usage": "{0}play <url | keyword> or {0}play <queue index>"
   },
   "stop": {
     "info": "Stops the player.",
@@ -82,6 +82,10 @@
   "skip": {
     "info": "Skips the queue.",
     "usage": "{0}skip"
+  },
+  "removesong": {
+    "info": "Removes song in specific index.",
+    "usage": "{0}removesong <index>"
   },
   "list": {
     "info": "Shows the list of queue.",
@@ -118,6 +122,10 @@
   "restartsong": {
     "info": "Force restart the song.",
     "usage": "{0}restartsong"
+  },
+  "autoresume": {
+    "info": "Enables auto resume when the bot reconnects.",
+    "usage": "{0}autoresume <enable | disable>"
   },
   "google": {
     "info": "Searches the keyword in Google.",

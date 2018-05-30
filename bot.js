@@ -50,16 +50,21 @@ bot.on('ready', async () => {
   var guilds = Array.from(bot.guilds.keys())
   await $.processDatabase(guilds, guildlist)
 
-  $.log(`Loaded Settings in ${((Date.now() - time) / 1000).toFixed(2)} secs.`)
+  $.log(`Loaded Settings in ${((Date.now() - time) / 1000).toFixed(2)} secs.\n`)
 
   time = new Date()
-
   try {
+    $.log(`Loading Administration Module...`)
     Administration = require('./modules/administration')
+    $.log(`Loading Utilities Module...`)
     Utilities = require('./modules/utilities')
+    $.log(`Loading Music Module...`)
     Music = require('./modules/music')
+    $.log(`Loading Searches Module...`)
     Searches = require('./modules/searches')
+    $.log(`Loading Games Module...`)
     Games = require('./modules/games')
+    $.log(`Loading Events Module...\n`)
     require('./modules/events')
   } catch (err) {
     $.warn(err)
@@ -73,7 +78,7 @@ bot.on('ready', async () => {
     "games": getAllFuncs(new Games())
   }
 
-  $.log(`Loaded Modules in ${((Date.now() - time) / 1000).toFixed(2)} secs.\n`)
+  $.log(`Loaded All Modules in ${((Date.now() - time) / 1000).toFixed(2)} secs.\n`)
 
   $.log(`Logged in as ${bot.user.tag}\n`)
 
@@ -99,7 +104,7 @@ bot.on('ready', async () => {
       .setFooter(bot.user.tag, bot.user.displayAvatarURL())
       .setAuthor("GitHub Update", "https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png")
       .setDescription("Updated!")
-    fs.readFile('updateid.txt', "utf8", function(err, data) {
+    fs.readFile('updateid.txt', 'utf8', function(err, data) {
       bot.channels.get(data).send(temp)
       fs.unlink('updateid.txt', function() {})
     });

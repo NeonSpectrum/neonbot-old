@@ -39,7 +39,8 @@ class Music {
           lastAutoMessage: null,
           lastPauseMessage: null,
           status: null,
-          stopped: false
+          stopped: false,
+          seekTime: 0
         }
       } else {
         servers[message.guild.id].currentChannel = (message.channel && message.channel.id) || servers[message.guild.id].currentChannel
@@ -83,7 +84,7 @@ Music.prototype.play = async function(args) {
       return message.channel.send($.embed(`Invalid Playlist URL`))
     }
 
-    var msg = await message.channel.send($.embed(`Adding ${videos.length} ${videos.length == 1 ? "song" : "songs"} to the queue`))
+    var msg = await message.channel.send($.embed(`Adding ${videos.length} ${videos.length == 1 ? "song" : "songs"} to the queue.`))
     var error = 0
 
     for (var i = 0; i < videos.length; i++) {
@@ -100,7 +101,7 @@ Music.prototype.play = async function(args) {
         error++
       }
     }
-    return msg.edit($.embed(`Done! Loaded ${videos.length} songs.` + (error > 0 ? ` ${error} failed to load.` : ""))).catch(() => {})
+    return msg.edit($.embed(`Done! Loaded ${videos.length} ${videos.length == 1 ? "song" : "songs"}.` + (error > 0 ? ` ${error} failed to load.` : ""))).catch(() => {})
   } else if (args[0].match(/^(https?\:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+$/g)) {
     var info = await ytdl.getInfo(args[0])
     message.channel.send($.embed()
@@ -182,6 +183,13 @@ Music.prototype.play = async function(args) {
       server.currentQueue += 1
       self.execute(server.connection)
     }
+    if (server.config.music.autoresume) {
+      $.storeMusicPlaylist({
+        guild: message.guild.id,
+        voice: message.member.voiceChannel.id,
+        msg: message.channel.id
+      }, server.queue.map(x => x.url))
+    }
   }
 }
 
@@ -201,6 +209,7 @@ Music.prototype.stop = function() {
       timeout: 3000
     })).catch(() => {})
     this.log("Player stopped!")
+    $.removeMusicPlaylist(message.guild.id)
   }
 }
 
@@ -216,6 +225,25 @@ Music.prototype.skip = function() {
     }
     server.dispatcher.end()
     this.log("Player skipped!")
+  }
+}
+
+Music.prototype.seek = function(args) {
+  var message = this.message,
+    server = this.server,
+    seconds = $.convertToSeconds(args[0])
+  if (server.dispatcher) {
+    if (!$.isOwner(message.author.id) && server.queue[server.currentQueue].requested.id != message.author.id && !server.queue[server.currentQueue].requested.bot) {
+      return message.channel.send($.embed("Please respect the one who queued the song."))
+    }
+    server.status = "seek"
+    server.seekTime = seconds
+    server.dispatcher.end()
+    this.execute(server.connection, seconds)
+    message.channel.send($.embed(`Seeking to ${seconds} seconds. Please wait.`))
+      .then(m => m.delete({
+        timeout: 3000
+      }))
   }
 }
 
@@ -236,6 +264,13 @@ Music.prototype.removesong = async function(args) {
     server.queue.splice(+args[0] - 1, 1)
     if (+args[0] >= server.currentQueue) {
       server.currentQueue -= 1
+    }
+    if (server.config.music.autoresume) {
+      $.storeMusicPlaylist({
+        guild: message.guild.id,
+        voice: message.member.voiceChannel.id,
+        msg: message.channel.id
+      }, server.queue.map(x => x.url))
     }
   }
 }
@@ -378,7 +413,7 @@ Music.prototype.nowplaying = function() {
       .setTitle("Title")
       .setDescription(server.queue[server.currentQueue].title)
       .setThumbnail(info.thumbnail_url)
-      .addField("Time", `${$.formatSeconds(server.dispatcher.streamTime / 1000)} - ${$.formatSeconds(info.length_seconds)}`)
+      .addField("Time", `${$.formatSeconds(server.dispatcher.streamTime / 1000 + server.seekTime)} - ${$.formatSeconds(info.length_seconds)}`)
       .addField("Description", (info.description.length > 500 ? info.description.substring(0, 500) + "..." : info.description))
       .setFooter(footer.join(" | "), requested.displayAvatarURL())
   }
@@ -401,7 +436,20 @@ Music.prototype.restartsong = function() {
   }
 }
 
-Music.prototype.execute = function(connection) {
+Music.prototype.autoresume = async function(args) {
+  var message = this.message,
+    server = this.server
+
+  if (!$.isOwner(message.member.id)) return message.channel.send($.embed("You don't have a permission to set the autoresume mode."))
+  if (args[0] != "enable" && args[0] != "disable") return message.channel.send($.embed("Invalid Parameters (enable | disable)."))
+
+  server.config = await $.updateServerConfig(message.guild.id, {
+    "music.autoresume": args[0] == "enable" ? true : false
+  })
+  message.channel.send($.embed(`Auto Resume is now ${server.config.music.autoresume ? "enabled" : "disabled"}.`))
+}
+
+Music.prototype.execute = function(connection, time) {
   var message = this.message,
     server = this.server
 
@@ -409,7 +457,8 @@ Music.prototype.execute = function(connection) {
     server.dispatcher = connection.play(ytdl(server.queue[server.currentQueue].url, process.env.DEVELOPMENT ? {
       filter: "audioonly"
     } : {
-      quality: "highestaudio"
+      quality: "highestaudio",
+      begin: time * 1000
     }), {
       volume: server.config.music.volume / 100,
       highWaterMark: 1,
@@ -417,6 +466,10 @@ Music.prototype.execute = function(connection) {
     })
 
     server.dispatcher.on("start", async () => {
+      if (server.status == "seek") {
+        server.status = null
+        return
+      }
       var requested = server.queue[server.currentQueue].requested
       var footer = [requested.tag, $.formatSeconds(server.queue[server.currentQueue].info.length_seconds), `Volume: ${server.config.music.volume}%`, `Repeat: ${server.config.music.repeat}`, `Autoplay: ${server.config.music.autoplay ? "on" : "off"}`]
       if (server.lastPlayingMessage) server.lastPlayingMessage.delete().catch(() => {})
@@ -430,6 +483,8 @@ Music.prototype.execute = function(connection) {
     })
 
     server.dispatcher.on("finish", async () => {
+      if (server.status == "seek") return
+      server.seekTime = 0
       var requested = server.queue[server.currentQueue].requested
       var footer = [requested.tag, $.formatSeconds(server.queue[server.currentQueue].info.length_seconds), `Volume: ${server.config.music.volume}%`, `Repeat: ${server.config.music.repeat}`, `Autoplay: ${server.config.music.autoplay ? "on" : "off"}`]
 
@@ -478,14 +533,60 @@ Music.prototype.execute = function(connection) {
       } else {
         server.currentQueue = 0
         server.queue = []
-        server.dispatcher == null
+        server.dispatcher.destroy()
       }
     })
   } catch (err) {
     message.channel.send($.embed(`I can't play this song.`))
     console.log(err)
-    return
   }
 }
+
+async function checkPlaylist() {
+  var guilds = Array.from(bot.guilds.keys())
+  for (var i = 0; i < guilds.length; i++) {
+    var config = $.getServerConfig(guilds[i])
+    if (config.music.autoresume) {
+      var playlist = await $.getMusicPlaylist(guilds[i])
+      if (!playlist) continue
+      var message = {
+        guild: bot.guilds.get(guilds[i]),
+        channel: bot.channels.get(playlist[1]),
+        author: bot.user
+      }
+      var music = new Music(message)
+      var server = servers[guilds[i]]
+      var voiceChannel = playlist[0]
+      playlist = playlist.slice(2)
+      $.log(`Auto Resume is enabled. Adding ${playlist.length} ${playlist.length == 1 ? "song" : "songs"} to the queue.`, message)
+      var msg = await message.channel.send($.embed(`Auto Resume is enabled. Adding ${playlist.length} ${playlist.length == 1 ? "song" : "songs"} to the queue.`))
+      var error = 0
+      for (var i = 0; i < playlist.length; i++) {
+        try {
+          var info = await ytdl.getInfo(playlist[i])
+          server.queue.push({
+            title: info.title,
+            url: info.video_url,
+            requested: message.author,
+            info: info
+          })
+          if (!message.guild.voiceConnection) {
+            bot.channels.get(voiceChannel).join()
+              .then((connection) => {
+                server.connection = connection
+                music.execute(connection)
+              }).catch(() => {
+                message.channel.send("I can't join the voice channel.")
+              })
+          }
+        } catch (err) {
+          error++
+        }
+      }
+      msg.edit($.embed(`Done! Loaded ${playlist.length} ${playlist.length == 1 ? "song" : "songs"}.` + (error > 0 ? ` ${error} failed to load.` : ""))).catch(() => {})
+    }
+  }
+}
+checkPlaylist()
 
 module.exports = Music
