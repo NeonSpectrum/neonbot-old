@@ -6,6 +6,7 @@ const Discord = require("discord.js")
 const bot = new Discord.Client()
 const MongoClient = require('mongodb').MongoClient
 const $ = require('./assets/functions')
+const package = require("./package.json")
 
 var Admin, Util, Music, Search, Games;
 var db, guildlist, config
@@ -19,6 +20,7 @@ if (!process.env.TOKEN || !process.env.PREFIX || !process.env.OWNER_ID) {
 }
 
 displayAscii()
+$.log(`Starting ${package.name} v${package.version}`)
 MongoClient.connect(`mongodb://${process.env.DB_USER}:${process.env.DB_PASS}@${process.env.DB_HOST}/${process.env.DB_NAME}`, async (err, client) => {
   if (err) {
     console.log(colors.red(`${err}\nFailed to establish connection to ${process.env.DB_HOST}`))
@@ -202,13 +204,13 @@ function getAllFuncs(obj) {
 
 function displayAscii() {
   console.log(colors.rainbow(`
- _______  _______  _______  ___      __   __  _______  _______  __    _  ______   _______   
-|       ||       ||       ||   |    |  | |  ||       ||   _   ||  |  | ||      | |   _   |  
-|    ___||____   ||    ___||   |    |  |_|  ||    _  ||  |_|  ||   |_| ||  _    ||  |_|  |  
-|   | __  ____|  ||   |___ |   |    |       ||   |_| ||       ||       || | |   ||       |  
-|   ||  || ______||    ___||   |___ |_     _||    ___||       ||  _    || |_|   ||       |  
-|   |_| || |_____ |   |___ |       |  |   |  |   |    |   _   || | |   ||       ||   _   |  
-|_______||_______||_______||_______|  |___|  |___|    |__| |__||_|  |__||______| |__| |__|  
+ __    _  _______  _______  __    _  _______  _______  _______   
+|  |  | ||       ||       ||  |  | ||  _    ||       ||       |
+|   |_| ||    ___||   _   ||   |_| || |_|   ||   _   ||_     _|
+|       ||   |___ |  | |  ||       ||       ||  | |  |  |   |
+|  _    ||    ___||  |_|  ||  _    ||  _   | |  |_|  |  |   |
+| | |   ||   |___ |       || | |   || |_|   ||       |  |   |
+|_|  |__||_______||_______||_|  |__||_______||_______|  |___|
 `))
 }
 
