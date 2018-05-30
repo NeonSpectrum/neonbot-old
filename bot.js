@@ -1,6 +1,7 @@
 require('dotenv').config()
 const fs = require('fs')
 const moment = require('moment')
+const fetch = require('node-fetch')
 const colors = require('colors/safe')
 const Discord = require("discord.js")
 const bot = new Discord.Client()
@@ -119,7 +120,7 @@ bot.on('ready', async () => {
   loaded = true
 })
 
-bot.on('message', message => {
+bot.on('message', async message => {
   var server = $.getServerConfig(message.guild.id)
   if (!loaded) return
   if (message.author.bot) return
@@ -136,6 +137,16 @@ bot.on('message', message => {
     message.channel.send($.embed("You must have at least one role to command me."))
     return
   }
+
+  if (message.content.startsWith(bot.user.toString())) {
+    var content = message.content.replace(bot.user.toString(), "").trim()
+    if (content) {
+      const response = await fetch(`https://program-o.com/v3/chat.php?say=${content}`);
+      const json = await response.json();
+      message.channel.send($.embed(`${message.author.toString()} ${json.conversation.say.bot}`));
+    }
+  }
+
   if (!message.content.startsWith(server.prefix)) return
 
   var messageArray = message.content.trim().split(/\s/g)

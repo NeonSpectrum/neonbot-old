@@ -124,6 +124,9 @@ Music.prototype.play = async function(args) {
     } catch (err) {
       return message.channel.send($.embed("Cannot find any videos"))
     }
+    if (videos.length == 0) {
+      return message.channel.send($.embed("Cannot find any videos"))
+    }
     var temp = $.embed().setAuthor("Choose 1-5 below.", "https://i.imgur.com/SBMH84I.png")
     var songSearchList = []
     for (var i = 0, j = 1; i < videos.length; i++, j++) {
@@ -176,7 +179,7 @@ Music.prototype.play = async function(args) {
           self.log("Connected to " + message.member.voiceChannel.name)
           self.execute(connection)
         }).catch(() => {
-          message.channel.send("I can't join the voice channel.")
+          message.channel.send($.embed("I can't join the voice channel."))
         })
     } else if (server.stopped) {
       server.stopped = false
@@ -550,14 +553,17 @@ async function checkPlaylist() {
     if (config.music.autoresume) {
       var playlist = await $.getMusicPlaylist(guilds[i])
       if (!playlist) continue
+      var voiceChannel = playlist[0]
       var message = {
         guild: bot.guilds.get(guilds[i]),
         channel: bot.channels.get(playlist[1]),
-        author: bot.user
+        author: bot.user,
+        member: {
+          voiceChannel: voiceChannel
+        }
       }
       var music = new Music(message)
       var server = servers[guilds[i]]
-      var voiceChannel = playlist[0]
       playlist = playlist.slice(2)
       $.log(`Auto Resume is enabled. Adding ${playlist.length} ${playlist.length == 1 ? "song" : "songs"} to the queue.`, message)
       var msg = await message.channel.send($.embed(`Auto Resume is enabled. Adding ${playlist.length} ${playlist.length == 1 ? "song" : "songs"} to the queue.`))
@@ -576,7 +582,8 @@ async function checkPlaylist() {
               .then((connection) => {
                 server.connection = connection
                 music.execute(connection)
-              }).catch(() => {
+              }).catch((err) => {
+                console.log(err)
                 message.channel.send("I can't join the voice channel.")
               })
           }
