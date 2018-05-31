@@ -35,6 +35,14 @@ class Games {
   }
 }
 
+Games.prototype.choose = function(args) {
+  var message = this.message
+
+  if (!args[0] || args[0].indexOf("|") == -1) return message.channel.send($.embed("Invalid parameters. (<choice1>|<choice2>|...>"))
+  var values = args[0].split("|")
+  message.channel.send($.embed(values[Math.floor(Math.random() * values.length)]))
+}
+
 Games.prototype.pokemon = async function(args) {
   var message = this.message,
     server = this.server,

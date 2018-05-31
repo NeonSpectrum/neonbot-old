@@ -2,8 +2,8 @@ const bot = require('../bot')
 const $ = require('../assets/functions')
 const config = $.getConfig()
 const moment = require('moment')
-const fetch = require('node-fetch')
 const emojiFlags = require('emoji-flags')
+const cheerio = require('cheerio')
 const GoogleSearch = require('google-search')
 const googleSearch = new GoogleSearch({
   key: process.env.GOOGLE_API,
@@ -81,8 +81,7 @@ Searches.prototype.weather = async function(args) {
 
   if (!args[0]) return message.channel.send($.embed("Please specify a city."))
 
-  var response = await fetch(`http://api.openweathermap.org/data/2.5/weather?q=${args.join(" ")}&units=metric&appid=a88701020436549755f42d7e4be71762`)
-  var json = await response.json()
+  var json = $.fetchJSON(`http://api.openweathermap.org/data/2.5/weather?q=${args.join(" ")}&units=metric&appid=a88701020436549755f42d7e4be71762`)
 
   if (json.cod != 200) return message.channel.send($.embed("City not found."))
   message.channel.send($.embed()
@@ -99,6 +98,72 @@ Searches.prototype.weather = async function(args) {
     .addField("🎛 Pressure", `${json.main.pressure} hpa`)
     .addField("💧 Humidity", `${json.main.humidity}%`)
   )
+}
+
+Searches.prototype.randomjoke = async function(args) {
+  var message = this.message
+
+  var name = message.mentions.users.first() ? message.mentions.users.first().username : (args[0] || "Chuck Norris")
+
+  var json = await $.fetchJSON(`http://api.icndb.com/jokes/random?escape=javascript`)
+
+  var msg = json.value.joke.replace("Chuck Norris", name).replace(`${name}' `, name[name.length - 1] != "s" ? `${name}'s ` : undefined)
+
+  message.channel.send($.embed(msg))
+}
+
+Searches.prototype.lol = async function(args) {
+  var message = this.message
+
+  if (args[0] == "summoner") {
+    var name = args.slice(1).join(" ")
+    var c = cheerio.load(await $.fetchHTML(`http://ph.op.gg/summoner/userName=${name}`))
+    var mostPlayed = []
+    c(".MostChampionContent").find(".ChampionName").each(function() {
+      mostPlayed.push(c(this).attr("title"))
+    })
+    var recentlyPlayed = []
+    c("table.SummonersMostGameTable").find(".SummonerName>a").each(function() {
+      recentlyPlayed.push(c(this).html())
+    })
+    var data = {
+      icon: `http:${c(".ProfileIcon>img.ProfileImage").attr("src")}`,
+      name: c(".Profile>.Information>.Name").html(),
+      rank: {
+        title: c(".TierRankInfo>.TierRank>.tierRank").html(),
+        icon: `http:${c(".Medal>img.Image").attr("src")}`,
+        info: {
+          points: c(".TierRankInfo>.TierInfo>.LeaguePoints").html(),
+          win: c(".TierRankInfo>.TierInfo>.WinLose>.wins").html(),
+          lose: c(".TierRankInfo>.TierInfo>.WinLose>.losses").html(),
+          ratio: c(".TierRankInfo>.TierInfo>.WinLose>.winratio").html()
+        }
+      },
+      mostPlayed: mostPlayed,
+      recentlyPlayed: recentlyPlayed
+    }
+    if (data.name) {
+      var msg = $.embed()
+        .setAuthor(data.name, data.icon)
+        .setFooter("Powered by op.gg", "http://opgg-static.akamaized.net/images/logo/logo-lol.png")
+        .setThumbnail(data.rank.icon)
+        .addField("Rank", data.rank.title)
+
+      if (data.rank.title != "Unranked")
+        msg.addField("Points", data.rank.info.points)
+        .addField("Stats", `${data.rank.info.win} / ${data.rank.info.lose} (${data.rank.info.ratio})`)
+
+      if (data.mostPlayed.length > 0)
+        msg.addField("Most Played Champions (Ranked)", data.mostPlayed.join(", "))
+
+      if (data.recentlyPlayed.length > 0)
+        msg.addField("Recently Played with", data.recentlyPlayed.join(", "))
+
+      message.channel.send(msg)
+    } else {
+      message.channel.send($.embed("Summoner name not found."))
+    }
+  }
 }
 
 module.exports = Searches

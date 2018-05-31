@@ -1,6 +1,7 @@
 const fs = require('fs-extra')
 const Discord = require('discord.js')
 const moment = require('moment')
+const fetch = require('node-fetch')
 const colors = require('colors/safe')
 
 var servers, config, db, currentGuild
@@ -162,11 +163,24 @@ $.getMusicPlaylist = (id) => {
     }
   })
 }
+
 $.removeMusicPlaylist = (id) => {
   var file = `musiclist/${id}.txt`
   if (fs.existsSync(file)) {
     fs.unlink(file, function() {})
   }
+}
+
+$.fetchJSON = (url, obj) => {
+  return new Promise(async resolve => {
+    resolve(await (await fetch(url, obj)).json())
+  })
+}
+
+$.fetchHTML = (url, obj) => {
+  return new Promise(async resolve => {
+    resolve(await (await fetch(url, obj)).text())
+  })
 }
 
 $.formatSeconds = (secs, format) => {

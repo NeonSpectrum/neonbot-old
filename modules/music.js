@@ -1,6 +1,5 @@
 const fs = require('fs')
 const moment = require('moment')
-const fetch = require('node-fetch')
 
 const bot = require('../bot')
 const {
@@ -126,12 +125,11 @@ Music.prototype.play = async function(args) {
     var token = await getSpotifyToken()
     if (uri.type == "playlist") {
       async function loop(offset) {
-        var response = await fetch(`https://api.spotify.com/v1/users/${uri.user}/playlists/${uri.id}/tracks?offset=${offset}&limit=100`, {
+        var json = await $.fetchJSON(`https://api.spotify.com/v1/users/${uri.user}/playlists/${uri.id}/tracks?offset=${offset}&limit=100`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
         })
-        var json = await response.json()
         if (json.items) {
           var msg = await message.channel.send($.embed(`Adding ${json.total} ${json.total == 1 ? "song" : "songs"} to the queue.`))
           var error = 0
@@ -160,12 +158,11 @@ Music.prototype.play = async function(args) {
       }
       loop(0)
     } else if (uri.type == "track") {
-      var response = await fetch(`https://api.spotify.com/v1/tracks/${uri.id}`, {
+      var json = await $.fetchJSON(`https://api.spotify.com/v1/tracks/${uri.id}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       })
-      var json = await response.json()
       var videos = await yt.searchVideos(`${json.artists[0].name} ${json.name}`)
       if (videos.length == 0) {
         return message.channel.send($.embed("I can't find a song from that spotify link."))
@@ -626,7 +623,7 @@ Music.prototype._saveplaylist = function() {
 function getSpotifyToken() {
   return new Promise(async resolve => {
     if (moment() > spotify.expiration) {
-      var api = await (await fetch('https://accounts.spotify.com/api/token', {
+      var json = await $.fetchJSON('https://accounts.spotify.com/api/token', {
         method: 'POST',
         headers: {
           'Authorization': `Basic ${new Buffer(process.env.SPOTIFY_CLIENT_ID + ':' + process.env.SPOTIFY_CLIENT_SECRET).toString('base64')}`,
@@ -634,9 +631,9 @@ function getSpotifyToken() {
           'Content-Type': 'application/x-www-form-urlencoded'
         },
         body: "grant_type=client_credentials"
-      })).json()
-      spotify.token = api.access_token
-      spotify.expiration = moment().add(api.expires_in - 600, 'seconds')
+      })
+      spotify.token = json.access_token
+      spotify.expiration = moment().add(json.expires_in - 600, 'seconds')
     }
     resolve(spotify.token)
   })
@@ -667,7 +664,7 @@ async function checkPlaylist() {
         time: 15000,
         errors: ['time']
       }).then(async (m) => {
-        if (m.first().content == "n") throw "no"
+        if (m.first().content.toLowerCase() == "n") throw "no"
         m.first().delete().catch(() => {})
         reqmsg.delete().catch(() => {})
         $.log(`Auto Resume is enabled. Adding ${playlist.length} ${playlist.length == 1 ? "song" : "songs"} to the queue.`, message)

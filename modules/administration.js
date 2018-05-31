@@ -367,7 +367,7 @@ Administration.prototype.update = function() {
         time: 15000,
         errors: ['time']
       }).then(async (m) => {
-        if (m.first().content == "n") throw "no"
+        if (m.first().content.toLowerCase() == "n") throw "no"
         m.delete().catch(() => {})
         msg.delete().catch(() => {})
         var ghmsg = await message.channel.send($.embed()
