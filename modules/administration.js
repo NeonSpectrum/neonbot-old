@@ -368,16 +368,15 @@ Administration.prototype.update = function() {
         errors: ['time']
       }).then(async (m) => {
         if (m.first().content.toLowerCase() == "n") throw "no"
-        m.delete().catch(() => {})
+        m.first().delete().catch(() => {})
         msg.delete().catch(() => {})
         var ghmsg = await message.channel.send($.embed()
           .setFooter(bot.user.tag, bot.user.displayAvatarURL())
           .setAuthor("GitHub Update", "https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png")
           .setDescription("Updating...")
         )
-        fs.unlink('updateid.txt', function() {
-          fs.writeFile('updateid.txt', message.channel.id, function() {})
-        })
+        fs.writeFile('updateid.txt', message.channel.id, function() {})
+
         exec(`${process.env.GIT_PATH}git pull origin master`, async (err, stdout, stderr) => {
           await execute(`${process.env.NODE_PATH}npm i`)
           await ghmsg.edit($.embed()
