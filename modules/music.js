@@ -587,7 +587,7 @@ Music.prototype._execute = function(connection, time) {
           } catch (err) {
             console.log(err)
           }
-        } else if (server.config.music.repeat == "all") {
+        } else if (server.config.music.repeat == "all" && server.currentQueue == server.queue.length - 1) {
           server.status = 0
         }
         if (Number.isInteger(server.status)) {
