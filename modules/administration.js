@@ -272,21 +272,18 @@ Administration.prototype.deleteoncmd = async function(args) {
 Administration.prototype.vcrole = async function(args) {
   var message = this.message,
     server = this.server
-  try {
-    if (!$.isOwner(message.member.id)) return message.channel.send($.embed("You don't have a permission to set voice channel role."))
-    if (args[0] && !message.guild.roles.exists("name", args[0])) return message.channel.send($.embed("Invalid Role Name."))
-    if (!message.member.voiceChannel) return message.channel.send($.embed("You must be in a voice channel."))
 
-    server.config = await $.updateServerConfig(message.guild.id, {
-      ["music.roles." + message.member.voiceChannel.id]: args[0] ? message.guild.roles.find("name", args[0]).id : null
-    })
-    if (args[0]) {
-      message.channel.send($.embed(`Connecting to ${message.member.voiceChannel.name} will have a role ${args[0]}.`))
-    } else {
-      message.channel.send($.embed(`Voice channel role has been removed.`))
-    }
-  } catch (err) {
-    console.log(err)
+  if (!$.isOwner(message.member.id)) return message.channel.send($.embed("You don't have a permission to set voice channel role."))
+  if (args[0] && !message.guild.roles.exists("name", args[0])) return message.channel.send($.embed("Invalid Role Name."))
+  if (!message.member.voiceChannel) return message.channel.send($.embed("You must be in a voice channel."))
+
+  server.config = await $.updateServerConfig(message.guild.id, {
+    ["music.roles." + message.member.voiceChannel.id]: args[0] ? message.guild.roles.find("name", args[0]).id : null
+  })
+  if (args[0]) {
+    message.channel.send($.embed(`Connecting to ${message.member.voiceChannel.name} will have a role ${args[0]}.`))
+  } else {
+    message.channel.send($.embed(`Voice channel role has been removed.`))
   }
 }
 

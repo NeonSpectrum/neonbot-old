@@ -17,6 +17,10 @@ const yt = new Youtube(process.env.GOOGLE_API)
 
 const spotifyUri = require('spotify-uri');
 
+var spotify = {
+  token: null,
+  expiration: null
+}
 var servers = []
 
 class Music {
@@ -116,66 +120,74 @@ Music.prototype.play = async function(args) {
     })
     connect()
   } else if (args[0].match(/^(spotify:|https:\/\/[a-z]+\.spotify\.com\/)/g)) {
-    var uri = spotifyUri.parse(args[0])
-    if (uri.type == "playlist") {
-      async function loop(offset) {
-        var response = await fetch(`https://api.spotify.com/v1/users/${uri.user}/playlists/${uri.id}/tracks?offset=${offset}&limit=100`, {
+    try {
+      var uri = spotifyUri.parse(args[0])
+      var token = await getSpotifyToken()
+      if (uri.type == "playlist") {
+        async function loop(offset) {
+          var response = await fetch(`https://api.spotify.com/v1/users/${uri.user}/playlists/${uri.id}/tracks?offset=${offset}&limit=100`, {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          })
+          json = await response.json()
+          console.log(json)
+          if (json.items) {
+            var msg = await message.channel.send($.embed(`Adding ${json.total} ${json.total == 1 ? "song" : "songs"} to the queue.`))
+            var error = 0
+            for (var i = 0; i < json.items.length; i++) {
+              var videos = await yt.searchVideos(`${json.items[i].track.artists[0].name} ${json.items[i].track.name}`)
+              if (videos.length == 0) {
+                error++
+                continue
+              }
+              var info = await ytdl.getInfo(videos[0].url)
+              server.queue.push({
+                title: info.title,
+                url: info.video_url,
+                requested: message.author,
+                info: info
+              })
+              connect()
+            }
+            if (json.next) loop(offset + 100)
+            else msg.edit($.embed(`Done! Loaded ${json.total} ${json.total == 1 ? "song" : "songs"}.` + (error > 0 ? ` ${error} failed to load.` : ""))).catch(() => {})
+          } else {
+            message.channel.send($.embed("I can't play this song."))
+          }
+        }
+        loop(0)
+      } else if (uri.type == "track") {
+        var response = await fetch(`https://api.spotify.com/v1/tracks/${uri.id}`, {
           headers: {
-            'Authorization': `Bearer ${process.env.SPOTIFY_TOKEN}`
+            'Authorization': `Bearer ${token}`
           }
         })
-        var json = await response.json()
-        if (json.items) {
-          var msg = await message.channel.send($.embed(`Adding ${json.total} ${json.total == 1 ? "song" : "songs"} to the queue.`))
-          var error = 0
-          for (var i = 0; i < json.items.length; i++) {
-            var videos = await yt.searchVideos(`${json.items[i].track.artists[0].name} ${json.items[i].track.name}`)
-            if (videos.length == 0) {
-              error++
-              continue
-            }
-            var info = await ytdl.getInfo(videos[0].url)
-            server.queue.push({
-              title: info.title,
-              url: info.video_url,
-              requested: message.author,
-              info: info
-            })
-            connect()
-          }
-          if (json.next) loop(offset + 100)
-          else msg.edit($.embed(`Done! Loaded ${json.total} ${json.total == 1 ? "song" : "songs"}.` + (error > 0 ? ` ${error} failed to load.` : ""))).catch(() => {})
+        json = await response.json()
+        var videos = await yt.searchVideos(`${json.artists[0].name} ${json.name}`)
+        if (videos.length == 0) {
+          return message.channel.send($.embed("I can't find a song from that spotify link."))
         }
+        var info = await ytdl.getInfo(videos[0].url)
+        server.queue.push({
+          title: info.title,
+          url: info.video_url,
+          requested: message.author,
+          info: info
+        })
+        message.channel.send($.embed()
+          .setAuthor("Added song to queue", "https://i.imgur.com/SBMH84I.png")
+          .setTitle(info.title)
+          .setURL(info.video_url)
+        ).then(m => m.delete({
+          timeout: 5000
+        }).catch(() => {}))
+        connect()
+      } else {
+        message.channel.send($.embed("I can't play that spotify link."))
       }
-      loop(0)
-    } else if (uri.type == "track") {
-      var response = await fetch(`https://api.spotify.com/v1/tracks/${uri.id}`, {
-        headers: {
-          'Authorization': `Bearer ${process.env.SPOTIFY_TOKEN}`
-        }
-      })
-      var json = await response.json()
-      var videos = await yt.searchVideos(`${json.artists[0].name} ${json.name}`)
-      if (videos.length == 0) {
-        return message.channel.send($.embed("I can't find a song from that spotify link."))
-      }
-      var info = await ytdl.getInfo(videos[0].url)
-      server.queue.push({
-        title: info.title,
-        url: info.video_url,
-        requested: message.author,
-        info: info
-      })
-      message.channel.send($.embed()
-        .setAuthor("Added song to queue", "https://i.imgur.com/SBMH84I.png")
-        .setTitle(info.title)
-        .setURL(info.video_url)
-      ).then(m => m.delete({
-        timeout: 5000
-      }).catch(() => {}))
-      connect()
-    } else {
-      message.channel.send($.embed("I can't play that spotify link."))
+    } catch (err) {
+      console.log(err)
     }
   } else {
     try {
@@ -631,35 +643,74 @@ async function checkPlaylist() {
       var music = new Music(message)
       var server = servers[guilds[i]]
       playlist = playlist.slice(2)
-      $.log(`Auto Resume is enabled. Adding ${playlist.length} ${playlist.length == 1 ? "song" : "songs"} to the queue.`, message)
-      var msg = await message.channel.send($.embed(`Auto Resume is enabled. Adding ${playlist.length} ${playlist.length == 1 ? "song" : "songs"} to the queue.`))
-      var error = 0
-      for (var i = 0; i < playlist.length; i++) {
-        try {
-          var info = await ytdl.getInfo(playlist[i])
-          server.queue.push({
-            title: info.title,
-            url: info.video_url,
-            requested: message.author,
-            info: info
-          })
-          if (!message.guild.voiceConnection) {
-            bot.channels.get(voiceChannel).join()
-              .then((connection) => {
-                server.connection = connection
-                music.execute(connection)
-              }).catch(() => {
-                message.channel.send("I can't join the voice channel.")
+      var reqmsg = await message.channel.send($.embed("Auto Resume is enabled. Would you like to add the previous playlist to queue? (y | n)"))
+      try {
+        message.channel.awaitMessages((m) => m.content.toLowerCase() == "y" || m.content.toLowerCase() == "n", {
+          max: 1,
+          time: 15000,
+          errors: ['time']
+        }).then(async (m) => {
+          if (m.first().content == "n") throw "no"
+          m.first().delete().catch(() => {})
+          reqmsg.delete().catch(() => {})
+          $.log(`Auto Resume is enabled. Adding ${playlist.length} ${playlist.length == 1 ? "song" : "songs"} to the queue.`, message)
+          var msg = await message.channel.send($.embed(`Auto Resume is enabled. Adding ${playlist.length} ${playlist.length == 1 ? "song" : "songs"} to the queue.`))
+          var error = 0
+          for (var i = 0; i < playlist.length; i++) {
+            try {
+              var info = await ytdl.getInfo(playlist[i])
+              server.queue.push({
+                title: info.title,
+                url: info.video_url,
+                requested: message.author,
+                info: info
               })
+              if (!message.guild.voiceConnection) {
+                bot.channels.get(voiceChannel).join()
+                  .then((connection) => {
+                    server.connection = connection
+                    music.execute(connection)
+                  }).catch(() => {
+                    message.channel.send("I can't join the voice channel.")
+                  })
+              }
+            } catch (err) {
+              error++
+            }
           }
-        } catch (err) {
-          error++
-        }
+          msg.edit($.embed(`Done! Loaded ${playlist.length} ${playlist.length == 1 ? "song" : "songs"}.` + (error > 0 ? ` ${error} failed to load.` : ""))).catch(() => {})
+        }).catch((err) => {
+          if (err == "no") message.channel.send($.embed("Okay.")).then(m => m.delete({
+            timeout: 3000
+          }))
+          reqmsg.delete().catch(() => {})
+          $.removeMusicPlaylist(message.guild.id)
+        })
+      } catch (err) {
+        console.log(err)
       }
-      msg.edit($.embed(`Done! Loaded ${playlist.length} ${playlist.length == 1 ? "song" : "songs"}.` + (error > 0 ? ` ${error} failed to load.` : ""))).catch(() => {})
     }
   }
 }
 checkPlaylist()
+
+function getSpotifyToken() {
+  return new Promise(async resolve => {
+    if (moment() > spotify.expiration) {
+      var api = await (await fetch('https://accounts.spotify.com/api/token', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Basic ${new Buffer(process.env.SPOTIFY_CLIENT_ID + ':' + process.env.SPOTIFY_CLIENT_SECRET).toString('base64')}`,
+          'Accept': 'application/json',
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: "grant_type=client_credentials"
+      })).json()
+      spotify.token = api.access_token
+      spotify.expiration = moment().add(api.expires_in - 600, 'seconds')
+    }
+    resolve(spotify.token)
+  })
+}
 
 module.exports = Music
