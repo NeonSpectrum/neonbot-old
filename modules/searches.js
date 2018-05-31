@@ -117,8 +117,11 @@ Searches.prototype.lol = async function(args) {
   var message = this.message
 
   if (args[0] == "summoner") {
+    var msg = await message.channel.send($.embed("Searching..."))
     var name = args.slice(1).join(" ")
     var c = cheerio.load(await $.fetchHTML(`http://ph.op.gg/summoner/userName=${name}`))
+    msg.delete().catch(() => {})
+
     var mostPlayed = []
     c(".MostChampionContent").find(".ChampionName").each(function() {
       mostPlayed.push(c(this).attr("title"))
@@ -127,6 +130,7 @@ Searches.prototype.lol = async function(args) {
     c("table.SummonersMostGameTable").find(".SummonerName>a").each(function() {
       recentlyPlayed.push(c(this).html())
     })
+
     var data = {
       icon: `http:${c(".ProfileIcon>img.ProfileImage").attr("src")}`,
       name: c(".Profile>.Information>.Name").html(),
@@ -143,6 +147,7 @@ Searches.prototype.lol = async function(args) {
       mostPlayed: mostPlayed,
       recentlyPlayed: recentlyPlayed
     }
+
     if (data.name) {
       var msg = $.embed()
         .setAuthor(data.name, data.icon)

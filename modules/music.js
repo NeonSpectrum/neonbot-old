@@ -587,6 +587,8 @@ Music.prototype._execute = function(connection, time) {
           } catch (err) {
             console.log(err)
           }
+        } else if (server.config.music.repeat == "all") {
+          server.status = 0
         }
         if (Number.isInteger(server.status)) {
           server.currentQueue = server.status
