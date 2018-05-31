@@ -81,7 +81,7 @@ Searches.prototype.weather = async function(args) {
 
   if (!args[0]) return message.channel.send($.embed("Please specify a city."))
 
-  var json = $.fetchJSON(`http://api.openweathermap.org/data/2.5/weather?q=${args.join(" ")}&units=metric&appid=a88701020436549755f42d7e4be71762`)
+  var json = await $.fetchJSON(`http://api.openweathermap.org/data/2.5/weather?q=${args.join(" ")}&units=metric&appid=a88701020436549755f42d7e4be71762`)
 
   if (json.cod != 200) return message.channel.send($.embed("City not found."))
   message.channel.send($.embed()
