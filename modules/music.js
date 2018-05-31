@@ -107,7 +107,7 @@ Music.prototype.play = async function(args) {
   } else if (args[0].match(/^(https?\:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+$/g)) {
     var info = await ytdl.getInfo(args[0])
     message.channel.send($.embed()
-      .setAuthor("Added song to queue", "https://i.imgur.com/SBMH84I.png")
+      .setAuthor(`Added song to queue #${server.queue.length}`, "https://i.imgur.com/SBMH84I.png")
       .setTitle(info.title)
       .setURL(info.video_url)
     ).then(m => m.delete({
@@ -175,7 +175,7 @@ Music.prototype.play = async function(args) {
         info: info
       })
       message.channel.send($.embed()
-        .setAuthor("Added song to queue", "https://i.imgur.com/SBMH84I.png")
+        .setAuthor(`Added song to queue #${server.queue.length}`, "https://i.imgur.com/SBMH84I.png")
         .setTitle(info.title)
         .setURL(info.video_url)
       ).then(m => m.delete({
@@ -215,7 +215,7 @@ Music.prototype.play = async function(args) {
       collected.first().message.delete().catch(() => {})
       if (collected.first().emoji.name == "🗑") return
       var i = reactionlist.indexOf(collected.first().emoji.name)
-      message.channel.send($.embed(songSearchList[i].title).setTitle(`You have selected #${i+1}. `))
+      message.channel.send($.embed(songSearchList[i].title).setTitle(`You have selected #${i+1}. Adding song to queue #${server.queue.length}`))
         .then(msg => msg.delete({
           timeout: 5000
         }).catch(() => {}))
