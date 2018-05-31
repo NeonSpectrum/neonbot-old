@@ -122,11 +122,12 @@ Searches.prototype.lol = async function(args) {
     var c = cheerio.load(await $.fetchHTML(`http://ph.op.gg/summoner/userName=${name}`))
     msg.delete().catch(() => {})
 
-    var mostPlayed = []
+    var mostPlayed = [],
+      recentlyPlayed = []
+
     c(".MostChampionContent").find(".ChampionName").each(function() {
       mostPlayed.push(c(this).attr("title"))
     })
-    var recentlyPlayed = []
     c("table.SummonersMostGameTable").find(".SummonerName>a").each(function() {
       recentlyPlayed.push(c(this).html())
     })
@@ -196,7 +197,7 @@ Searches.prototype.overwatch = async function(args) {
       .addField("Medals", data.competitive.global.medals)
       .addField("Time Played", `${timePlayed} ${timePlayed == 1 ? "hour" : "hours"}`)
     )
-  } catch () {
+  } catch (err) {
     message.channel.send($.embed("Player not found."))
   }
 }
