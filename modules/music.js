@@ -508,7 +508,7 @@ Music.prototype.autoresume = async function(args) {
     server = this.server
 
   if (!$.isOwner(message.member.id)) return message.channel.send($.embed("You don't have a permission to set the autoresume mode."))
-  if (args[0] != "enable" && args[0] != "disable") return message.channel.send($.embed("Invalid Parameters (enable | disable)."))
+  if (!args[0] || (args[0] != "enable" && args[0] != "disable")) return message.channel.send($.embed(`Auto Resume is ${server.config.music.autoresume ? "enabled" : "disabled"} (enable | disable).`))
 
   server.config = await $.updateServerConfig(message.guild.id, {
     "music.autoresume": args[0] == "enable" ? true : false

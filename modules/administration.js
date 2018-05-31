@@ -248,7 +248,7 @@ Administration.prototype.strictmode = async function(args) {
     server = this.server
 
   if (!$.isOwner(message.member.id)) return message.channel.send($.embed("You don't have a permission to set delete on cmd."))
-  if (args[0] != "enable" && args[0] != "disable") return message.channel.send($.embed("Invalid Parameters (enable | disable)."))
+  if (!args[0] || (args[0] != "enable" && args[0] != "disable")) return message.channel.send($.embed(`Strict Mode is ${server.config.strictmode ? "enabled" : "disabled"} (enable | disable).`))
 
   server.config = await $.updateServerConfig(message.guild.id, {
     strictmode: args[0] == "enable" ? true : false
@@ -261,7 +261,7 @@ Administration.prototype.deleteoncmd = async function(args) {
     server = this.server
 
   if (!$.isOwner(message.member.id)) return message.channel.send($.embed("You don't have a permission to set delete on cmd."))
-  if (args[0] != "enable" && args[0] != "disable") return message.channel.send($.embed("Invalid Parameters (enable | disable)."))
+  if (!args[0] || (args[0] != "enable" && args[0] != "disable")) return message.channel.send($.embed(`Delete On Cmd is ${server.config.deleteoncmd ? "enabled" : "disabled"} (enable | disable).`))
 
   server.config = await $.updateServerConfig(message.guild.id, {
     deleteoncmd: args[0] == "enable" ? true : false
@@ -292,7 +292,7 @@ Administration.prototype.voicetts = async function(args) {
     server = this.server
 
   if (!$.isOwner(message.member.id)) return message.channel.send($.embed("You don't have a permission to set voice tts channel."))
-  if (args[0] != "enable" && args[0] != "disable") return message.channel.send($.embed("Invalid Parameters (enable | disable)."))
+  if (!args[0] || (args[0] != "enable" && args[0] != "disable")) return message.channel.send($.embed(`Voice TTS Channel is ${server.config.channel.voicetts ? "enabled" : "disabled"} (enable | disable).`))
 
   server.config = await $.updateServerConfig(message.guild.id, {
     "channel.voicetts": args[0] == "enable" ? message.channel.id : null
@@ -305,7 +305,7 @@ Administration.prototype.logchannel = async function(args) {
     server = this.server
 
   if (!$.isOwner(message.member.id)) return message.channel.send($.embed("You don't have a permission to set log channel."))
-  if (args[0] != "enable" && args[0] != "disable") return message.channel.send($.embed("Invalid Parameters (enable | disable)."))
+  if (!args[0] || (args[0] != "enable" && args[0] != "disable")) return message.channel.send($.embed(`Log Channel is ${server.config.channel.log ? "enabled" : "disabled"} (enable | disable).`))
 
   server.config = await $.updateServerConfig(message.guild.id, {
     "channel.log": args[0] == "enable" ? message.channel.id : null
@@ -318,7 +318,7 @@ Administration.prototype.logmsgdelete = async function(args) {
     server = this.server
 
   if (!$.isOwner(message.member.id)) return message.channel.send($.embed("You don't have a permission to set message deleted channel."))
-  if (args[0] != "enable" && args[0] != "disable") return message.channel.send($.embed("Invalid Parameters (enable | disable)."))
+  if (!args[0] || (args[0] != "enable" && args[0] != "disable")) return message.channel.send($.embed(`Message Deleted Channel is ${server.config.channel.msgdelete ? "enabled" : "disabled"} (enable | disable).`))
 
   server.config = await $.updateServerConfig(message.guild.id, {
     "channel.msgdelete": args[0] == "enable" ? message.channel.id : null
@@ -331,7 +331,7 @@ Administration.prototype.debug = async function(args) {
     server = this.server
 
   if (!$.isOwner(message.member.id)) return message.channel.send($.embed("You don't have a permission to set debug channel."))
-  if (args[0] != "enable" && args[0] != "disable") return message.channel.send($.embed("Invalid Parameters (enable | disable)."))
+  if (!args[0] || (args[0] != "enable" && args[0] != "disable")) return message.channel.send($.embed(`Debug Channel is ${server.config.channel.debug ? "enabled" : "disabled"} (enable | disable).`))
 
   server.config = await $.updateServerConfig(message.guild.id, {
     "channel.debug": args[0] == "enable" ? message.channel.id : null
@@ -362,48 +362,41 @@ Administration.prototype.update = function() {
         .setAuthor("GitHub Update", "https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png")
         .setDescription("There is an update available. Update? (y | n)")
       )
-      var collector = new Discord.MessageCollector(message.channel, m => m.author.id === message.author.id)
-      collector.on("collect", async (m) => {
-        if (m.content.toLowerCase() == "y") {
-          m.delete().catch(() => {})
-          msg.delete().catch(() => {})
-          msg = null
-          var ghmsg = await message.channel.send($.embed()
+      message.channel.awaitMessages((m) => (m.content.toLowerCase() == "y" || m.content.toLowerCase() == "n") && m.author.id === message.author.id, {
+        max: 1,
+        time: 15000,
+        errors: ['time']
+      }).then(async (m) => {
+        if (m.first().content == "n") throw "no"
+        m.delete().catch(() => {})
+        msg.delete().catch(() => {})
+        var ghmsg = await message.channel.send($.embed()
+          .setFooter(bot.user.tag, bot.user.displayAvatarURL())
+          .setAuthor("GitHub Update", "https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png")
+          .setDescription("Updating...")
+        )
+        fs.writeFile('updateid.txt', message.channel.id, function(err) {})
+        exec(`${process.env.GIT_PATH}git pull origin master`, async (err, stdout, stderr) => {
+          if (stdout.indexOf("package.json") > -1) await execute(`${process.env.NODE_PATH}npm i`)
+          await ghmsg.edit($.embed()
             .setFooter(bot.user.tag, bot.user.displayAvatarURL())
             .setAuthor("GitHub Update", "https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png")
-            .setDescription("Updating...")
-          )
-          fs.writeFile('updateid.txt', message.channel.id, function(err) {})
-          exec(`${process.env.GIT_PATH}git pull origin master`, async (err, stdout, stderr) => {
-            if (stdout.indexOf("package.json") > -1) await execute(`${process.env.NODE_PATH}npm i`)
-            await ghmsg.edit($.embed()
-              .setFooter(bot.user.tag, bot.user.displayAvatarURL())
-              .setAuthor("GitHub Update", "https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png")
-              .setDescription("Now restarting the bot to apply changes.")
-            ).catch(() => {})
-            process.exit(2)
-          })
+            .setDescription("Now restarting the bot to apply changes.")
+          ).catch(() => {})
+          process.exit(2)
+        })
 
-          function execute(str) {
-            return new Promise((resolve, reject) => {
-              exec(str, async (err, stdout, stderr) => {
-                if (err) reject(err)
-                else resolve(stdout)
-              })
+        function execute(str) {
+          return new Promise((resolve, reject) => {
+            exec(str, async (err, stdout, stderr) => {
+              if (err) reject(err)
+              else resolve(stdout)
             })
-          }
-        } else if (m.content.toLowerCase() == "n") {
-          m.delete().catch(() => {})
-          msg.delete().catch(() => {})
-          collector.emit("end")
+          })
         }
+      }).catch(() => {
+        msg.delete().catch(() => {})
       })
-      setTimeout(() => {
-        if (msg != null) {
-          collector.emit("end")
-          msg.delete().catch(() => {})
-        }
-      }, 20000)
     }
   })
 }
