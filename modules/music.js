@@ -107,7 +107,7 @@ Music.prototype.play = async function(args) {
   } else if (args[0].match(/^(https?\:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+$/g)) {
     var info = await ytdl.getInfo(args[0])
     message.channel.send($.embed()
-      .setAuthor(`Added song to queue #${server.queue.length}`, "https://i.imgur.com/SBMH84I.png")
+      .setAuthor(`Added song to queue #${server.queue.length + 1}`, "https://i.imgur.com/SBMH84I.png")
       .setTitle(info.title)
       .setURL(info.video_url)
     ).then(m => m.delete({
@@ -175,7 +175,7 @@ Music.prototype.play = async function(args) {
         info: info
       })
       message.channel.send($.embed()
-        .setAuthor(`Added song to queue #${server.queue.length}`, "https://i.imgur.com/SBMH84I.png")
+        .setAuthor(`Added song to queue #${server.queue.length + 1}`, "https://i.imgur.com/SBMH84I.png")
         .setTitle(info.title)
         .setURL(info.video_url)
       ).then(m => m.delete({
@@ -215,7 +215,7 @@ Music.prototype.play = async function(args) {
       collected.first().message.delete().catch(() => {})
       if (collected.first().emoji.name == "🗑") return
       var i = reactionlist.indexOf(collected.first().emoji.name)
-      message.channel.send($.embed(songSearchList[i].title).setTitle(`You have selected #${i+1}. Adding song to queue #${server.queue.length}`))
+      message.channel.send($.embed(songSearchList[i].title).setTitle(`You have selected #${i+1}. Adding song to queue #${server.queue.length+1}`))
         .then(msg => msg.delete({
           timeout: 5000
         }).catch(() => {}))
@@ -641,73 +641,76 @@ function getSpotifyToken() {
   })
 }
 
-async function checkPlaylist() {
+(async function() {
   var guilds = Array.from(bot.guilds.keys())
+
   for (var i = 0; i < guilds.length; i++) {
     var config = $.getServerConfig(guilds[i])
     if (config.music.autoresume) {
       var playlist = await $.getMusicPlaylist(guilds[i])
       if (!playlist) continue
-      var voiceChannel = playlist[0]
-      var message = {
-        guild: bot.guilds.get(guilds[i]),
-        channel: bot.channels.get(playlist[1]),
-        author: bot.user,
-        member: {
-          voiceChannel: bot.channels.get(voiceChannel)
-        }
-      }
-      var music = new Music(message)
-      var server = servers[guilds[i]]
-      playlist = playlist.slice(2)
-      var reqmsg = await message.channel.send($.embed("Auto Resume is enabled. Would you like to add the previous playlist to queue? (y | n)"))
-      message.channel.awaitMessages((m) => m.content.toLowerCase() == "y" || m.content.toLowerCase() == "n", {
-        max: 1,
-        time: 15000,
-        errors: ['time']
-      }).then(async (m) => {
-        if (m.first().content.toLowerCase() == "n") throw "no"
-        m.first().delete().catch(() => {})
-        reqmsg.delete().catch(() => {})
-        $.log(`Auto Resume is enabled. Adding ${playlist.length} ${playlist.length == 1 ? "song" : "songs"} to the queue.`, message)
-        var msg = await message.channel.send($.embed(`Auto Resume is enabled. Adding ${playlist.length} ${playlist.length == 1 ? "song" : "songs"} to the queue.`))
-        var error = 0
-        for (var i = 0; i < playlist.length; i++) {
-          try {
-            var info = await ytdl.getInfo(playlist[i])
-            server.queue.push({
-              title: info.title,
-              url: info.video_url,
-              requested: message.author,
-              info: info
-            })
-            if (!message.guild.voiceConnection) {
-              bot.channels.get(voiceChannel).join()
-                .then((connection) => {
-                  server.connection = connection
-                  music._execute(connection)
-                }).catch(() => {
-                  message.channel.send("I can't join the voice channel.")
-                })
-            }
-          } catch (err) {
-            error++
-          }
-        }
-        msg.edit($.embed(`Done! Loaded ${playlist.length} ${playlist.length == 1 ? "song" : "songs"}.` + (error > 0 ? ` ${error} failed to load.` : ""))).then(m => m.delete({
-          timeout: 10000
-        })).catch(() => {})
-      }).catch((err) => {
-        if (err == "no") message.channel.send($.embed("Okay.")).then(m => m.delete({
-          timeout: 3000
-        }))
-        reqmsg.delete().catch(() => {})
-        $.removeMusicPlaylist(message.guild.id)
-      })
+      processPlaylist(guilds[i], playlist)
     }
   }
-}
+})()
 
-checkPlaylist()
+async function processPlaylist(id, playlist) {
+  var voiceChannel = playlist[0]
+  var message = {
+    guild: bot.guilds.get(id),
+    channel: bot.channels.get(playlist[1]),
+    author: bot.user,
+    member: {
+      voiceChannel: bot.channels.get(voiceChannel)
+    }
+  }
+  var music = new Music(message)
+  var server = servers[id]
+  playlist = playlist.slice(2)
+  var reqmsg = await message.channel.send($.embed("Auto Resume is enabled. Would you like to add the previous playlist to queue? (y | n)"))
+  message.channel.awaitMessages((m) => m.content.toLowerCase() == "y" || m.content.toLowerCase() == "n", {
+    max: 1,
+    time: 15000,
+    errors: ['time']
+  }).then(async (m) => {
+    if (m.first().content.toLowerCase() == "n") throw "no"
+    m.first().delete().catch(() => {})
+    reqmsg.delete().catch(() => {})
+    $.log(`Auto Resume is enabled. Adding ${playlist.length} ${playlist.length == 1 ? "song" : "songs"} to the queue.`, message)
+    var msg = await message.channel.send($.embed(`Auto Resume is enabled. Adding ${playlist.length} ${playlist.length == 1 ? "song" : "songs"} to the queue.`))
+    var error = 0
+    for (var i = 0; i < playlist.length; i++) {
+      try {
+        var info = await ytdl.getInfo(playlist[i])
+        server.queue.push({
+          title: info.title,
+          url: info.video_url,
+          requested: message.author,
+          info: info
+        })
+        if (!message.guild.voiceConnection) {
+          bot.channels.get(voiceChannel).join()
+            .then((connection) => {
+              server.connection = connection
+              music._execute(connection)
+            }).catch(() => {
+              message.channel.send("I can't join the voice channel.")
+            })
+        }
+      } catch (err) {
+        error++
+      }
+    }
+    msg.edit($.embed(`Done! Loaded ${playlist.length} ${playlist.length == 1 ? "song" : "songs"}.` + (error > 0 ? ` ${error} failed to load.` : ""))).then(m => m.delete({
+      timeout: 10000
+    })).catch(() => {})
+  }).catch((err) => {
+    if (err == "no") message.channel.send($.embed("Okay.")).then(m => m.delete({
+      timeout: 3000
+    }).catch(() => {}))
+    reqmsg.delete().catch(() => {})
+    $.removeMusicPlaylist(message.guild.id)
+  })
+}
 
 module.exports = Music

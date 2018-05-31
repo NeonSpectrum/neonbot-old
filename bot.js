@@ -213,7 +213,7 @@ function getModule(command) {
 }
 
 function getAllFuncs(obj) {
-  return Object.getOwnPropertyNames(Object.getPrototypeOf(obj)).filter((x) => x != "constructor")
+  return Object.getOwnPropertyNames(Object.getPrototypeOf(obj)).filter((x) => x != "constructor" && !x.startsWith("_"))
 }
 
 function displayAscii() {

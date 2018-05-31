@@ -36,14 +36,13 @@ Utilities.prototype.cmds = function(args) {
   if (!bot.modules[args[0]]) return message.channel.send($.embed(`Invalid Module. (${Object.keys(bot.modules).join(" | ")})`))
 
   var command = bot.modules[args[0]],
-    module
-  switch (args[0]) {
+    modules
+  switch (args[0].toLowerCase()) {
     case 'admin':
       modules = "Administration"
       break
     case 'music':
       modules = "Music"
-      command = command.filter((x) => x != "execute")
       break
     case "util":
       modules = "Utilities"
@@ -55,9 +54,9 @@ Utilities.prototype.cmds = function(args) {
       modules = "Games"
       break
   }
-  var temp = $.embed().setAuthor("📘 Command list for " + modules)
+  var temp = $.embed().setTitle("📘 Command list for " + modules)
   for (var i = 0; i < command.length; i++) {
-    temp.addField(`${command[i]} - ${help[command[i]] && help[command[i]].info || "N/A"}`, `\`Usage:\` \`${help[command[i]] && help[command[i]].usage.replace("{0}", server.config.prefix) || "N/A"}\``)
+    temp.addField(`${command[i]} - ${help[command[i]] && help[command[i]].info || "N/A"}`, `\`Usage:\` \`${help[command[i]] && help[command[i]].usage.replace(/\{0\}/g, server.config.prefix) || "N/A"}\``)
   }
   message.channel.send(temp)
 }
