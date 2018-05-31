@@ -147,6 +147,18 @@
     "info": "Searches the weather forecast.",
     "usage": "{0}weather <keyword>"
   },
+  "randomjoke": {
+    "info": "Searches a random joke.",
+    "usage": "{0}randomjoke | {0}randomjoke <user>"
+  },
+  "lol": {
+    "info": "Searches League of Legends information.",
+    "usage": "{0}lol summoner <user>"
+  },
+  "overwatch": {
+    "info": "Searches Overwatch user information.",
+    "usage": "{0}overwatch <user>"
+  },
   "help": {
     "info": "Shows usage of the command.",
     "usage": "{0}help <command>"

@@ -4,6 +4,7 @@ const config = $.getConfig()
 const moment = require('moment')
 const emojiFlags = require('emoji-flags')
 const cheerio = require('cheerio')
+const owjs = require('overwatch-js');
 const GoogleSearch = require('google-search')
 const googleSearch = new GoogleSearch({
   key: process.env.GOOGLE_API,
@@ -163,6 +164,35 @@ Searches.prototype.lol = async function(args) {
     } else {
       message.channel.send($.embed("Summoner name not found."))
     }
+  }
+}
+
+Searches.prototype.overwatch = async function(args) {
+  var message = this.message
+
+  if (!args[0] || args[0].indexOf("#") == -1) return message.channel.send($.embed("Please specify a name with tag"))
+  try {
+    var msg = await message.channel.send($.embed("Searching..."))
+
+    var user = await owjs.search(args[0])
+    var data = await owjs.getAll("pc", "career", user[0].urlName)
+    var main = data.competitive.global.masteringHeroe
+    var timePlayed = data.quickplay.global.time_played / 1000 / 3600
+
+    msg.delete().catch(() => {})
+    message.channel.send($.embed()
+      .setAuthor(user[0].name, data.profile.avatar, data.profile.url)
+      .setThumbnail(data.profile.rankPicture)
+      .setFooter("Powered by Overwatch", "https://cdn.iconscout.com/public/images/icon/free/png-512/overwatch-logo-353d59a7a9b81227-512x512.png")
+      .addField("Level", data.profile.level)
+      .addField("Tier", data.profile.tier)
+      .addField("Rank", `${data.profile.level} (${data.profile.rank})`)
+      .addField("Main Hero", `${main.toUpperCase()} W: ${data.competitive.heroes[main].games_won} L: ${data.competitive.heroes[main].games_lost} (${data.competitive.heroes[main].win_percentage}%)`)
+      .addField("Medals", data.competitive.global.medals)
+      .addField("Time Played", `${timePlayed} ${timePlayed == 1 ? "hour" : "hours"}`)
+    )
+  } catch () {
+    message.channel.send($.embed("Player not found."))
   }
 }
 

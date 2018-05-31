@@ -23,7 +23,7 @@ Utilities.prototype.help = function(args) {
     server = this.server
 
   if (help[args[0]]) {
-    message.channel.send($.embed().addField(`${args[0]} - ${help[args[0]].info}`, `\`Usage:\` \`${help[args[0]].usage.replace("{0}", server.config.prefix)}\``))
+    message.channel.send($.embed().addField(`${args[0]} - ${help[args[0]].info}`, `\`Usage:\` \`${help[args[0]].usage.replace(/\{0\}/g, server.config.prefix)}\``))
   } else {
     message.channel.send($.embed("Cannot find command"))
   }
