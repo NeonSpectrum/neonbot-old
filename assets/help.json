@@ -136,7 +136,7 @@
     "usage": "{0}google <keyword>"
   },
   "image": {
-    "info": "Searches and display the first image in Google",
+    "info": "Searches and displays the first image in Google",
     "usage": "{0}image <keyword>"
   },
   "ud": {

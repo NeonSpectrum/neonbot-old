@@ -1,5 +1,6 @@
 const fs = require('fs')
 const moment = require('moment')
+const fetch = require('node-fetch')
 
 const bot = require('../bot')
 const {
@@ -14,11 +15,7 @@ const config = $.getConfig()
 const Youtube = require('simple-youtube-api')
 const yt = new Youtube(process.env.GOOGLE_API)
 
-const SpotifyWebApi = require('spotify-web-api-node')
-const spotify = new SpotifyWebApi({
-  clientId: process.env.SPOTIFY_ID,
-  clientSecret: process.env.SPOTIFY_SECRET
-})
+const spotifyUri = require('spotify-uri');
 
 var servers = []
 
@@ -118,6 +115,68 @@ Music.prototype.play = async function(args) {
       info: info
     })
     connect()
+  } else if (args[0].match(/^(spotify:|https:\/\/[a-z]+\.spotify\.com\/)/g)) {
+    var uri = spotifyUri.parse(args[0])
+    if (uri.type == "playlist") {
+      async function loop(offset) {
+        var response = await fetch(`https://api.spotify.com/v1/users/${uri.user}/playlists/${uri.id}/tracks?offset=${offset}&limit=100`, {
+          headers: {
+            'Authorization': `Bearer ${process.env.SPOTIFY_TOKEN}`
+          }
+        })
+        var json = await response.json()
+        if (json.items) {
+          var msg = await message.channel.send($.embed(`Adding ${json.total} ${json.total == 1 ? "song" : "songs"} to the queue.`))
+          var error = 0
+          for (var i = 0; i < json.items.length; i++) {
+            var videos = await yt.searchVideos(`${json.items[i].track.artists[0].name} ${json.items[i].track.name}`)
+            if (videos.length == 0) {
+              error++
+              continue
+            }
+            var info = await ytdl.getInfo(videos[0].url)
+            server.queue.push({
+              title: info.title,
+              url: info.video_url,
+              requested: message.author,
+              info: info
+            })
+            connect()
+          }
+          if (json.next) loop(offset + 100)
+          else msg.edit($.embed(`Done! Loaded ${json.total} ${json.total == 1 ? "song" : "songs"}.` + (error > 0 ? ` ${error} failed to load.` : ""))).catch(() => {})
+        }
+      }
+      loop(0)
+    } else if (uri.type == "track") {
+      var response = await fetch(`https://api.spotify.com/v1/tracks/${uri.id}`, {
+        headers: {
+          'Authorization': `Bearer ${process.env.SPOTIFY_TOKEN}`
+        }
+      })
+      var json = await response.json()
+      var videos = await yt.searchVideos(`${json.artists[0].name} ${json.name}`)
+      if (videos.length == 0) {
+        return message.channel.send($.embed("I can't find a song from that spotify link."))
+      }
+      var info = await ytdl.getInfo(videos[0].url)
+      server.queue.push({
+        title: info.title,
+        url: info.video_url,
+        requested: message.author,
+        info: info
+      })
+      message.channel.send($.embed()
+        .setAuthor("Added song to queue", "https://i.imgur.com/SBMH84I.png")
+        .setTitle(info.title)
+        .setURL(info.video_url)
+      ).then(m => m.delete({
+        timeout: 5000
+      }).catch(() => {}))
+      connect()
+    } else {
+      message.channel.send($.embed("I can't play that spotify link."))
+    }
   } else {
     try {
       var videos = await yt.searchVideos(args.join(" "))
@@ -172,6 +231,7 @@ Music.prototype.play = async function(args) {
   }
 
   function connect() {
+    self.saveplaylist()
     if (!message.guild.voiceConnection) {
       message.member.voiceChannel.join()
         .then((connection) => {
@@ -285,7 +345,7 @@ Music.prototype.list = function() {
       for (var i = 0; i < server.queue.length && server.queue[i].info; i++) {
         temp.push(`\`${server.currentQueue == i ? "*" : ""}${i+1}.\` [${server.queue[i].title}](${server.queue[i].url})\n\t  \`${$.formatSeconds(server.queue[i].info.length_seconds)} | ${server.queue[i].requested.tag}\``)
         totalseconds += +server.queue[i].info.length_seconds
-        if (i != 0 && i % 9 == 0 || i == server.queue.length - 1) {
+        if (i != 0 && (i + 1) % 10 == 0 || i == server.queue.length - 1) {
           embeds.push($.embed().setDescription(temp.join("\n")))
           temp = []
         }
@@ -449,14 +509,6 @@ Music.prototype.execute = function(connection, time) {
   var message = this.message,
     server = this.server
 
-  if (server.config.music.autoresume) {
-    $.storeMusicPlaylist({
-      guild: message.guild.id,
-      voice: message.member.voiceChannel.id,
-      msg: message.channel.id
-    }, server.queue.map(x => x.url))
-  }
-
   try {
     server.dispatcher = connection.play(ytdl(server.queue[server.currentQueue].url, process.env.DEVELOPMENT ? {
       filter: "audioonly"
@@ -523,6 +575,7 @@ Music.prototype.execute = function(connection, time) {
               requested: bot.user,
               info: info
             })
+            this.saveplaylist()
           } catch (err) {
             console.log(err)
           }
@@ -543,6 +596,19 @@ Music.prototype.execute = function(connection, time) {
   } catch (err) {
     message.channel.send($.embed(`I can't play this song.`))
     console.log(err)
+  }
+}
+
+Music.prototype.saveplaylist = function() {
+  var message = this.message,
+    server = this.server
+
+  if (server.config.music.autoresume) {
+    $.storeMusicPlaylist({
+      guild: message.guild.id,
+      voice: message.member.voiceChannel.id,
+      msg: message.channel.id
+    }, server.queue.map(x => x.url))
   }
 }
 

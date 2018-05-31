@@ -55,9 +55,10 @@ Searches.prototype.image = function(args) {
 
   googleImages.search(args.join(" "))
     .then(images => {
-      message.channel.send({
-        files: [images[0].url.split('?')[0]]
-      })
+      message.channel.send($.embed()
+        .setAuthor(`Google Images for ${args.join(" ")}`, "http://i.imgur.com/G46fm8J.png")
+        .setImage(images[0].url.split('?')[0])
+      )
     });
 }
 
