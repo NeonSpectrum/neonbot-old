@@ -72,7 +72,7 @@ Music.prototype.play = async function(args) {
     if (server.stopped) {
       server.stopped = false
       server.currentQueue = +args[0] - 1
-      this.execute(server.connection)
+      this._execute(server.connection)
     } else {
       server.status = +args[0] - 1
       server.dispatcher.end()
@@ -102,7 +102,9 @@ Music.prototype.play = async function(args) {
         error++
       }
     }
-    return msg.edit($.embed(`Done! Loaded ${videos.length} ${videos.length == 1 ? "song" : "songs"}.` + (error > 0 ? ` ${error} failed to load.` : ""))).catch(() => {})
+    msg.edit($.embed(`Done! Loaded ${videos.length} ${videos.length == 1 ? "song" : "songs"}.` + (error > 0 ? ` ${error} failed to load.` : ""))).then(m => m.delete({
+      timeout: 10000
+    })).catch(() => {})
   } else if (args[0].match(/^(https?\:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+$/g)) {
     var info = await ytdl.getInfo(args[0])
     message.channel.send($.embed()
@@ -149,7 +151,9 @@ Music.prototype.play = async function(args) {
             connect()
           }
           if (json.next) loop(offset + 100)
-          else msg.edit($.embed(`Done! Loaded ${json.total} ${json.total == 1 ? "song" : "songs"}.` + (error > 0 ? ` ${error} failed to load.` : ""))).catch(() => {})
+          else msg.edit($.embed(`Done! Loaded ${json.total} ${json.total == 1 ? "song" : "songs"}.` + (error > 0 ? ` ${error} failed to load.` : ""))).then(m => m.delete({
+            timeout: 10000
+          })).catch(() => {})
         } else {
           message.channel.send($.embed("I can't play this song."))
         }
@@ -238,20 +242,20 @@ Music.prototype.play = async function(args) {
   }
 
   function connect() {
-    self.saveplaylist()
+    self._saveplaylist()
     if (!message.guild.voiceConnection) {
       message.member.voiceChannel.join()
         .then((connection) => {
           server.connection = connection
           self.log("Connected to " + message.member.voiceChannel.name)
-          self.execute(connection)
+          self._execute(connection)
         }).catch(() => {
           message.channel.send($.embed("I can't join the voice channel."))
         })
     } else if (server.stopped) {
       server.stopped = false
       server.currentQueue += 1
-      self.execute(server.connection)
+      self._execute(server.connection)
     }
   }
 }
@@ -302,7 +306,7 @@ Music.prototype.seek = function(args) {
     server.status = "seek"
     server.seekTime = seconds
     server.dispatcher.end()
-    this.execute(server.connection, seconds)
+    this._execute(server.connection, seconds)
     message.channel.send($.embed(`Seeking to ${seconds} seconds. Please wait.`))
       .then(m => m.delete({
         timeout: 3000
@@ -512,7 +516,7 @@ Music.prototype.autoresume = async function(args) {
   message.channel.send($.embed(`Auto Resume is now ${server.config.music.autoresume ? "enabled" : "disabled"}.`))
 }
 
-Music.prototype.execute = function(connection, time) {
+Music.prototype._execute = function(connection, time) {
   var message = this.message,
     server = this.server
 
@@ -582,7 +586,7 @@ Music.prototype.execute = function(connection, time) {
               requested: bot.user,
               info: info
             })
-            this.saveplaylist()
+            this._saveplaylist()
           } catch (err) {
             console.log(err)
           }
@@ -593,7 +597,7 @@ Music.prototype.execute = function(connection, time) {
           server.currentQueue += 1
         }
         server.status = null
-        this.execute(connection)
+        this._execute(connection)
       } else {
         server.currentQueue = 0
         server.queue = []
@@ -606,7 +610,7 @@ Music.prototype.execute = function(connection, time) {
   }
 }
 
-Music.prototype.saveplaylist = function() {
+Music.prototype._saveplaylist = function() {
   var message = this.message,
     server = this.server
 
@@ -617,6 +621,25 @@ Music.prototype.saveplaylist = function() {
       msg: message.channel.id
     }, server.queue.map(x => x.url))
   }
+}
+
+function getSpotifyToken() {
+  return new Promise(async resolve => {
+    if (moment() > spotify.expiration) {
+      var api = await (await fetch('https://accounts.spotify.com/api/token', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Basic ${new Buffer(process.env.SPOTIFY_CLIENT_ID + ':' + process.env.SPOTIFY_CLIENT_SECRET).toString('base64')}`,
+          'Accept': 'application/json',
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: "grant_type=client_credentials"
+      })).json()
+      spotify.token = api.access_token
+      spotify.expiration = moment().add(api.expires_in - 600, 'seconds')
+    }
+    resolve(spotify.token)
+  })
 }
 
 async function checkPlaylist() {
@@ -663,7 +686,7 @@ async function checkPlaylist() {
               bot.channels.get(voiceChannel).join()
                 .then((connection) => {
                   server.connection = connection
-                  music.execute(connection)
+                  music._execute(connection)
                 }).catch(() => {
                   message.channel.send("I can't join the voice channel.")
                 })
@@ -672,7 +695,9 @@ async function checkPlaylist() {
             error++
           }
         }
-        msg.edit($.embed(`Done! Loaded ${playlist.length} ${playlist.length == 1 ? "song" : "songs"}.` + (error > 0 ? ` ${error} failed to load.` : ""))).catch(() => {})
+        msg.edit($.embed(`Done! Loaded ${playlist.length} ${playlist.length == 1 ? "song" : "songs"}.` + (error > 0 ? ` ${error} failed to load.` : ""))).then(m => m.delete({
+          timeout: 10000
+        })).catch(() => {})
       }).catch((err) => {
         if (err == "no") message.channel.send($.embed("Okay.")).then(m => m.delete({
           timeout: 3000
@@ -683,25 +708,7 @@ async function checkPlaylist() {
     }
   }
 }
-checkPlaylist()
 
-function getSpotifyToken() {
-  return new Promise(async resolve => {
-    if (moment() > spotify.expiration) {
-      var api = await (await fetch('https://accounts.spotify.com/api/token', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Basic ${new Buffer(process.env.SPOTIFY_CLIENT_ID + ':' + process.env.SPOTIFY_CLIENT_SECRET).toString('base64')}`,
-          'Accept': 'application/json',
-          'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: "grant_type=client_credentials"
-      })).json()
-      spotify.token = api.access_token
-      spotify.expiration = moment().add(api.expires_in - 600, 'seconds')
-    }
-    resolve(spotify.token)
-  })
-}
+checkPlaylist()
 
 module.exports = Music

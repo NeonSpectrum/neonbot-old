@@ -154,6 +154,8 @@ bot.on('message', async message => {
   var cmd = messageArray[0].substring(server.prefix.length).toLowerCase()
   var args = messageArray.slice(1)
 
+  if (cmd.startsWith("_")) return
+
   switch (getModule(cmd)) {
     case 'admin':
       processBeforeCommand()
