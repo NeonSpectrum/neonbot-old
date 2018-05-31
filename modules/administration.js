@@ -350,7 +350,7 @@ Administration.prototype.update = function() {
   var message = this.message
 
   if (!$.isOwner(message.member.id)) return message.channel.send($.embed("You don't have a permission to update the bot."))
-  exec("git remote show origin", async (err, stdout, stderr) => {
+  exec(`${process.env.GIT_PATH}git remote show origin`, async (err, stdout, stderr) => {
     if (stdout.indexOf("(fast-forwardable)") > -1 || stdout.indexOf("(up to date)") > -1) {
       message.channel.send($.embed().setFooter(bot.user.tag, bot.user.displayAvatarURL())
         .setAuthor("GitHub Update", "https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png")
