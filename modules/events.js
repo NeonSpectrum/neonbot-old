@@ -43,14 +43,14 @@ bot.on('voiceStateUpdate', async (oldMember, newMember) => {
   }
 
   if (msg) {
-    if (config.channel.voicetts) {
+    if (bot.channels.get(config.channel.voicetts)) {
       bot.channels.get(config.channel.voicetts).send(msg.replace(/\*\*/g, ""), {
         tts: true
       }).then(msg => msg.delete({
         timeout: 5000
       }).catch(() => {}))
     }
-    if (config.channel.log) {
+    if (bot.channels.get(config.channel.log)) {
       bot.channels.get(config.channel.log).send($.embed()
         .setAuthor("Voice Presence Update", `https://cdn.discordapp.com/avatars/${bot.user.id}/${bot.user.avatar}.png?size=16`)
         .setDescription(`\`${moment().format('YYYY-MM-DD hh:mm:ss A')}\`:bust_in_silhouette:${msg}.`)
@@ -70,7 +70,7 @@ bot.on('presenceUpdate', (oldMember, newMember) => {
   } else if (oldMember.presence.activity != newMember.presence.activity) {
     msg = `**${newMember.user.username}** is now ${newMember.presence.activity ? newMember.presence.activity.type.toLowerCase() : "playing"} **${!newMember.presence.activity ? "nothing" : newMember.presence.activity.name}**`
   }
-  if (msg && config.channel.log) {
+  if (msg && bot.channels.get(config.channel.log)) {
     bot.channels.get(config.channel.log).send($.embed()
       .setAuthor("User Presence Update", `https://cdn.discordapp.com/avatars/${bot.user.id}/${bot.user.avatar}.png?size=16`)
       .setDescription(`\`${moment().format('YYYY-MM-DD hh:mm:ss A')}\`:bust_in_silhouette:${msg}.`)
@@ -87,8 +87,9 @@ bot.on('guildMemberAdd', (member) => {
     .setDescription(`Welcome to ${member.guild.name}, ${member.user.toString()}!`)
   ).then(s => s.delete({
     timeout: 30000
-  }).catch(() => {}))
-  if (config.channel.log) {
+  }).catch(() => {})).catch(() => {})
+
+  if (bot.channels.get(config.channel.log)) {
     bot.channels.get(config.channel.log).send($.embed()
       .setAuthor("Guild Member Update", `https://cdn.discordapp.com/avatars/${bot.user.id}/${bot.user.avatar}.png?size=16`)
       .setDescription(`\`${moment().format('YYYY-MM-DD hh:mm:ss A')}\` ${member.user.username} joined the server.`)
@@ -106,7 +107,7 @@ bot.on('guildMemberRemove', (member) => {
   ).then(s => s.delete({
     timeout: 30000
   }).catch(() => {}))
-  if (config.channel.log) {
+  if (bot.channels.get(config.channel.log)) {
     bot.channels.get(config.channel.log).send($.embed()
       .setAuthor("Guild Member Update", `https://cdn.discordapp.com/avatars/${bot.user.id}/${bot.user.avatar}.png?size=16`)
       .setDescription(`\`${moment().format('YYYY-MM-DD hh:mm:ss A')}\` ${member.user.username} left the server.`)

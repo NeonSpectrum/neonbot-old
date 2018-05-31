@@ -1,6 +1,9 @@
 const bot = require('../bot')
 const $ = require('../assets/functions')
 const config = $.getConfig()
+const moment = require('moment')
+const fetch = require('node-fetch')
+const emojiFlags = require('emoji-flags')
 const GoogleSearch = require('google-search')
 const googleSearch = new GoogleSearch({
   key: process.env.GOOGLE_API,
@@ -70,6 +73,31 @@ Searches.prototype.ud = function(args) {
       .setFooter(`Searched by ${message.author.tag}`, message.author.displayAvatarURL())
     )
   })
+}
+
+Searches.prototype.weather = async function(args) {
+  var message = this.message
+
+  if (!args[0]) return message.channel.send($.embed("Please specify a city."))
+
+  var response = await fetch(`http://api.openweathermap.org/data/2.5/weather?q=${args.join(" ")}&units=metric&appid=a88701020436549755f42d7e4be71762`)
+  var json = await response.json()
+
+  if (json.cod != 200) return message.channel.send($.embed("City not found."))
+  message.channel.send($.embed()
+    .setTitle(`${emojiFlags.countryCode(json.sys.country).emoji} ${json.sys.country} - ${json.name}`)
+    .setURL(`https://openweathermap.org/city/${json.id}`)
+    .setFooter("Powered by OpenWeatherMap", "https://media.dragstone.com/content/icon-openweathermap-1.png")
+    .setThumbnail(`http://openweathermap.org/img/w/${json.weather[0].icon}.png`)
+    .addField("☁ Weather", `${json.weather[0].main} - ${json.weather[0].description}`)
+    .addField("🌡 Temperature", `Minimum Temperature: ${json.main.temp_min}°C\nMaximum Temperature: ${json.main.temp_max}°C\nTemperature: ${json.main.temp}°C`)
+    .addField("💨 Wind", `Speed: ${json.wind.speed} m/s\nDegrees: ${json.wind.deg}°`)
+    .addField("🌤 Sunrise", moment(new Date(json.sys.sunrise * 1000)).format("MMM D, YYYY h:mm:ss A"))
+    .addField("🌥 Sunset", moment(new Date(json.sys.sunset * 1000)).format("MMM D, YYYY h:mm:ss A"))
+    .addField("🔘 Coordinates", `Longitude: ${json.coord.lon}\nLatitude: ${json.coord.lat}`)
+    .addField("🎛 Pressure", `${json.main.pressure} hpa`)
+    .addField("💧 Humidity", `${json.main.humidity}%`)
+  )
 }
 
 module.exports = Searches

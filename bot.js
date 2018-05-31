@@ -22,6 +22,7 @@ if (!process.env.TOKEN || !process.env.PREFIX || !process.env.OWNER_ID) {
 
 displayAscii()
 $.log(`Starting ${package.name} v${package.version}`)
+
 MongoClient.connect(`mongodb://${process.env.DB_USER}:${process.env.DB_PASS}@${process.env.DB_HOST}/${process.env.DB_NAME}`, async (err, client) => {
   if (err) {
     console.log(colors.red(`${err}\nFailed to establish connection to ${process.env.DB_HOST}`))

@@ -71,6 +71,10 @@
     "info": "Start, stop, and show score of the Pokemon Game.",
     "usage": "{0}pokemon <start | stop | score>"
   },
+  "connect4": {
+    "info": "Start or join a connect4 game",
+    "usage": "{0}connect4"
+  },
   "play": {
     "info": "Plays a music or a specific index.",
     "usage": "{0}play <url | keyword> or {0}play <queue index>"
@@ -138,6 +142,10 @@
   "ud": {
     "info": "Searches the word in Urban Dictionary.",
     "usage": "{0}ud <keyword>"
+  },
+  "weather": {
+    "info": "Searches the weather forecast.",
+    "usage": "{0}weather <keyword>"
   },
   "help": {
     "info": "Shows usage of the command.",

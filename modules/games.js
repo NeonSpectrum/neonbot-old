@@ -13,7 +13,15 @@ class Games {
           config: $.getServerConfig(message.guild.id),
           loop: true,
           pokemonTimeout: 0,
-          score: {}
+          score: {},
+          connect4: {
+            board: null,
+            players: [],
+            turn: null,
+            lastBoardMessage: null,
+            waitingMessage: null,
+            timeout: null
+          }
         }
       } else {
         servers[message.guild.id].config = $.getServerConfig(message.guild.id)
@@ -149,6 +157,175 @@ Games.prototype.pokemon = async function(args) {
   function reset() {
     server.pokemonTimeout = 0
     server.score = {}
+  }
+}
+
+Games.prototype.connect4 = async function() {
+  var message = this.message,
+    server = this.server,
+    connect4 = server.connect4
+
+  if (connect4.players.length == 2) return message.channel.send($.embed("The game is already running."))
+  if (connect4.players.indexOf(message.author.id) == -1) {
+    connect4.players.push(message.author.id)
+    if (connect4.players.length != 2) {
+      connect4.waitingMessage = await message.channel.send($.embed(`Waiting for players to join. To join the game please use \`${server.config.prefix}connect4\`.`))
+      connect4.timeout = setTimeout(() => {
+        if (connect4.players.length != 2) {
+          connect4.waitingMessage.delete().catch(() => {})
+          message.channel.send($.embed(`Insufficient players. The game will now close.`)).then(m => m.delete({
+            timeout: 5000
+          }).catch(() => {}))
+          connect4.players = []
+        }
+      }, 20000)
+      return
+    }
+  } else return message.channel.send($.embed(`${message.author.toString()} You are already in the game.`)).then(m => m.delete({
+    timeout: 3000
+  }).catch(() => {}))
+
+  clearTimeout(connect4.timeout)
+  connect4.waitingMessage.delete().catch(() => {})
+  connect4.turn = Math.floor(Math.random() * 2)
+  resetBoard()
+  showBoard()
+
+  function waitForAnswer() {
+    message.channel.awaitMessages((m) => connect4.players.indexOf(m.author.id) == connect4.turn && m.content > 0 && m.content <= 7, {
+      max: 1,
+      time: 30000,
+      errors: ['time']
+    }).then((m) => {
+      movePlayer(connect4.players.indexOf(m.first().author.id), m.first().content - 1)
+      var winner = checkWinner()
+      if (!winner) {
+        nextPlayer()
+        showBoard()
+        waitForAnswer()
+      } else {
+        showBoard(winner == "draw" ? winner : bot.users.get(connect4.players[winner - 1]).tag)
+      }
+      m.first().delete().catch(() => {})
+    }).catch(() => {
+      var winner = connect4.turn == 0 ? 1 : 0
+      showBoard(bot.users.get(connect4.players[winner]).tag, true)
+    })
+  }
+  waitForAnswer()
+
+  async function showBoard(winner, timeout) {
+    var board = []
+    for (var i = 0; i < connect4.board.length; i++) {
+      var arr = []
+      for (var j = 0; j < connect4.board[i].length; j++) {
+        var circle = connect4.board[i][j]
+        switch (circle) {
+          case 0:
+            arr.push("⚫")
+            break
+          case 1:
+            arr.push("🔴")
+            break
+          case 2:
+            arr.push("🔵")
+            break
+        }
+      }
+      board.push(arr.join(""))
+    }
+    board.push("\u0031\u20E3\u0032\u20E3\u0033\u20E3\u0034\u20E3\u0035\u20E3\u0036\u20E3\u0037\u20E3")
+    var temp
+    if (!winner) {
+      temp = $.embed().setTitle(`Player to move: **${bot.users.get(connect4.players[connect4.turn]).tag}**\n`)
+    } else {
+      if (winner == "draw") {
+        temp = $.embed().setTitle(`Congratulations. It's a draw!`)
+      } else {
+        temp = $.embed().setTitle(`${timeout ? `${bot.users.get(connect4.players[connect4.turn]).tag} didn't answer.\n` : ""}Congratulations. ${winner} won the game!`)
+      }
+    }
+    if (connect4.lastBoardMessage) connect4.lastBoardMessage.delete().catch(() => {})
+    connect4.lastBoardMessage = await message.channel.send(temp
+      .setDescription(board.join("\n"))
+      .setFooter(`Started by ${bot.users.get(connect4.players[0]).tag}`, bot.users.get(connect4.players[0]).displayAvatarURL())
+    )
+    if (winner) connect4.players = []
+  }
+
+  function resetBoard() {
+    connect4.board = [
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0]
+    ]
+
+    // connect4.board = [
+    //   [0, 1, 1, 1, 2, 2, 1],
+    //   [1, 2, 2, 2, 1, 2, 2],
+    //   [2, 1, 1, 1, 2, 2, 1],
+    //   [2, 2, 2, 1, 1, 1, 2],
+    //   [1, 2, 1, 1, 2, 1, 1],
+    //   [2, 1, 1, 2, 1, 2, 2]
+    // ]
+  }
+
+  function movePlayer(id, index) {
+    for (var i = connect4.board.length - 1; i >= 0; i--) {
+      if (connect4.board[i][index] == 0) {
+        connect4.board[i][index] = id + 1
+        return true
+      }
+    }
+    return false
+  }
+
+  function nextPlayer() {
+    connect4.turn = connect4.turn == 0 ? 1 : 0
+  }
+
+  function checkLine(a, b, c, d) {
+    // Check first cell non-zero and all cells match
+    return ((a != 0) && (a == b) && (a == c) && (a == d));
+  }
+
+  function checkWinner() {
+    var board = connect4.board
+
+    // Check down
+    for (i = 0; i < 3; i++)
+      for (j = 0; j < 7; j++)
+        if (checkLine(board[i][j], board[i + 1][j], board[i + 2][j], board[i + 3][j]))
+          return board[i][j];
+
+    // Check right
+    for (i = 0; i < 6; i++)
+      for (j = 0; j < 4; j++)
+        if (checkLine(board[i][j], board[i][j + 1], board[i][j + 2], board[i][j + 3]))
+          return board[i][j];
+
+    // Check down-right
+    for (i = 0; i < 3; i++)
+      for (j = 0; j < 4; j++)
+        if (checkLine(board[i][j], board[i + 1][j + 1], board[i + 2][j + 2], board[i + 3][j + 3]))
+          return board[i][j];
+
+    // Check down-left
+    for (i = 3; i < 6; i++)
+      for (j = 0; j < 4; j++)
+        if (checkLine(board[i][j], board[i - 1][j + 1], board[i - 2][j + 2], board[i - 3][j + 3]))
+          return board[i][j];
+
+    // Check if draw
+    for (i = 0; i < 6; i++)
+      for (j = 0; j < 7; j++)
+        if (board[i][j] == 0)
+          return false;
+
+    return "draw"
   }
 }
 

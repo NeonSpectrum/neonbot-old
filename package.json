@@ -1,6 +1,6 @@
 {
   "name": "NeonBot",
-  "version": "2.1.6",
+  "version": "2.2.0",
   "description": "",
   "main": "bot.js",
   "scripts": {
@@ -10,14 +10,17 @@
   "author": "NeonSpectrum",
   "license": "ISC",
   "dependencies": {
+    "ffmpeg-binaries": "^3.2.2-3"
+  },
+  "devDependencies": {
     "bufferutil": "^3.0.4",
     "child_process": "^1.0.2",
     "colors": "^1.2.1",
     "discord-paginationembed": "github:gazmull/discord-paginationembed",
     "discord.js": "github:discordjs/discord.js#master",
     "dotenv": "^5.0.1",
+    "emoji-flags": "^1.2.0",
     "erlpack": "github:discordapp/erlpack",
-    "ffmpeg-binaries": "^3.2.2-3",
     "fs-extra": "^6.0.1",
     "google-images": "^2.1.0",
     "google-search": "0.0.5",
