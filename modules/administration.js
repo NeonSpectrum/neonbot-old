@@ -378,6 +378,7 @@ Administration.prototype.update = function() {
           )
           fs.writeFile('updateid.txt', message.channel.id, function(err) {})
           exec(`${process.env.GIT_PATH}git pull origin master`, async (err, stdout, stderr) => {
+            if (stdout.indexOf("package.json") > -1) await execute(`${process.env.NODE_PATH}npm i`)
             await ghmsg.edit($.embed()
               .setFooter(bot.user.tag, bot.user.displayAvatarURL())
               .setAuthor("GitHub Update", "https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png")
@@ -385,6 +386,15 @@ Administration.prototype.update = function() {
             ).catch(() => {})
             process.exit(2)
           })
+
+          function execute(str) {
+            return new Promise((resolve, reject) => {
+              exec(str, async (err, stdout, stderr) => {
+                if (err) reject(err)
+                else resolve(stdout)
+              })
+            })
+          }
         } else if (m.content.toLowerCase() == "n") {
           m.delete().catch(() => {})
           msg.delete().catch(() => {})
