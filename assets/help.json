@@ -167,6 +167,14 @@
     "info": "Searches Overwatch user information.",
     "usage": "{0}overwatch <user>"
   },
+  "dota2": {
+    "info": "Searches Dota 2 user information.",
+    "usage": "{0}dota2 <steam id>"
+  },
+  "csgo": {
+    "info": "Searches CS-GO user information.",
+    "usage": "{0}csgo <steam id>"
+  },
   "lyrics": {
     "info": "Searches lyrics of a song.",
     "usage": "{0}lyrics <song>"

@@ -262,6 +262,7 @@ Music.prototype.stop = function() {
     server = this.server
 
   if (server.dispatcher) {
+    if (!message.member.voiceChannel) return message.channel.send($.embed("You must be in the voice channel!"))
     if (!$.isOwner(message.author.id) && server.queue[server.currentQueue].requested.id != message.author.id && !server.queue[server.currentQueue].requested.bot) {
       return message.channel.send($.embed("Please respect the one who queued the song."))
     }
@@ -280,7 +281,9 @@ Music.prototype.stop = function() {
 Music.prototype.skip = function() {
   var message = this.message,
     server = this.server
+
   if (server.dispatcher) {
+    if (!message.member.voiceChannel) return message.channel.send($.embed("You must be in the voice channel!"))
     if (!$.isOwner(message.author.id) && server.queue[server.currentQueue].requested.id != message.author.id && !server.queue[server.currentQueue].requested.bot) {
       return message.channel.send($.embed("Please respect the one who queued the song."))
     }
@@ -296,7 +299,9 @@ Music.prototype.seek = function(args) {
   var message = this.message,
     server = this.server,
     seconds = $.convertToSeconds(args[0])
+
   if (server.dispatcher) {
+    if (!message.member.voiceChannel) return message.channel.send($.embed("You must be in the voice channel!"))
     if (!$.isOwner(message.author.id) && server.queue[server.currentQueue].requested.id != message.author.id && !server.queue[server.currentQueue].requested.bot) {
       return message.channel.send($.embed("Please respect the one who queued the song."))
     }
@@ -314,7 +319,9 @@ Music.prototype.seek = function(args) {
 Music.prototype.removesong = async function(args) {
   var message = this.message,
     server = this.server
+
   if (server.dispatcher && Number.isInteger(+args[0])) {
+    if (!message.member.voiceChannel) return message.channel.send($.embed("You must be in the voice channel!"))
     if (+args[0] <= 0 || +args[0] > server.queue.length) return message.channel.send($.embed("There is no song in that index."))
     if (!$.isOwner(message.author.id) && server.queue[+args[0] - 1].requested.id != message.author.id && !server.queue[+args[0] - 1].requested.bot) {
       return message.channel.send($.embed("You cannot remove this song. You're not the one who requested it."))
@@ -433,6 +440,7 @@ Music.prototype.pause = async function() {
     server = this.server
 
   if (server && server.dispatcher && !server.dispatcher.paused && server.queue.length > 0) {
+    if (!message.member.voiceChannel) return message.channel.send($.embed("You must be in the voice channel!"))
     server.dispatcher.pause()
     if (message.channel) {
       server.lastPauseMessage = await message.channel.send($.embed(`Player paused. \`${server.config.prefix}resume\` to resume.`))
@@ -450,6 +458,7 @@ Music.prototype.resume = async function() {
     server = this.server
 
   if (server && server.dispatcher && server.dispatcher.paused && server.queue.length > 0) {
+    if (!message.member.voiceChannel) return message.channel.send($.embed("You must be in the voice channel!"))
     server.dispatcher.resume()
     if (message.channel) {
       if (server.lastPauseMessage) {
@@ -503,6 +512,7 @@ Music.prototype.nowplaying = function() {
 Music.prototype.leave = function() {
   var message = this.message
   if (!$.isOwner(message.member.id)) return message.channel.send($.embed("You don't have a permission to make the bot leave."))
+  if (!message.member.voiceChannel) return message.channel.send($.embed("You must be in the voice channel!"))
   if (message.guild.voiceConnection) message.guild.voiceConnection.disconnect()
 }
 
@@ -511,6 +521,7 @@ Music.prototype.restartsong = function() {
     server = this.server
 
   if (message.guild.voiceConnection && server.dispatcher) {
+    if (!message.member.voiceChannel) return message.channel.send($.embed("You must be in the voice channel!"))
     server.status = "restart"
     server.dispatcher.end()
   }
@@ -581,28 +592,24 @@ Music.prototype._execute = function(connection, time) {
           server.stopped = true
           return
         } else if (server.currentQueue == server.queue.length - 1 && server.config.music.autoplay && server.config.music.repeat != "all") {
-          try {
-            if (server.autoplayid.indexOf(server.queue[server.currentQueue].info.video_id) == -1) server.autoplayid.push(server.queue[server.currentQueue].info.video_id)
-            var info
-            for (var i = 0; i < server.queue[server.currentQueue].info.related_videos.length; i++) {
-              var id = server.queue[server.currentQueue].info.related_videos[i].id || server.queue[server.currentQueue].info.related_videos[i].video_id
-              if (server.autoplayid.indexOf(id) == -1) {
-                server.autoplayid.push(id)
-                info = await ytdl.getInfo(id)
-                break
-              }
+          if (server.autoplayid.indexOf(server.queue[server.currentQueue].info.video_id) == -1) server.autoplayid.push(server.queue[server.currentQueue].info.video_id)
+          var info
+          for (var i = 0; i < server.queue[server.currentQueue].info.related_videos.length; i++) {
+            var id = server.queue[server.currentQueue].info.related_videos[i].id || server.queue[server.currentQueue].info.related_videos[i].video_id
+            if (server.autoplayid.indexOf(id) == -1) {
+              server.autoplayid.push(id)
+              info = await ytdl.getInfo(id)
+              break
             }
-            server.queue.push({
-              id: info.video_id,
-              title: info.title,
-              url: info.video_url,
-              requested: bot.user,
-              info: info
-            })
-            this._saveplaylist()
-          } catch (err) {
-            console.log(err)
           }
+          server.queue.push({
+            id: info.video_id,
+            title: info.title,
+            url: info.video_url,
+            requested: bot.user,
+            info: info
+          })
+          this._saveplaylist()
         } else if (server.config.music.repeat == "all" && server.currentQueue == server.queue.length - 1) {
           server.status = 0
         }
