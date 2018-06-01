@@ -35,6 +35,7 @@ MongoClient.connect(`mongodb://${process.env.DB_USER}:${process.env.DB_PASS}@${p
   var items = await db.collection("settings").find({}).toArray()
   if (items.length == 0) {
     var insert = await db.collection('settings').insert({
+      status: "online",
       game: {
         type: "",
         name: ""
@@ -114,8 +115,12 @@ bot.on('ready', async () => {
     });
   }
 
-  bot.user.setActivity(config.game.name, {
-    type: config.game.type.toUpperCase()
+  bot.user.setPresence({
+    activity: {
+      name: config.game.name,
+      type: config.game.type.toUpperCase()
+    },
+    status: config.status
   })
 
   loaded = true

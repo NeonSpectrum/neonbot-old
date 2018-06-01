@@ -202,6 +202,25 @@ Administration.prototype.setname = async function(args) {
     })
 }
 
+Administration.prototype.setstatus = function(args) {
+  var message = this.message,
+    server = this.server
+
+  if (!$.isOwner(message.member.id)) return message.channel.send($.embed("You don't have a permission to set status."))
+  if (!(args[0].toLowerCase() == "online" || args[0].toLowerCase() == "offline" || args[0].toLowerCase() == "dnd" || args[0].toLowerCase() == "idle"))
+    return message.channel.send($.embed("Invalid Parameters. Not a valid status. (online | dnd | idle | offline)"))
+
+  bot.user.setPresence({
+    status: args[0].toLowerCase()
+  }).then(async () => {
+    server.config = await $.updateConfig({
+      "status": args[0].toLowerCase()
+    })
+    message.channel.send($.embed(`Bot Status set to ${args[0]}`))
+    this.log(`Bot Status set to ${args[0]}`)
+  }).catch(console.error)
+}
+
 Administration.prototype.setgame = function(args) {
   var message = this.message,
     server = this.server

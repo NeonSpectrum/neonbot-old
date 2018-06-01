@@ -1,9 +1,11 @@
 const bot = require('../bot')
 const $ = require('../assets/functions')
+const fs = require('fs')
 const config = $.getConfig()
 const moment = require('moment')
 const emojiFlags = require('emoji-flags')
 const cheerio = require('cheerio')
+const HttpsProxyAgent = require('https-proxy-agent');
 const owjs = require('overwatch-js');
 const GoogleSearch = require('google-search')
 const googleSearch = new GoogleSearch({
@@ -170,6 +172,94 @@ Searches.prototype.lol = async function(args) {
     } else {
       message.channel.send($.embed("Summoner name not found."))
     }
+  } else if (args[0] == "champion") {
+    var msg = await message.channel.send($.embed("Searching..."))
+    var c = cheerio.load(await $.fetchHTML(`https://www.leaguespy.net/league-of-legends/champion/${args[1]}/stats`))
+    msg.delete().catch(() => {})
+    var strongAgainst = [
+        c(".champ__counters").eq(0).find(".champ__counters__radials__big>a>span").text(),
+        c(".champ__counters").eq(0).find(".champ__counters__radials__small>a>span").text()
+      ],
+      weakAgainst = [
+        c(".champ__counters").eq(1).find(".champ__counters__radials__big>a>span").text(),
+        c(".champ__counters").eq(1).find(".champ__counters__radials__small>a>span").text()
+      ],
+      skillBuild = [],
+      itemBuild = {
+        startingItems: [],
+        boots: [],
+        coreItems: [],
+        luxuryItems: []
+      }
+
+    c(".ls-table").eq(0).find(".ls-table__row").each(function() {
+      strongAgainst.push(c(this).find("a").text().trim())
+    })
+    c(".ls-table").eq(1).find(".ls-table__row").each(function() {
+      weakAgainst.push(c(this).find("a").text().trim())
+    })
+    c(".skill-block").find(".skill-grid__column").each(function() {
+      c(this).find("span").each(function(i) {
+        if (c(this).hasClass("active")) {
+          var skill = ""
+          switch (i) {
+            case 0:
+              skill = "q"
+              break
+            case 1:
+              skill = "w"
+              break
+            case 2:
+              skill = "e"
+              break
+            case 3:
+              skill = "r"
+              break
+          }
+          skillBuild.push(skill)
+        }
+      })
+    })
+    c(".champ-block").find(".item-block").eq(0).find(".item-block__top>.item-block__items>span").each(function() {
+      itemBuild.startingItems.push(c(this).find("span").text())
+    })
+    c(".champ-block").find(".item-block").eq(1).find(".item-block__top>.item-block__items>span").each(function() {
+      itemBuild.boots.push(c(this).find("span").text())
+    })
+    c(".champ-block").find(".item-block").eq(2).find(".item-block__top>.item-block__items>span").each(function() {
+      itemBuild.coreItems.push(c(this).find("span").text())
+    })
+    c(".champ-block").find(".item-block").eq(3).find(".item-block__top>.item-block__items>span").each(function() {
+      itemBuild.luxuryItems.push(c(this).find("span").text())
+    })
+    var data = {
+      icon: c(".champ__header__left__radial").find(".inset>img").attr("src"),
+      name: c(".champ__header__left__main>h2").text(),
+      role: c(".stat-source>.stat-source__btn").eq(0).find("a").text().split(" ")[0],
+      roleIcon: `https://www.leaguespy.net${c(".champ__header__left__radial>.overlay>img").attr("src")}`,
+      winRate: c(".champ__header__left__main>.stats-bar").eq(0).find(".bar-div>span").text(),
+      banRate: c(".champ__header__left__main>.stats-bar").eq(1).find(".bar-div>span").text(),
+      weakAgainst: weakAgainst,
+      strongAgainst: strongAgainst,
+      skillBuild: skillBuild,
+      itemBuild: itemBuild
+    }
+    if (data.name) {
+      message.channel.send($.embed()
+        .setAuthor(data.name, data.roleIcon, `https://www.leaguespy.net/league-of-legends/champion/${args[1]}/stats`)
+        .setThumbnail(data.icon)
+        .setFooter("Powered by LeagueSpy", "https://www.leaguespy.net/images/favicon/favicon-32x32.png")
+        .addField("Role", data.role)
+        .addField("Win Rate", data.winRate)
+        .addField("Ban Rate", data.banRate)
+        .addField("Weak Against", data.weakAgainst.join(", "))
+        .addField("Strong Against", data.strongAgainst.join(", "))
+        .addField("Skill Build", data.skillBuild.join(" > "))
+        .addField("Item Build", `Starting Items: ${data.itemBuild.startingItems.join(", ")}\nBoots: ${data.itemBuild.boots.join(", ")}\nCore Items: ${data.itemBuild.coreItems.join(", ")}\nLuxury Items: ${data.itemBuild.luxuryItems.join(", ")}`)
+      )
+    } else {
+      message.channel.send($.embed("Champion not found"))
+    }
   }
 }
 
@@ -199,6 +289,77 @@ Searches.prototype.overwatch = async function(args) {
     )
   } catch (err) {
     message.channel.send($.embed("Player not found."))
+  }
+}
+
+Searches.prototype.lyrics = async function(args) {
+  var message = this.message
+
+  if (!args[0]) return message.channel.send($.embed("Please specify a song"))
+
+  var msg = await message.channel.send($.embed("Searching..."))
+  var html = await $.fetchHTML("https://search.azlyrics.com/search.php?q=" + args.join(" ").replace(/\s/g, "+"))
+  msg.delete().catch(() => {})
+  var c = cheerio.load(html)
+  var lyricSearchList = []
+  c("td.visitedlyr a").each(function(i) {
+    if (i < 5 && c(this).attr("href").indexOf("/lyrics/") > -1) {
+      lyricSearchList.push({
+        title: c(this).text(),
+        url: c(this).attr("href")
+      })
+    }
+  })
+  if (lyricSearchList.length > 0) {
+    var temp = $.embed().setAuthor("Choose 1-5 below.", "https://i.imgur.com/SBMH84I.png")
+    for (var i = 0; i < lyricSearchList.length; i++) {
+      temp.addField(`${i + 1}. ${lyricSearchList[i].title}`, lyricSearchList[i].url)
+    }
+    var reactionlist = ["\u0031\u20E3", "\u0032\u20E3", "\u0033\u20E3", "\u0034\u20E3", "\u0035\u20E3", "🗑"]
+    var msg = await message.channel.send(temp)
+    msg.awaitReactions((reaction, user) => reactionlist.indexOf(reaction.emoji.name) > -1 && user.id === message.author.id, {
+      max: 1,
+      time: 15000,
+      errors: ['time']
+    }).then(async (collected) => {
+      var i = reactionlist.indexOf(collected.first()._emoji.name)
+      msg.delete().catch(() => {})
+      msg = await message.channel.send($.embed("Processing..."))
+      var proxy = process.env.PROXY.split(":")
+      html = await $.fetchHTML(lyricSearchList[i].url, {
+        agent: proxy[0] ? new HttpsProxyAgent({
+          host: proxy[0],
+          port: proxy[1]
+        }) : null
+      })
+      msg.delete().catch(() => {})
+      lyricSearchList = []
+      var c = cheerio.load(html)
+      var string = c("div.col-xs-12.col-lg-8.text-center div").eq(6).text()
+      var strings = []
+      do {
+        var part = string.substring(0, 2001)
+        part = part.substring(0, part.lastIndexOf(part.lastIndexOf("\n\n") >= 0 ? "\n\n" : "\n") + 1)
+        strings.push(part)
+        string = string.replace(part, "")
+      } while (string.length > 0)
+      for (var i = 0; i < strings.length; i++) {
+        var temp = $.embed(strings[i])
+        if (i == 0) temp.setTitle(c("div.lyricsh h2 b").text())
+        await message.channel.send(temp)
+      }
+    }).catch(() => {
+      msg.delete().catch(() => {})
+    });
+    for (var i = 0; i < reactionlist.length; i++) {
+      try {
+        await msg.react(reactionlist[i])
+      } catch (err) {
+        break
+      }
+    }
+  } else {
+    message.channel.send($.embed("Lyrics not found."))
   }
 }
 
