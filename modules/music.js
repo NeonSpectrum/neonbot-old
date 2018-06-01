@@ -358,7 +358,7 @@ Music.prototype.list = function() {
           temp = []
         }
       }
-      var footer = [`${server.queue.length} ${server.queue.length == 1 ? "song" : "songs"}`, $.formatSeconds(totalseconds), `Volume: ${server.config.music.volume}%`, `Repeat: ${server.config.music.repeat}`, `Autoplay: ${server.config.music.autoplay ? "on" : "off"}`]
+      var footer = [`${server.queue.length} ${server.queue.length == 1 ? "song" : "songs"}`, $.formatSeconds(totalseconds), `Volume: ${server.config.music.volume}%`, `Repeat: ${server.config.music.repeat}`, `Shuffle: ${server.config.music.shuffle ? "on" : "off"}`, `Autoplay: ${server.config.music.autoplay ? "on" : "off"}`]
       if (Math.ceil(server.queue.length / 10) == 1 && embeds[0]) {
         message.channel.send(embeds[0]
           .setAuthor('Player Queue', "https://i.imgur.com/SBMH84I.png")
@@ -403,7 +403,7 @@ Music.prototype.repeat = async function(args) {
   if (args[0] && args[0].toLowerCase() != "off" && args[0].toLowerCase() != "single" && args[0].toLowerCase() != "all") {
     message.channel.send($.embed("Invalid parameters. (off | single | all)"))
   } else if (!args[0]) {
-    message.channel.send($.embed("Repeat is set to " + server.config.music.repeat + "."))
+    message.channel.send($.embed(`Repeat is set to ${server.config.music.repeat}.`))
   } else {
     server.config = await $.updateServerConfig(message.guild.id, {
       "music.repeat": args[0]
@@ -419,7 +419,7 @@ Music.prototype.shuffle = async function(args) {
   if (args[0] && args[0].toLowerCase() != "off" && args[0].toLowerCase() != "on") {
     message.channel.send($.embed("Invalid parameters. (off | on)"))
   } else if (!args[0]) {
-    message.channel.send($.embed("Shuffle is set to " + server.config.music.shuffle + "."))
+    message.channel.send($.embed(`Shuffle is set to ${server.config.music.shuffle ? "on" : "off"}.`))
   } else {
     server.config = await $.updateServerConfig(message.guild.id, {
       "music.shuffle": args[0] == "on" ? true : false
@@ -488,7 +488,7 @@ Music.prototype.nowplaying = function() {
   if (server && server.queue[server.currentQueue]) {
     var requested = server.queue[server.currentQueue].requested
     var info = server.queue[server.currentQueue].info
-    var footer = [requested.tag, `Volume: ${server.config.music.volume}%`, `Repeat: ${server.config.music.repeat}`, `Autoplay: ${server.config.music.autoplay ? "on" : "off"}`]
+    var footer = [requested.tag, `Volume: ${server.config.music.volume}%`, `Repeat: ${server.config.music.repeat}`, `Shuffle: ${server.config.music.shuffle ? "on" : "off"}`, `Autoplay: ${server.config.music.autoplay ? "on" : "off"}`]
     temp = $.embed()
       .setTitle("Title")
       .setDescription(server.queue[server.currentQueue].title)
@@ -551,7 +551,7 @@ Music.prototype._execute = function(connection, time) {
         return
       }
       var requested = server.queue[server.currentQueue].requested
-      var footer = [requested.tag, $.formatSeconds(server.queue[server.currentQueue].info.length_seconds), `Volume: ${server.config.music.volume}%`, `Repeat: ${server.config.music.repeat}`, `Autoplay: ${server.config.music.autoplay ? "on" : "off"}`]
+      var footer = [requested.tag, $.formatSeconds(server.queue[server.currentQueue].info.length_seconds), `Volume: ${server.config.music.volume}%`, `Repeat: ${server.config.music.repeat}`, `Shuffle: ${server.config.music.shuffle ? "on" : "off"}`, `Autoplay: ${server.config.music.autoplay ? "on" : "off"}`]
       if (server.lastPlayingMessage) server.lastPlayingMessage.delete().catch(() => {})
       server.lastPlayingMessage = await message.channel.send($.embed()
         .setAuthor("Now Playing #" + (server.currentQueue + 1), "https://i.imgur.com/SBMH84I.png")
@@ -566,7 +566,7 @@ Music.prototype._execute = function(connection, time) {
       if (server.status == "seek") return
       server.seekTime = 0
       var requested = server.queue[server.currentQueue].requested
-      var footer = [requested.tag, $.formatSeconds(server.queue[server.currentQueue].info.length_seconds), `Volume: ${server.config.music.volume}%`, `Repeat: ${server.config.music.repeat}`, `Autoplay: ${server.config.music.autoplay ? "on" : "off"}`]
+      var footer = [requested.tag, $.formatSeconds(server.queue[server.currentQueue].info.length_seconds), `Volume: ${server.config.music.volume}%`, `Repeat: ${server.config.music.repeat}`, `Shuffle: ${server.config.music.shuffle ? "on" : "off"}`, `Autoplay: ${server.config.music.autoplay ? "on" : "off"}`]
 
       if (server.lastFinishedMessage) server.lastFinishedMessage.delete().catch(() => {})
       server.lastFinishedMessage = await message.channel.send($.embed()
@@ -606,10 +606,10 @@ Music.prototype._execute = function(connection, time) {
         } else if (server.config.music.repeat == "all" && server.currentQueue == server.queue.length - 1) {
           server.status = 0
         }
-        if (server.config.music.shuffle && !server.status) {
+        if (server.config.music.shuffle && (!server.status || server.status == "skip") && server.config.music.repeat != "single") {
           do {
             server.status = Math.floor(Math.random() * server.queue.length)
-          } while (server.status == server.currentQueue)
+          } while (server.status == server.currentQueue && server.queue.length > 1)
         }
         if (Number.isInteger(server.status)) {
           server.currentQueue = server.status
