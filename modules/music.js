@@ -408,7 +408,23 @@ Music.prototype.repeat = async function(args) {
     server.config = await $.updateServerConfig(message.guild.id, {
       "music.repeat": args[0]
     })
-    message.channel.send($.embed("Repeat is now set to " + server.config.music.repeat + "."))
+    message.channel.send($.embed(`Repeat is now set to ${server.config.music.repeat}.`))
+  }
+}
+
+Music.prototype.shuffle = async function(args) {
+  var message = this.message,
+    server = this.server
+
+  if (args[0] && args[0].toLowerCase() != "off" && args[0].toLowerCase() != "on") {
+    message.channel.send($.embed("Invalid parameters. (off | on)"))
+  } else if (!args[0]) {
+    message.channel.send($.embed("Shuffle is set to " + server.config.music.shuffle + "."))
+  } else {
+    server.config = await $.updateServerConfig(message.guild.id, {
+      "music.shuffle": args[0] == "on" ? true : false
+    })
+    message.channel.send($.embed(`Shuffle is now set to ${server.config.music.shuffle ? "on" : "off"}.`))
   }
 }
 
@@ -589,6 +605,11 @@ Music.prototype._execute = function(connection, time) {
           }
         } else if (server.config.music.repeat == "all" && server.currentQueue == server.queue.length - 1) {
           server.status = 0
+        }
+        if (server.config.music.shuffle && !server.status) {
+          do {
+            server.status = Math.floor(Math.random() * server.queue.length)
+          } while (server.status == server.currentQueue)
         }
         if (Number.isInteger(server.status)) {
           server.currentQueue = server.status

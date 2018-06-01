@@ -161,7 +161,7 @@
   },
   "lol": {
     "info": "Searches League of Legends information.",
-    "usage": "{0}lol summoner <user>"
+    "usage": "{0}lol summoner <user> | {0}lol champion <name>"
   },
   "overwatch": {
     "info": "Searches Overwatch user information.",
