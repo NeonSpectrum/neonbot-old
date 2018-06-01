@@ -7,6 +7,7 @@ const emojiFlags = require('emoji-flags')
 const cheerio = require('cheerio')
 const HttpsProxyAgent = require('https-proxy-agent');
 const owjs = require('overwatch-js');
+const SteamID = require('steamid');
 const GoogleSearch = require('google-search')
 const googleSearch = new GoogleSearch({
   key: process.env.GOOGLE_API,
@@ -289,6 +290,93 @@ Searches.prototype.overwatch = async function(args) {
     )
   } catch (err) {
     message.channel.send($.embed("Player not found."))
+  }
+}
+
+Searches.prototype.dota2 = async function(args) {
+  var message = this.message
+
+  if (!args[0]) return message.channel.send($.embed("Please specify an ID."))
+
+  var msg = await message.channel.send($.embed("Searching..."))
+  var sid = new SteamID(args[0])
+
+  var c = cheerio.load(await $.fetchHTML(`https://www.dotabuff.com/players/${sid.accountid}`))
+  msg.delete().catch(() => {})
+
+  var mostPlayed = [],
+    record = c(".header-content-secondary>dl").eq(3).find(".game-record").text().split("-")
+
+  c(".heroes-overview>.r-row").each(function(i) {
+    if (i < 5) {
+      mostPlayed.push(c(this).find(".r-none-mobile>a").text())
+    }
+  })
+  var data = {
+    name: c(".image-container-bigavatar>a>img").attr("alt"),
+    icon: c(".image-container-bigavatar>a>img").attr("src"),
+    lastMatch: c(".header-content-secondary>dl").eq(0).find("dd>time").text() || "N/A",
+    soloMMR: c(".header-content-secondary>dl").eq(1).find("dd").text().split(" ")[0] || "N/A",
+    partyMMR: c(".header-content-secondary>dl").eq(2).find("dd").text().split(" ")[0] || "N/A",
+    record: record[0] ? record : "N/A",
+    winRate: c(".header-content-secondary>dl").eq(4).find("dd").text() || "N/A",
+    mostPlayed: mostPlayed[0] ? mostPlayed : "N/A"
+  }
+  if (data.name && data.lastMatch != "N/A") {
+    message.channel.send($.embed()
+      .setAuthor(data.name, data.icon)
+      .setFooter("Powered by Dota Buff", "https://pbs.twimg.com/profile_images/879332626414358528/eHLyVWo-_400x400.jpg")
+      .addField("Solo MMR", data.soloMMR)
+      .addField("Party MMR", data.partyMMR)
+      .addField("Record", typeof data.record == "object" ? `Win: ${data.record[0]}\nLose: ${data.record[1]}\nAbandon: ${data.record[2]}` : data.record)
+      .addField("Win Rate", data.winRate)
+      .addField("Most Played Hero", typeof data.mostPlayed == "object" ? data.mostPlayed.join(", ") : data.mostPlayed)
+    )
+  } else {
+    message.channel.send($.embed("User not found."))
+  }
+}
+
+Searches.prototype.csgo = async function(args) {
+  var message = this.message
+
+  if (!args[0]) return message.channel.send($.embed("Please specify an ID."))
+
+  var msg = await message.channel.send($.embed("Searching..."))
+  var c = cheerio.load(await $.fetchHTML(`https://csgo-stats.com/search/${args[0]}`))
+
+  msg.delete().catch(() => {})
+  var data = {
+    name: c(".steam-name>a").text(),
+    icon: c(".avatar>img").attr("src"),
+    rank: c("span.rank-name").text(),
+    rankIcon: `https://csgo-stats.com${c(".rank>img").attr("src")}`,
+    kills: c(".main-stats").eq(0).find(".main-stats-row-top").find(".main-stats-data-row").eq(1).find(".main-stats-data-row-data").text(),
+    timePlayed: c(".main-stats").eq(0).find(".main-stats-row").find(".main-stats-data-row").eq(1).find(".main-stats-data-row-data").text(),
+    winRate: c(".main-stats").eq(0).find(".main-stats-row-bot").find(".main-stats-data-row").eq(1).find(".main-stats-data-row-data").text(),
+    accuracy: c(".main-stats").eq(1).find(".main-stats-row-top").find(".main-stats-data-row-alt").eq(1).find(".main-stats-data-row-data").text(),
+    headshot: c(".main-stats").eq(1).find(".main-stats-row").find(".main-stats-data-row-alt").eq(1).find(".main-stats-data-row-data").text(),
+    mvp: c(".main-stats").eq(1).find(".main-stats-row-bot").find(".main-stats-data-row-alt").eq(1).find(".main-stats-data-row-data").text(),
+    favoriteWeapon: c(".fav-weapon-pretty-name>span").eq(0).text(),
+    favoriteMap: c(".fav-weapon-pretty-name>span").eq(1).text()
+  }
+  if (data.name) {
+    message.channel.send($.embed()
+      .setAuthor(data.name, data.icon)
+      .setFooter("Powered by CSGO Stats", "https://store2cdn2.overwolf.com/.galleries/app-icons/CSGO_Stats_com-CSGO_Stats_Icon.png")
+      .setThumbnail(data.rankIcon)
+      .addField("Rank", data.rank)
+      .addField("Kills", data.kills)
+      .addField("Win Rate", data.winRate)
+      .addField("MVP", data.mvp)
+      .addField("Accuracy", data.accuracy)
+      .addField("Headshot", data.headshot)
+      .addField("Favorite Weapon", data.favoriteWeapon)
+      .addField("Favorite Map", data.favoriteMap)
+      .addField("Time Played", data.timePlayed)
+    )
+  } else {
+    message.channel.send($.embed("User not found."))
   }
 }
 

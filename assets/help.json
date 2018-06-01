@@ -111,6 +111,10 @@
     "info": "Changes the repeat mode.",
     "usage": "{0}repeat <off | single | all>"
   },
+  "shuffle": {
+    "info": "Changes the shuffle mode.",
+    "usage": "{0}shuffle <off | on>"
+  },
   "pause": {
     "info": "Pauses the player.",
     "usage": "{0}pause"
@@ -161,11 +165,19 @@
   },
   "lol": {
     "info": "Searches League of Legends information.",
-    "usage": "{0}lol summoner <user>"
+    "usage": "{0}lol summoner <user> | {0}lol champion <name>"
   },
   "overwatch": {
     "info": "Searches Overwatch user information.",
     "usage": "{0}overwatch <user>"
+  },
+  "dota2": {
+    "info": "Searches Dota 2 user information.",
+    "usage": "{0}dota2 <steam id>"
+  },
+  "csgo": {
+    "info": "Searches CS-GO user information.",
+    "usage": "{0}csgo <steam id>"
   },
   "lyrics": {
     "info": "Searches lyrics of a song.",

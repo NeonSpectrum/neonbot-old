@@ -262,6 +262,7 @@ Music.prototype.stop = function() {
     server = this.server
 
   if (server.dispatcher) {
+    if (!message.member.voiceChannel) return message.channel.send($.embed("You must be in the voice channel!"))
     if (!$.isOwner(message.author.id) && server.queue[server.currentQueue].requested.id != message.author.id && !server.queue[server.currentQueue].requested.bot) {
       return message.channel.send($.embed("Please respect the one who queued the song."))
     }
@@ -280,7 +281,9 @@ Music.prototype.stop = function() {
 Music.prototype.skip = function() {
   var message = this.message,
     server = this.server
+
   if (server.dispatcher) {
+    if (!message.member.voiceChannel) return message.channel.send($.embed("You must be in the voice channel!"))
     if (!$.isOwner(message.author.id) && server.queue[server.currentQueue].requested.id != message.author.id && !server.queue[server.currentQueue].requested.bot) {
       return message.channel.send($.embed("Please respect the one who queued the song."))
     }
@@ -296,7 +299,9 @@ Music.prototype.seek = function(args) {
   var message = this.message,
     server = this.server,
     seconds = $.convertToSeconds(args[0])
+
   if (server.dispatcher) {
+    if (!message.member.voiceChannel) return message.channel.send($.embed("You must be in the voice channel!"))
     if (!$.isOwner(message.author.id) && server.queue[server.currentQueue].requested.id != message.author.id && !server.queue[server.currentQueue].requested.bot) {
       return message.channel.send($.embed("Please respect the one who queued the song."))
     }
@@ -314,7 +319,9 @@ Music.prototype.seek = function(args) {
 Music.prototype.removesong = async function(args) {
   var message = this.message,
     server = this.server
+
   if (server.dispatcher && Number.isInteger(+args[0])) {
+    if (!message.member.voiceChannel) return message.channel.send($.embed("You must be in the voice channel!"))
     if (+args[0] <= 0 || +args[0] > server.queue.length) return message.channel.send($.embed("There is no song in that index."))
     if (!$.isOwner(message.author.id) && server.queue[+args[0] - 1].requested.id != message.author.id && !server.queue[+args[0] - 1].requested.bot) {
       return message.channel.send($.embed("You cannot remove this song. You're not the one who requested it."))
@@ -358,7 +365,7 @@ Music.prototype.list = function() {
           temp = []
         }
       }
-      var footer = [`${server.queue.length} ${server.queue.length == 1 ? "song" : "songs"}`, $.formatSeconds(totalseconds), `Volume: ${server.config.music.volume}%`, `Repeat: ${server.config.music.repeat}`, `Autoplay: ${server.config.music.autoplay ? "on" : "off"}`]
+      var footer = [`${server.queue.length} ${server.queue.length == 1 ? "song" : "songs"}`, $.formatSeconds(totalseconds), `Volume: ${server.config.music.volume}%`, `Repeat: ${server.config.music.repeat}`, `Shuffle: ${server.config.music.shuffle ? "on" : "off"}`, `Autoplay: ${server.config.music.autoplay ? "on" : "off"}`]
       if (Math.ceil(server.queue.length / 10) == 1 && embeds[0]) {
         message.channel.send(embeds[0]
           .setAuthor('Player Queue', "https://i.imgur.com/SBMH84I.png")
@@ -403,12 +410,28 @@ Music.prototype.repeat = async function(args) {
   if (args[0] && args[0].toLowerCase() != "off" && args[0].toLowerCase() != "single" && args[0].toLowerCase() != "all") {
     message.channel.send($.embed("Invalid parameters. (off | single | all)"))
   } else if (!args[0]) {
-    message.channel.send($.embed("Repeat is set to " + server.config.music.repeat + "."))
+    message.channel.send($.embed(`Repeat is set to ${server.config.music.repeat}.`))
   } else {
     server.config = await $.updateServerConfig(message.guild.id, {
       "music.repeat": args[0]
     })
-    message.channel.send($.embed("Repeat is now set to " + server.config.music.repeat + "."))
+    message.channel.send($.embed(`Repeat is now set to ${server.config.music.repeat}.`))
+  }
+}
+
+Music.prototype.shuffle = async function(args) {
+  var message = this.message,
+    server = this.server
+
+  if (args[0] && args[0].toLowerCase() != "off" && args[0].toLowerCase() != "on") {
+    message.channel.send($.embed("Invalid parameters. (off | on)"))
+  } else if (!args[0]) {
+    message.channel.send($.embed(`Shuffle is set to ${server.config.music.shuffle ? "on" : "off"}.`))
+  } else {
+    server.config = await $.updateServerConfig(message.guild.id, {
+      "music.shuffle": args[0] == "on" ? true : false
+    })
+    message.channel.send($.embed(`Shuffle is now set to ${server.config.music.shuffle ? "on" : "off"}.`))
   }
 }
 
@@ -417,6 +440,7 @@ Music.prototype.pause = async function() {
     server = this.server
 
   if (server && server.dispatcher && !server.dispatcher.paused && server.queue.length > 0) {
+    if (!message.member.voiceChannel) return message.channel.send($.embed("You must be in the voice channel!"))
     server.dispatcher.pause()
     if (message.channel) {
       server.lastPauseMessage = await message.channel.send($.embed(`Player paused. \`${server.config.prefix}resume\` to resume.`))
@@ -434,6 +458,7 @@ Music.prototype.resume = async function() {
     server = this.server
 
   if (server && server.dispatcher && server.dispatcher.paused && server.queue.length > 0) {
+    if (!message.member.voiceChannel) return message.channel.send($.embed("You must be in the voice channel!"))
     server.dispatcher.resume()
     if (message.channel) {
       if (server.lastPauseMessage) {
@@ -472,7 +497,7 @@ Music.prototype.nowplaying = function() {
   if (server && server.queue[server.currentQueue]) {
     var requested = server.queue[server.currentQueue].requested
     var info = server.queue[server.currentQueue].info
-    var footer = [requested.tag, `Volume: ${server.config.music.volume}%`, `Repeat: ${server.config.music.repeat}`, `Autoplay: ${server.config.music.autoplay ? "on" : "off"}`]
+    var footer = [requested.tag, `Volume: ${server.config.music.volume}%`, `Repeat: ${server.config.music.repeat}`, `Shuffle: ${server.config.music.shuffle ? "on" : "off"}`, `Autoplay: ${server.config.music.autoplay ? "on" : "off"}`]
     temp = $.embed()
       .setTitle("Title")
       .setDescription(server.queue[server.currentQueue].title)
@@ -487,6 +512,7 @@ Music.prototype.nowplaying = function() {
 Music.prototype.leave = function() {
   var message = this.message
   if (!$.isOwner(message.member.id)) return message.channel.send($.embed("You don't have a permission to make the bot leave."))
+  if (!message.member.voiceChannel) return message.channel.send($.embed("You must be in the voice channel!"))
   if (message.guild.voiceConnection) message.guild.voiceConnection.disconnect()
 }
 
@@ -495,6 +521,7 @@ Music.prototype.restartsong = function() {
     server = this.server
 
   if (message.guild.voiceConnection && server.dispatcher) {
+    if (!message.member.voiceChannel) return message.channel.send($.embed("You must be in the voice channel!"))
     server.status = "restart"
     server.dispatcher.end()
   }
@@ -535,7 +562,7 @@ Music.prototype._execute = function(connection, time) {
         return
       }
       var requested = server.queue[server.currentQueue].requested
-      var footer = [requested.tag, $.formatSeconds(server.queue[server.currentQueue].info.length_seconds), `Volume: ${server.config.music.volume}%`, `Repeat: ${server.config.music.repeat}`, `Autoplay: ${server.config.music.autoplay ? "on" : "off"}`]
+      var footer = [requested.tag, $.formatSeconds(server.queue[server.currentQueue].info.length_seconds), `Volume: ${server.config.music.volume}%`, `Repeat: ${server.config.music.repeat}`, `Shuffle: ${server.config.music.shuffle ? "on" : "off"}`, `Autoplay: ${server.config.music.autoplay ? "on" : "off"}`]
       if (server.lastPlayingMessage) server.lastPlayingMessage.delete().catch(() => {})
       server.lastPlayingMessage = await message.channel.send($.embed()
         .setAuthor("Now Playing #" + (server.currentQueue + 1), "https://i.imgur.com/SBMH84I.png")
@@ -550,7 +577,7 @@ Music.prototype._execute = function(connection, time) {
       if (server.status == "seek") return
       server.seekTime = 0
       var requested = server.queue[server.currentQueue].requested
-      var footer = [requested.tag, $.formatSeconds(server.queue[server.currentQueue].info.length_seconds), `Volume: ${server.config.music.volume}%`, `Repeat: ${server.config.music.repeat}`, `Autoplay: ${server.config.music.autoplay ? "on" : "off"}`]
+      var footer = [requested.tag, $.formatSeconds(server.queue[server.currentQueue].info.length_seconds), `Volume: ${server.config.music.volume}%`, `Repeat: ${server.config.music.repeat}`, `Shuffle: ${server.config.music.shuffle ? "on" : "off"}`, `Autoplay: ${server.config.music.autoplay ? "on" : "off"}`]
 
       if (server.lastFinishedMessage) server.lastFinishedMessage.delete().catch(() => {})
       server.lastFinishedMessage = await message.channel.send($.embed()
@@ -565,30 +592,31 @@ Music.prototype._execute = function(connection, time) {
           server.stopped = true
           return
         } else if (server.currentQueue == server.queue.length - 1 && server.config.music.autoplay && server.config.music.repeat != "all") {
-          try {
-            if (server.autoplayid.indexOf(server.queue[server.currentQueue].info.video_id) == -1) server.autoplayid.push(server.queue[server.currentQueue].info.video_id)
-            var info
-            for (var i = 0; i < server.queue[server.currentQueue].info.related_videos.length; i++) {
-              var id = server.queue[server.currentQueue].info.related_videos[i].id || server.queue[server.currentQueue].info.related_videos[i].video_id
-              if (server.autoplayid.indexOf(id) == -1) {
-                server.autoplayid.push(id)
-                info = await ytdl.getInfo(id)
-                break
-              }
+          if (server.autoplayid.indexOf(server.queue[server.currentQueue].info.video_id) == -1) server.autoplayid.push(server.queue[server.currentQueue].info.video_id)
+          var info
+          for (var i = 0; i < server.queue[server.currentQueue].info.related_videos.length; i++) {
+            var id = server.queue[server.currentQueue].info.related_videos[i].id || server.queue[server.currentQueue].info.related_videos[i].video_id
+            if (server.autoplayid.indexOf(id) == -1) {
+              server.autoplayid.push(id)
+              info = await ytdl.getInfo(id)
+              break
             }
-            server.queue.push({
-              id: info.video_id,
-              title: info.title,
-              url: info.video_url,
-              requested: bot.user,
-              info: info
-            })
-            this._saveplaylist()
-          } catch (err) {
-            console.log(err)
           }
+          server.queue.push({
+            id: info.video_id,
+            title: info.title,
+            url: info.video_url,
+            requested: bot.user,
+            info: info
+          })
+          this._saveplaylist()
         } else if (server.config.music.repeat == "all" && server.currentQueue == server.queue.length - 1) {
           server.status = 0
+        }
+        if (server.config.music.shuffle && (!server.status || server.status == "skip") && server.config.music.repeat != "single") {
+          do {
+            server.status = Math.floor(Math.random() * server.queue.length)
+          } while (server.status == server.currentQueue && server.queue.length > 1)
         }
         if (Number.isInteger(server.status)) {
           server.currentQueue = server.status
