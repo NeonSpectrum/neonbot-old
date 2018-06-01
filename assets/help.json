@@ -111,6 +111,10 @@
     "info": "Changes the repeat mode.",
     "usage": "{0}repeat <off | single | all>"
   },
+  "shuffle": {
+    "info": "Changes the shuffle mode.",
+    "usage": "{0}shuffle <off | on>"
+  },
   "pause": {
     "info": "Pauses the player.",
     "usage": "{0}pause"
