@@ -409,7 +409,7 @@ Administration.prototype.update = function() {
         )
 
         exec(`${process.env.GIT_PATH}git pull`, async (err, stdout, stderr) => {
-          await execute(`${process.env.NODE_PATH}npm i`)
+          await execute(`export PATH=$PATH:${process.env.NODE_PATH} && npm i`)
           await ghmsg.edit($.embed()
             .setFooter(bot.user.tag, bot.user.displayAvatarURL())
             .setAuthor("GitHub Update", "https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png")
