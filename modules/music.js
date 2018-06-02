@@ -298,7 +298,14 @@ Music.prototype.seek = function(args) {
     server = this.server,
     seconds = $.convertToSeconds(args[0])
 
-  if (!Number.isInteger(seconds)) return message.channel.send("Parameter must be in seconds.")
+    <<
+    <<
+    << < HEAD
+  if (!Number.isInteger(seconds)) return message.channel.send("Parameter must be in seconds.") ===
+    ===
+    = >>>
+    >>>
+    > 9909e6 b797f9514fcd0cdfdcb3caf6a950b1ed2c
   if (server.dispatcher) {
     if (!message.member.voiceChannel) return message.channel.send($.embed("You must be in the voice channel!"))
     if (!$.isOwner(message.author.id) && server.queue[server.currentQueue].requested.id != message.author.id && !server.queue[server.currentQueue].requested.bot) {
@@ -321,6 +328,7 @@ Music.prototype.removesong = async function(args) {
 
   if (server.dispatcher && Number.isInteger(+args[0])) {
     if (!message.member.voiceChannel) return message.channel.send($.embed("You must be in the voice channel!"))
+
     if (!args[0]) return message.channel.send($.embed("Invalid Parameters. (<index> | all)"))
     if (args[0].toLowerCase() == "all") {
       message.channel.send($.embed("Cleared queue.")).then(m => m.delete({
@@ -331,6 +339,7 @@ Music.prototype.removesong = async function(args) {
       server.dispatcher.end()
       return
     }
+
     if (+args[0] <= 0 || +args[0] > server.queue.length) return message.channel.send($.embed("There is no song in that index."))
     if (!$.isOwner(message.author.id) && server.queue[+args[0] - 1].requested.id != message.author.id && !server.queue[+args[0] - 1].requested.bot) {
       return message.channel.send($.embed("You cannot remove this song. You're not the one who requested it."))
@@ -583,48 +592,58 @@ Music.prototype._execute = function(connection, time) {
     })
 
     server.dispatcher.on("finish", async () => {
-      if (server.status == "seek") return
-      server.seekTime = 0
-      var requested = server.queue[server.currentQueue].requested
-      var footer = [requested.tag, $.formatSeconds(server.queue[server.currentQueue].info.length_seconds), `Volume: ${server.config.music.volume}%`, `Repeat: ${server.config.music.repeat}`, `Shuffle: ${server.config.music.shuffle ? "on" : "off"}`, `Autoplay: ${server.config.music.autoplay ? "on" : "off"}`]
+        if (server.status == "seek") return
+        server.seekTime = 0
+        var requested = server.queue[server.currentQueue].requested
+        var footer = [requested.tag, $.formatSeconds(server.queue[server.currentQueue].info.length_seconds), `Volume: ${server.config.music.volume}%`, `Repeat: ${server.config.music.repeat}`, `Shuffle: ${server.config.music.shuffle ? "on" : "off"}`, `Autoplay: ${server.config.music.autoplay ? "on" : "off"}`]
 
-      if (server.lastFinishedMessage) server.lastFinishedMessage.delete().catch(() => {})
-      server.lastFinishedMessage = await message.channel.send($.embed()
-        .setAuthor("Finished Playing #" + (server.currentQueue + 1), "https://i.imgur.com/SBMH84I.png")
-        .setFooter(footer.join(" | "), requested.displayAvatarURL())
-        .setTitle(server.queue[server.currentQueue].title)
-        .setURL(server.queue[server.currentQueue].url)
-      )
+        if (server.lastFinishedMessage) server.lastFinishedMessage.delete().catch(() => {})
+        server.lastFinishedMessage = await message.channel.send($.embed()
+          .setAuthor("Finished Playing #" + (server.currentQueue + 1), "https://i.imgur.com/SBMH84I.png")
+          .setFooter(footer.join(" | "), requested.displayAvatarURL())
+          .setTitle(server.queue[server.currentQueue].title)
+          .setURL(server.queue[server.currentQueue].url)
+        )
 
-      if (!server.stopped) {
-        if (server.config.music.repeat == "off" && !server.config.music.autoplay && server.currentQueue == server.queue.length - 1 && server.status != "skip" && !Number.isInteger(server.status)) {
-          server.stopped = true
-          return
-        } else if (server.currentQueue == server.queue.length - 1 && server.config.music.autoplay && server.config.music.repeat != "all") {
-          if (server.autoplayid.indexOf(server.queue[server.currentQueue].info.video_id) == -1) server.autoplayid.push(server.queue[server.currentQueue].info.video_id)
-          var info
-          for (var i = 0; i < server.queue[server.currentQueue].info.related_videos.length; i++) {
-            var id = server.queue[server.currentQueue].info.related_videos[i].id || server.queue[server.currentQueue].info.related_videos[i].video_id
-            if (server.autoplayid.indexOf(id) == -1) {
-              server.autoplayid.push(id)
-              info = await ytdl.getInfo(id)
-              break
+        if (!server.stopped) {
+          if (server.config.music.repeat == "off" && !server.config.music.autoplay && server.currentQueue == server.queue.length - 1 && server.status != "skip" && !Number.isInteger(server.status)) {
+            server.stopped = true
+            return
+          } else if (server.currentQueue == server.queue.length - 1 && server.config.music.autoplay && server.config.music.repeat != "all") {
+            if (server.autoplayid.indexOf(server.queue[server.currentQueue].info.video_id) == -1) server.autoplayid.push(server.queue[server.currentQueue].info.video_id)
+            var info
+            for (var i = 0; i < server.queue[server.currentQueue].info.related_videos.length; i++) {
+              var id = server.queue[server.currentQueue].info.related_videos[i].id || server.queue[server.currentQueue].info.related_videos[i].video_id
+              if (server.autoplayid.indexOf(id) == -1) {
+                server.autoplayid.push(id)
+                info = await ytdl.getInfo(id)
+                break
+              }
             }
+            server.queue.push({
+              id: info.video_id,
+              title: info.title,
+              url: info.video_url,
+              requested: bot.user,
+              info: info
+            })
+            this._saveplaylist()
+          } else if (server.config.music.shuffle && (!server.status || server.status == "skip") && server.config.music.repeat != "single") {
+            do {
+              server.status = Math.floor(Math.random() * server.queue.length)
+            } while (server.status == server.currentQueue && server.queue.length > 1)
+          } else if (server.config.music.repeat == "all" && server.currentQueue == server.queue.length - 1) {
+            server.status = 0
           }
-          server.queue.push({
-            id: info.video_id,
-            title: info.title,
-            url: info.video_url,
-            requested: bot.user,
-            info: info
-          })
-          this._saveplaylist()
-        } else if (server.config.music.shuffle && (!server.status || server.status == "skip") && server.config.music.repeat != "single") {
+
+        } else if (server.config.music.repeat == "all" && server.currentQueue == server.queue.length - 1) {
+          server.status = 0
+        }
+
+        if (server.config.music.shuffle && (!server.status || server.status == "skip") && server.config.music.repeat != "single") {
           do {
             server.status = Math.floor(Math.random() * server.queue.length)
           } while (server.status == server.currentQueue && server.queue.length > 1)
-        } else if (server.config.music.repeat == "all" && server.currentQueue == server.queue.length - 1) {
-          server.status = 0
         }
 
         if (Number.isInteger(server.status)) {
@@ -639,10 +658,10 @@ Music.prototype._execute = function(connection, time) {
         server.dispatcher.destroy()
       }
     })
-  } catch (err) {
-    message.channel.send($.embed(`I can't play this song.`))
-    console.log(err)
-  }
+} catch (err) {
+  message.channel.send($.embed(`I can't play this song.`))
+  console.log(err)
+}
 }
 
 Music.prototype._saveplaylist = function() {
