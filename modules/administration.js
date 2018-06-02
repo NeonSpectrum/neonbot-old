@@ -383,7 +383,7 @@ Administration.prototype.update = function() {
 
   if (!$.isOwner(message.member.id)) return message.channel.send($.embed("You don't have a permission to update the bot."))
   exec(`${process.env.GIT_PATH}git remote show origin`, async (err, stdout, stderr) => {
-    if (stdout.indexOf("(fast-forwardable)") > -1 || stdout.indexOf("(up to date)") > -1) {
+    if (stdout.indexOf("out of date") == -1) {
       message.channel.send($.embed().setFooter(bot.user.tag, bot.user.displayAvatarURL())
         .setAuthor("GitHub Update", "https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png")
         .setDescription("Already up to date.")
@@ -408,7 +408,7 @@ Administration.prototype.update = function() {
           .setDescription("Updating...")
         )
 
-        exec(`${process.env.GIT_PATH}git pull origin master`, async (err, stdout, stderr) => {
+        exec(`${process.env.GIT_PATH}git pull`, async (err, stdout, stderr) => {
           await execute(`${process.env.NODE_PATH}npm i`)
           await ghmsg.edit($.embed()
             .setFooter(bot.user.tag, bot.user.displayAvatarURL())
