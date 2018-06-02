@@ -259,7 +259,6 @@ Music.prototype.stop = function() {
     player = this.player,
     music = player.config.music
 
-  console.log("hello")
   if (player.dispatcher) {
     if (!message.member.voiceChannel) return message.channel.send($.embed("You must be in the voice channel!"))
     if (!$.isOwner(message.author.id) && player.queue[player.currentQueue].requested.id != message.author.id && !player.queue[player.currentQueue].requested.bot) {
@@ -360,7 +359,7 @@ Music.prototype.list = function() {
   var message = this.message,
     player = this.player,
     music = player.config.music
-
+  console.log("hi")
   if (player === undefined || player.queue.length === 0) {
     message.channel.send($.embed("The playlist is empty"))
   } else {
