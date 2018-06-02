@@ -60,7 +60,6 @@ bot.on('ready', async () => {
 
   await bot.loadModules()
 
-  console.log(`${((Date.now() - time) / 1000).toFixed(2)} secs.`)
   $.log(`Logged in as ${bot.user.tag}\n`)
 
   for (var i = 0; i < bot.guilds.size; i++) {
