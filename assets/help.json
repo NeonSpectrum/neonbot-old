@@ -171,6 +171,14 @@
     "info": "Searches and displays the first image in Google",
     "usage": "{0}image <keyword>"
   },
+  "translate": {
+    "info": "Translates a word from one language to another.",
+    "usage": "{0}translate <from<to | to> <word>"
+  },
+  "langlist": {
+    "info": "Lists down all languages available for translate.",
+    "usage": "{0}langlist"
+  },
   "ud": {
     "info": "Searches the word in Urban Dictionary.",
     "usage": "{0}ud <keyword>"

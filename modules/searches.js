@@ -6,9 +6,11 @@ const moment = require('moment')
 const emojiFlags = require('emoji-flags')
 const cheerio = require('cheerio')
 const HttpsProxyAgent = require('https-proxy-agent');
+const langs = require('../assets/lang');
 const owjs = require('overwatch-js');
 const SteamID = require('steamid');
 const GoogleSearch = require('google-search')
+const translate = require('google-translate-api');
 const googleSearch = new GoogleSearch({
   key: process.env.GOOGLE_API,
   cx: '010420937032738550228:8287l8l_wec'
@@ -65,9 +67,53 @@ Searches.prototype.image = async function(args) {
       msg.delete().catch(() => {})
       message.channel.send($.embed()
         .setAuthor(`Google Images for ${args.join(" ")}`, "http://i.imgur.com/G46fm8J.png")
+        .setFooter(`Searched by ${message.author.tag}`, message.author.displayAvatarURL())
         .setImage(images[0].url.split('?')[0])
       )
     });
+}
+
+Searches.prototype.translate = async function(args) {
+  var message = this.message
+
+  if (!args[0]) return message.channel.send($.embed("Invalid Paramters. (lang<lang <word> | lang <word>)"))
+
+  var msg = await message.channel.send($.embed("Searching..."))
+
+  var word = args.slice(1).join(" ")
+  var lang = args[0].split(">")
+  var from = lang[1] ? lang[0] : undefined
+  var to = lang[1] || lang[0]
+
+  translate(word, {
+    from: from,
+    to: to
+  }).then(res => {
+    msg.delete().catch(() => {})
+    message.channel.send($.embed()
+      .setAuthor("Google Translate", "http://i.imgur.com/G46fm8J.png")
+      .setFooter(`Searched by ${message.author.tag}`, message.author.displayAvatarURL())
+      .setDescription(`\`${word}\`from \`${langs[res.from.language.iso]}\` to \`${langs[to]}\`\n\`\`\`${res.text}\`\`\``)
+    )
+  }).catch(() => {
+    msg.delete().catch(() => {})
+    message.channel.send($.embed("Cannot translate to this language."))
+  })
+}
+
+Searches.prototype.langlist = function() {
+  var message = this.message
+
+  var key = Object.keys(langs)
+  var str = []
+
+  for (var i = 0; i < key.length; i++) {
+    str.push(`\`${key[i]}\`: ${langs[key[i]]}`)
+  }
+  message.channel.send($.embed()
+    .setTitle("Language List")
+    .setDescription(str.join("\n"))
+  )
 }
 
 Searches.prototype.ud = async function(args) {
@@ -79,7 +125,8 @@ Searches.prototype.ud = async function(args) {
     msg.delete().catch(() => {})
     message.channel.send($.embed()
       .setAuthor(`Urban Dictionary for ${args.join(" ")}`, "https://lh5.ggpht.com/oJ67p2f1o35dzQQ9fVMdGRtA7jKQdxUFSQ7vYstyqTp-Xh-H5BAN4T5_abmev3kz55GH%3Dw300")
-      .setDescription(`[**${entries[0].word}**](${entries[0].permalink})`)
+      .setTitle(entries[0].word)
+      .setURL(entries[0].permalink)
       .addField("**Definition:**", entries[0].definition)
       .addField("**Example:**", entries[0].example)
       .setFooter(`Searched by ${message.author.tag}`, message.author.displayAvatarURL())
