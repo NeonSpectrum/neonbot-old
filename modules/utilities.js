@@ -1,5 +1,6 @@
 const bot = require('../bot')
-const help = require("../assets/help")
+const reload = require('require-reload')(require)
+const help = reload("../assets/help")
 const $ = require('../assets/functions')
 
 class Utilities {
@@ -75,7 +76,7 @@ Utilities.prototype.stats = function() {
   message.channel.send($.embed()
     .setThumbnail(bot.user.displayAvatarURL())
     .addField("Bot Name", bot.user.tag)
-    .addField("Version", require("../package.json").version)
+    .addField("Version", reload("../package.json").version)
     .addField("Created On", bot.user.createdAt)
     .addField("Created By", "NeonSpectrum")
     .addField("Server Count", Array.from(bot.guilds.keys()).length)

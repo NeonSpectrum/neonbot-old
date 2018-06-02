@@ -39,9 +39,25 @@
     "info": "Set the avatar of the bot.",
     "usage": "{0}setavatar <url>"
   },
+  "alias": {
+    "info": "Adds or edits alias.",
+    "usage": "{0}alias <name> <command>"
+  },
+  "aliaslist": {
+    "info": "Lists down all alias.",
+    "usage": "{0}aliaslist"
+  },
+  "removealias": {
+    "info": "Deletes alias.",
+    "usage": "{0}removealias <alias name>"
+  },
+  "strictmode": {
+    "info": "Enables or Disables Strict Mode.",
+    "usage": "{0}strictmode <enable | disable>"
+  },
   "deleteoncmd": {
-    "info": "Enables or Disables delete on cmd.",
-    "usage": "{0}deleteoncmd"
+    "info": "Enables or Disables Delete On Command.",
+    "usage": "{0}deleteoncmd <enable | disable>"
   },
   "vcrole": {
     "info": "Adds a role if joining or leaving the voice channel.",
