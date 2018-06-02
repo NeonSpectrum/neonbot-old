@@ -438,8 +438,6 @@ Administration.prototype.update = function() {
         function execute(str) {
           return new Promise((resolve, reject) => {
             exec(str, (err, stdout, stderr) => {
-              console.log(stdout)
-              console.log(stderr)
               resolve()
             })
           })
