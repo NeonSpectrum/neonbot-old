@@ -326,7 +326,7 @@ Music.prototype.removesong = async function(args) {
       message.channel.send($.embed("Cleared queue.")).then(m => m.delete({
         timeout: 5000
       }))
-      server.queue = []
+      server.status = "clearqueue"
       server.stopped = true
       server.dispatcher.end()
       return
@@ -635,6 +635,7 @@ Music.prototype._execute = function(connection, time) {
         server.status = null
         this._execute(connection)
       } else {
+        if (server.status == "clearqueue") server.queue = []
         server.currentQueue = 0
       }
     })
