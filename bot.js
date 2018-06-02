@@ -94,7 +94,7 @@ bot.on('ready', async () => {
           voiceChannel: bot.channels.get(voiceChannel)
         }
       })
-      music._processPlaylist(guilds[i], playlist.slice(2))
+      music._processAutoResume(guilds[i], playlist.slice(2))
     }
   }
 

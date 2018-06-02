@@ -691,14 +691,14 @@ Music.prototype._processAutoplay = async function() {
   this._savePlaylist()
 }
 
-Music.prototype._processPlaylist = async function(id, playlist) {
+Music.prototype._processAutoResume = async function(id, playlist) {
   var message = this.message,
     player = this.player
 
   var reqmsg = await message.channel.send($.embed("Auto Resume is enabled. Would you like to add the previous playlist to queue? (y | n)"))
   message.channel.awaitMessages((m) => m.content.toLowerCase() == "y" || m.content.toLowerCase() == "n", {
     max: 1,
-    time: 15000,
+    time: 60000,
     errors: ['time']
   }).then(async (m) => {
     if (m.first().content.toLowerCase() == "n") throw "no"
