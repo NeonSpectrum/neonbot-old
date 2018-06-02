@@ -266,12 +266,10 @@ Music.prototype.stop = function() {
     if (!$.isOwner(message.author.id) && server.queue[server.currentQueue].requested.id != message.author.id && !server.queue[server.currentQueue].requested.bot) {
       return message.channel.send($.embed("Please respect the one who queued the song."))
     }
-    server.stopped = false
-    if (message.guild.voiceConnection) message.guild.voiceConnection.disconnect()
+    server.stopped = true
     server.dispatcher.end()
-    server.autoplayid = []
     message.channel.send($.embed("Player stopped!")).then(s => s.delete({
-      timeout: 3000
+      timeout: 5000
     })).catch(() => {})
     this.log("Player stopped!")
     $.removeMusicPlaylist(message.guild.id)
@@ -300,6 +298,7 @@ Music.prototype.seek = function(args) {
     server = this.server,
     seconds = $.convertToSeconds(args[0])
 
+  if (!Number.isInteger(seconds)) return message.channel.send("Parameter must be in seconds.")
   if (server.dispatcher) {
     if (!message.member.voiceChannel) return message.channel.send($.embed("You must be in the voice channel!"))
     if (!$.isOwner(message.author.id) && server.queue[server.currentQueue].requested.id != message.author.id && !server.queue[server.currentQueue].requested.bot) {
@@ -322,6 +321,16 @@ Music.prototype.removesong = async function(args) {
 
   if (server.dispatcher && Number.isInteger(+args[0])) {
     if (!message.member.voiceChannel) return message.channel.send($.embed("You must be in the voice channel!"))
+    if (!args[0]) return message.channel.send($.embed("Invalid Parameters. (<index> | all)"))
+    if (args[0].toLowerCase() == "all") {
+      message.channel.send($.embed("Cleared queue.")).then(m => m.delete({
+        timeout: 5000
+      }))
+      server.queue = []
+      server.stopped = true
+      server.dispatcher.end()
+      return
+    }
     if (+args[0] <= 0 || +args[0] > server.queue.length) return message.channel.send($.embed("There is no song in that index."))
     if (!$.isOwner(message.author.id) && server.queue[+args[0] - 1].requested.id != message.author.id && !server.queue[+args[0] - 1].requested.bot) {
       return message.channel.send($.embed("You cannot remove this song. You're not the one who requested it."))
@@ -587,7 +596,7 @@ Music.prototype._execute = function(connection, time) {
         .setURL(server.queue[server.currentQueue].url)
       )
 
-      if (!server.dispatcher._writableState.destroyed) {
+      if (!server.stopped) {
         if (server.config.music.repeat == "off" && !server.config.music.autoplay && server.currentQueue == server.queue.length - 1 && server.status != "skip" && !Number.isInteger(server.status)) {
           server.stopped = true
           return
@@ -610,14 +619,14 @@ Music.prototype._execute = function(connection, time) {
             info: info
           })
           this._saveplaylist()
-        } else if (server.config.music.repeat == "all" && server.currentQueue == server.queue.length - 1) {
-          server.status = 0
-        }
-        if (server.config.music.shuffle && (!server.status || server.status == "skip") && server.config.music.repeat != "single") {
+        } else if (server.config.music.shuffle && (!server.status || server.status == "skip") && server.config.music.repeat != "single") {
           do {
             server.status = Math.floor(Math.random() * server.queue.length)
           } while (server.status == server.currentQueue && server.queue.length > 1)
+        } else if (server.config.music.repeat == "all" && server.currentQueue == server.queue.length - 1) {
+          server.status = 0
         }
+
         if (Number.isInteger(server.status)) {
           server.currentQueue = server.status
         } else if (server.status != "force" && server.status != "restart" && server.config.music.repeat != "single" || server.status == "skip") {
@@ -627,7 +636,6 @@ Music.prototype._execute = function(connection, time) {
         this._execute(connection)
       } else {
         server.currentQueue = 0
-        server.queue = []
         server.dispatcher.destroy()
       }
     })
