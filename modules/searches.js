@@ -34,6 +34,7 @@ class Searches {
 
 Searches.prototype.google = async function(args) {
   var message = this.message
+
   var msg = await message.channel.send($.embed("Searching..."))
 
   googleSearch.build({
@@ -54,11 +55,14 @@ Searches.prototype.google = async function(args) {
   });
 }
 
-Searches.prototype.image = function(args) {
+Searches.prototype.image = async function(args) {
   var message = this.message
+
+  var msg = await message.channel.send($.embed("Searching..."))
 
   googleImages.search(args.join(" "))
     .then(images => {
+      msg.delete().catch(() => {})
       message.channel.send($.embed()
         .setAuthor(`Google Images for ${args.join(" ")}`, "http://i.imgur.com/G46fm8J.png")
         .setImage(images[0].url.split('?')[0])
@@ -66,10 +70,13 @@ Searches.prototype.image = function(args) {
     });
 }
 
-Searches.prototype.ud = function(args) {
+Searches.prototype.ud = async function(args) {
   var message = this.message
 
+  var msg = await message.channel.send($.embed("Searching..."))
+
   ud.term(args.join(" "), function(error, entries, tags, sounds) {
+    msg.delete().catch(() => {})
     message.channel.send($.embed()
       .setAuthor(`Urban Dictionary for ${args.join(" ")}`, "https://lh5.ggpht.com/oJ67p2f1o35dzQQ9fVMdGRtA7jKQdxUFSQ7vYstyqTp-Xh-H5BAN4T5_abmev3kz55GH%3Dw300")
       .setDescription(`[**${entries[0].word}**](${entries[0].permalink})`)
@@ -85,9 +92,10 @@ Searches.prototype.weather = async function(args) {
 
   if (!args[0]) return message.channel.send($.embed("Please specify a city."))
 
+  var msg = await message.channel.send($.embed("Searching..."))
   var json = await $.fetchJSON(`http://api.openweathermap.org/data/2.5/weather?q=${args.join(" ")}&units=metric&appid=a88701020436549755f42d7e4be71762`)
 
-  if (json.cod != 200) return message.channel.send($.embed("City not found."))
+  if (json.cod != 200) return msg.edit($.embed("City not found.")).catch(() => {})
   message.channel.send($.embed()
     .setTitle(`${emojiFlags.countryCode(json.sys.country).emoji} ${json.sys.country} - ${json.name}`)
     .setURL(`https://openweathermap.org/city/${json.id}`)
@@ -119,11 +127,12 @@ Searches.prototype.randomjoke = async function(args) {
 Searches.prototype.lol = async function(args) {
   var message = this.message
 
+  if (args[0] != "summoner" || args[0] != "champion") return message.channel.send($.embed("Invalid Parameters. (summoner <user> | champion <name>)"))
+
   if (args[0] == "summoner") {
     var msg = await message.channel.send($.embed("Searching..."))
     var name = args.slice(1).join(" ")
     var c = cheerio.load(await $.fetchHTML(`http://ph.op.gg/summoner/userName=${name}`))
-    msg.delete().catch(() => {})
 
     var mostPlayed = [],
       recentlyPlayed = []
@@ -153,6 +162,7 @@ Searches.prototype.lol = async function(args) {
     }
 
     if (data.name) {
+      msg.delete().catch(() => {})
       var msg = $.embed()
         .setAuthor(data.name, data.icon)
         .setFooter("Powered by op.gg", "http://opgg-static.akamaized.net/images/logo/logo-lol.png")
@@ -171,12 +181,12 @@ Searches.prototype.lol = async function(args) {
 
       message.channel.send(msg)
     } else {
-      message.channel.send($.embed("Summoner name not found."))
+      msg.edit($.embed("Summoner name not found.")).catch(() => {})
     }
   } else if (args[0] == "champion") {
     var msg = await message.channel.send($.embed("Searching..."))
     var c = cheerio.load(await $.fetchHTML(`https://www.leaguespy.net/league-of-legends/champion/${args[1]}/stats`))
-    msg.delete().catch(() => {})
+
     var strongAgainst = [
         c(".champ__counters").eq(0).find(".champ__counters__radials__big>a>span").text(),
         c(".champ__counters").eq(0).find(".champ__counters__radials__small>a>span").text()
@@ -246,6 +256,7 @@ Searches.prototype.lol = async function(args) {
       itemBuild: itemBuild
     }
     if (data.name) {
+      msg.delete().catch(() => {})
       message.channel.send($.embed()
         .setAuthor(data.name, data.roleIcon, `https://www.leaguespy.net/league-of-legends/champion/${args[1]}/stats`)
         .setThumbnail(data.icon)
@@ -259,7 +270,7 @@ Searches.prototype.lol = async function(args) {
         .addField("Item Build", `Starting Items: ${data.itemBuild.startingItems.join(", ")}\nBoots: ${data.itemBuild.boots.join(", ")}\nCore Items: ${data.itemBuild.coreItems.join(", ")}\nLuxury Items: ${data.itemBuild.luxuryItems.join(", ")}`)
       )
     } else {
-      message.channel.send($.embed("Champion not found"))
+      msg.edit($.embed("Champion not found")).catch(() => {})
     }
   }
 }
@@ -268,9 +279,10 @@ Searches.prototype.overwatch = async function(args) {
   var message = this.message
 
   if (!args[0] || args[0].indexOf("#") == -1) return message.channel.send($.embed("Please specify a name with tag"))
-  try {
-    var msg = await message.channel.send($.embed("Searching..."))
 
+  var msg = await message.channel.send($.embed("Searching..."))
+
+  try {
     var user = await owjs.search(args[0])
     var data = await owjs.getAll("pc", "career", user[0].urlName)
     var main = data.competitive.global.masteringHeroe
@@ -289,20 +301,26 @@ Searches.prototype.overwatch = async function(args) {
       .addField("Time Played", `${timePlayed} ${timePlayed == 1 ? "hour" : "hours"}`)
     )
   } catch (err) {
-    message.channel.send($.embed("Player not found."))
+    msg.edit($.embed("User not found.")).catch(() => {})
   }
 }
 
 Searches.prototype.dota2 = async function(args) {
   var message = this.message
 
-  if (!args[0]) return message.channel.send($.embed("Please specify an ID."))
+  if (!args[0]) return message.channel.send($.embed("Please specify an Steam ID."))
 
   var msg = await message.channel.send($.embed("Searching..."))
-  var sid = new SteamID(args[0])
+  var sid
+  try {
+    sid = new SteamID(args[0])
+  } catch (err) {
+    return msg.edit($.embed("User not found.")).catch(() => {})
+  }
 
   var c = cheerio.load(await $.fetchHTML(`https://www.dotabuff.com/players/${sid.accountid}`))
-  msg.delete().catch(() => {})
+
+  if (c(".intro.intro-smaller").text().indexOf("private") > -1) return message.channel.send($.embed("This user's profile is private."))
 
   var mostPlayed = [],
     record = c(".header-content-secondary>dl").eq(3).find(".game-record").text().split("-")
@@ -323,6 +341,7 @@ Searches.prototype.dota2 = async function(args) {
     mostPlayed: mostPlayed[0] ? mostPlayed : "N/A"
   }
   if (data.name && data.lastMatch != "N/A") {
+    msg.delete().catch(() => {})
     message.channel.send($.embed()
       .setAuthor(data.name, data.icon)
       .setFooter("Powered by Dota Buff", "https://pbs.twimg.com/profile_images/879332626414358528/eHLyVWo-_400x400.jpg")
@@ -333,19 +352,18 @@ Searches.prototype.dota2 = async function(args) {
       .addField("Most Played Hero", typeof data.mostPlayed == "object" ? data.mostPlayed.join(", ") : data.mostPlayed)
     )
   } else {
-    message.channel.send($.embed("User not found."))
+    msg.edit($.embed("User not found.")).catch(() => {})
   }
 }
 
 Searches.prototype.csgo = async function(args) {
   var message = this.message
 
-  if (!args[0]) return message.channel.send($.embed("Please specify an ID."))
+  if (!args[0]) return message.channel.send($.embed("Please specify an Steam ID."))
 
   var msg = await message.channel.send($.embed("Searching..."))
   var c = cheerio.load(await $.fetchHTML(`https://csgo-stats.com/search/${args[0]}`))
 
-  msg.delete().catch(() => {})
   var data = {
     name: c(".steam-name>a").text(),
     icon: c(".avatar>img").attr("src"),
@@ -361,6 +379,7 @@ Searches.prototype.csgo = async function(args) {
     favoriteMap: c(".fav-weapon-pretty-name>span").eq(1).text()
   }
   if (data.name) {
+    msg.delete().catch(() => {})
     message.channel.send($.embed()
       .setAuthor(data.name, data.icon)
       .setFooter("Powered by CSGO Stats", "https://store2cdn2.overwolf.com/.galleries/app-icons/CSGO_Stats_com-CSGO_Stats_Icon.png")
@@ -376,7 +395,7 @@ Searches.prototype.csgo = async function(args) {
       .addField("Time Played", data.timePlayed)
     )
   } else {
-    message.channel.send($.embed("User not found."))
+    msg.edit($.embed("User not found.")).catch(() => {})
   }
 }
 
@@ -387,7 +406,7 @@ Searches.prototype.lyrics = async function(args) {
 
   var msg = await message.channel.send($.embed("Searching..."))
   var html = await $.fetchHTML("https://search.azlyrics.com/search.php?q=" + args.join(" ").replace(/\s/g, "+"))
-  msg.delete().catch(() => {})
+
   var c = cheerio.load(html)
   var lyricSearchList = []
   c("td.visitedlyr a").each(function(i) {
@@ -399,6 +418,7 @@ Searches.prototype.lyrics = async function(args) {
     }
   })
   if (lyricSearchList.length > 0) {
+    msg.delete().catch(() => {})
     var temp = $.embed().setAuthor("Choose 1-5 below.", "https://i.imgur.com/SBMH84I.png")
     for (var i = 0; i < lyricSearchList.length; i++) {
       temp.addField(`${i + 1}. ${lyricSearchList[i].title}`, lyricSearchList[i].url)
@@ -447,7 +467,7 @@ Searches.prototype.lyrics = async function(args) {
       }
     }
   } else {
-    message.channel.send($.embed("Lyrics not found."))
+    msg.edit($.embed("Lyrics not found.")).catch(() => {})
   }
 }
 
