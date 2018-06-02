@@ -53,6 +53,11 @@ MongoClient.connect(`mongodb://${process.env.DB_USER}:${process.env.DB_PASS}@${p
 })
 
 bot.on('ready', async () => {
+  bot.servers = {
+    music: [],
+    games: []
+  }
+
   var guilds = Array.from(bot.guilds.keys())
   await $.processDatabase(guilds, guildlist)
 
@@ -82,7 +87,7 @@ bot.on('ready', async () => {
       if (!playlist) continue
       var voiceChannel = playlist[0]
       var music = new Music({
-        guild: bot.guilds.get(id),
+        guild: bot.guilds.get(guilds[i]),
         channel: bot.channels.get(playlist[1]),
         author: bot.user,
         member: {

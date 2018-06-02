@@ -1,9 +1,9 @@
 const bot = require('../bot')
 const $ = require('../assets/functions')
-const pokemon = require('pokemon')
 const jimp = require('jimp')
+const poke = require("pokemon")
 
-var servers = []
+const servers = bot.servers.games
 
 class Games {
   constructor(message) {
@@ -11,9 +11,11 @@ class Games {
       if (!servers[message.guild.id]) {
         servers[message.guild.id] = {
           config: $.getServerConfig(message.guild.id),
-          loop: true,
-          pokemonTimeout: 0,
-          score: {},
+          pokemon: {
+            loop: true,
+            pokemonTimeout: 0,
+            score: {}
+          },
           connect4: {
             board: null,
             players: [],
@@ -46,41 +48,43 @@ Games.prototype.choose = function(args) {
 Games.prototype.pokemon = async function(args) {
   var message = this.message,
     server = this.server,
+    pokemon = server.pokemon,
     self = this
 
   if (args[0] != "start" && args[0] != "stop" && args[0] != "score" && args != "loop") return message.channel.send($.embed("Invalid Parameters. (start | stop)"))
 
   if (args[0] == "start") {
     message.channel.send($.embed("Pokemon game has started"))
+    pokemon.score = {}
   } else if (args[0] == "stop") {
     message.channel.send($.embed(`Pokemon game will stop after this.`))
-    server.loop = false
+    pokemon.loop = false
     return
   } else if (args[0] == "score") {
     showScoreboard()
     return
   }
 
-  if (!server.loop) {
-    server.loop = true
+  if (!pokemon.loop) {
+    pokemon.loop = true
     showScoreboard(true)
-    reset()
+    pokemon.pokemonTimeout = 0
     return
-  } else if (server.pokemonTimeout == 5) {
+  } else if (pokemon.pokemonTimeout == 5) {
     message.channel.send($.embed(`Pokemon game has stopped due to 5 consecutive lose.`))
     showScoreboard(true)
-    reset()
+    pokemon.pokemonTimeout = 0
     return
   }
 
   var name
   do {
-    name = pokemon.random()
+    name = poke.random()
   } while (name == "Type: Null")
 
   this.log(`Pokemon correct answer: ${name}`)
 
-  var url = `https://gearoid.me/pokemon/images/artwork/${pokemon.getId(name)}.png`
+  var url = `https://gearoid.me/pokemon/images/artwork/${poke.getId(name)}.png`
 
   var image = await jimp.read(url)
   image.resize(200, 200)
@@ -109,10 +113,10 @@ Games.prototype.pokemon = async function(args) {
       errors: ['time']
     }).then((m) => {
       winner = m.first().author.id
-      if (!server.score[winner] && !m.first().author.bot) {
-        server.score[winner] = 0
+      if (!pokemon.score[winner] && !m.first().author.bot) {
+        pokemon.score[winner] = 0
       }
-      server.score[winner] += 1
+      pokemon.score[winner] += 1
       throw "done"
     }).catch(async (err) => {
       msg.delete().catch(() => {})
@@ -122,25 +126,25 @@ Games.prototype.pokemon = async function(args) {
         .setImage("attachment://file.jpg")
         .setDescription(`**${winner ? bot.users.get(winner).tag : "No one"}** got the correct answer!\nThe answer is **${name}**`)
       )
-      if (!winner) server.pokemonTimeout += 1
+      if (!winner) pokemon.pokemonTimeout += 1
       self.pokemon("loop")
     })
   })
 
   function showScoreboard(final) {
-    var sorted = Object.keys(server.score).sort(function(a, b) {
-      return server.score[a] - server.score[b]
+    var sorted = Object.keys(pokemon.score).sort(function(a, b) {
+      return pokemon.score[a] - pokemon.score[b]
     })
     sorted.reverse()
     var temp = []
     for (var i = 0; i < sorted.length; i++) {
-      temp.push(`\`${i+1}.\` **${bot.users.get(sorted[i]).tag}**: **${server.score[sorted[i]]} ${server.score[sorted[i]] == 1 ? "point" : "points"}**`)
+      temp.push(`\`${i+1}.\` **${bot.users.get(sorted[i]).tag}**: **${pokemon.score[sorted[i]]} ${pokemon.score[sorted[i]] == 1 ? "point" : "points"}**`)
     }
 
     var temp = $.embed()
       .setAuthor("Who's that pokemon?", "https://i.imgur.com/3sQh8aN.png")
       .setTitle("Scoreboard")
-      .setDescription(temp.join("\n"))
+      .setDescription(temp.join("\n") || "N/A")
     if (final) temp.setFooter("Thank you for playing!", message.author.displayAvatarURL())
 
     message.channel.send(temp)
@@ -160,11 +164,6 @@ Games.prototype.pokemon = async function(args) {
       str[arr[i]] = "_"
     }
     return str.join(" ")
-  }
-
-  function reset() {
-    server.pokemonTimeout = 0
-    server.score = {}
   }
 }
 

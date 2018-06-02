@@ -14,7 +14,7 @@ const yt = new Youtube(process.env.GOOGLE_API)
 
 const spotifyUri = require('spotify-uri');
 
-const servers = []
+const servers = bot.servers.music
 
 class Music {
   constructor(message) {
@@ -359,8 +359,8 @@ Music.prototype.list = function() {
   var message = this.message,
     player = this.player,
     music = player.config.music
-  console.log("hi")
-  if (player === undefined || player.queue.length === 0) {
+
+  if (player.queue.length == 0) {
     message.channel.send($.embed("The playlist is empty"))
   } else {
     try {
@@ -625,6 +625,33 @@ Music.prototype._execute = function(connection, time) {
   }
 }
 
+Music.prototype._processNext = function() {
+  var message = this.message,
+    player = this.player,
+    music = player.config.music
+
+  if (music.repeat == "off" && !music.autoplay && player.isLast() && player.status != "skip" && !Number.isInteger(player.status)) {
+    player.stopped = true
+    return
+  }
+
+  if (player.isLast() && music.autoplay && music.repeat != "all") {
+    this._processAutoplay()
+  } else if (music.shuffle && (!player.status || player.status == "skip") && music.repeat != "single") {
+    do {
+      player.status = Math.floor(Math.random() * player.queue.length)
+    } while (player.status == player.currentQueue && player.queue.length > 1)
+  } else if (music.repeat == "all" && player.isLast()) {
+    player.status = 0
+  }
+
+  if (Number.isInteger(player.status)) {
+    player.currentQueue = player.status
+  } else if (music.repeat != "single" || player.status == "skip") {
+    player.currentQueue += 1
+  }
+}
+
 Music.prototype._savePlaylist = function() {
   var message = this.message,
     player = this.player,
@@ -664,33 +691,6 @@ Music.prototype._processAutoplay = async function() {
   this._savePlaylist()
 }
 
-Music.prototype._processNext = function() {
-  var message = this.message,
-    player = this.player,
-    music = player.config.music
-
-  if (music.repeat == "off" && !music.autoplay && player.isLast() && player.status != "skip" && !Number.isInteger(player.status)) {
-    player.stopped = true
-    return
-  }
-
-  if (player.isLast() && music.autoplay && music.repeat != "all") {
-    this._processAutoplay()
-  } else if (music.shuffle && (!player.status || player.status == "skip") && music.repeat != "single") {
-    do {
-      player.status = Math.floor(Math.random() * player.queue.length)
-    } while (player.status == player.currentQueue && player.queue.length > 1)
-  } else if (music.repeat == "all" && player.isLast()) {
-    player.status = 0
-  }
-
-  if (Number.isInteger(player.status)) {
-    player.currentQueue = player.status
-  } else if (music.repeat != "single" || player.status == "skip") {
-    player.currentQueue += 1
-  }
-}
-
 Music.prototype._processPlaylist = async function(id, playlist) {
   var message = this.message,
     player = this.player
@@ -717,10 +717,10 @@ Music.prototype._processPlaylist = async function(id, playlist) {
           info: info
         })
         if (!message.guild.voiceConnection) {
-          bot.channels.get(voiceChannel).join()
+          message.member.voiceChannel.join()
             .then((connection) => {
               player.connection = connection
-              music._execute(connection)
+              this._execute(connection)
             }).catch(() => {
               message.channel.send("I can't join the voice channel.")
             })
