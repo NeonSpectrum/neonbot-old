@@ -421,8 +421,9 @@ Administration.prototype.update = function() {
             errors: ['time']
           }).then((m) => {
             if (m.first().content.toLowerCase() == "y") {
-              fs.writeFile('updateid.txt', message.channel.id, function() {})
-              process.exit(2)
+              fs.writeFile('updateid.txt', message.channel.id, function() {
+                process.exit(2)
+              })
             } else throw "no"
           }).catch((err) => {
             ghmsg.delete().catch(() => {})
