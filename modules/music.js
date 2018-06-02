@@ -259,7 +259,7 @@ Music.prototype.stop = function() {
     player = this.player,
     music = player.config.music
 
-  console.log("eh")
+  console.log("stop")
   if (player.dispatcher) {
     if (!message.member.voiceChannel) return message.channel.send($.embed("You must be in the voice channel!"))
     if (!$.isOwner(message.author.id) && player.queue[player.currentQueue].requested.id != message.author.id && !player.queue[player.currentQueue].requested.bot) {
