@@ -319,7 +319,7 @@ Music.prototype.removesong = async function(args) {
   var message = this.message,
     server = this.server
 
-  if (server.dispatcher && Number.isInteger(+args[0])) {
+  if (server.dispatcher) {
     if (!message.member.voiceChannel) return message.channel.send($.embed("You must be in the voice channel!"))
     if (!args[0]) return message.channel.send($.embed("Invalid Parameters. (<index> | all)"))
     if (args[0].toLowerCase() == "all") {
@@ -636,7 +636,6 @@ Music.prototype._execute = function(connection, time) {
         this._execute(connection)
       } else {
         server.currentQueue = 0
-        server.dispatcher.destroy()
       }
     })
   } catch (err) {
