@@ -6,6 +6,11 @@ const colors = require('colors/safe')
 
 var servers, config, db, currentGuild
 
+var spotify = {
+  token: null,
+  expiration: null
+}
+
 var $ = {}
 
 $.log = (content, message) => {
@@ -180,6 +185,25 @@ $.fetchJSON = (url, obj) => {
 $.fetchHTML = (url, obj) => {
   return new Promise(async resolve => {
     resolve(await (await fetch(url, obj)).text())
+  })
+}
+
+$.getSpotifyToken = () => {
+  return new Promise(async resolve => {
+    if (moment() > spotify.expiration) {
+      var json = await $.fetchJSON('https://accounts.spotify.com/api/token', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Basic ${new Buffer(process.env.SPOTIFY_CLIENT_ID + ':' + process.env.SPOTIFY_CLIENT_SECRET).toString('base64')}`,
+          'Accept': 'application/json',
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: "grant_type=client_credentials"
+      })
+      spotify.token = json.access_token
+      spotify.expiration = moment().add(json.expires_in - 600, 'seconds')
+    }
+    resolve(spotify.token)
   })
 }
 

@@ -365,6 +365,19 @@ Administration.prototype.restart = function() {
   process.exit(0)
 }
 
+Administration.prototype.reload = function() {
+  var message = this.message
+
+  if (!$.isOwner(message.member.id)) return message.channel.send($.embed("You don't have a permission to reload the modules of the bot."))
+  message.channel.send($.embed("Reloading all modules...")).then(async (m) => {
+    var time = new Date()
+    await bot.loadModules()
+    m.edit($.embed(`Reloaded all modules in ${((Date.now() - time) / 1000).toFixed(2)} secs.`)).then(m => m.delete({
+      timeout: 5000
+    }))
+  })
+}
+
 Administration.prototype.update = function() {
   var message = this.message
 
@@ -394,21 +407,38 @@ Administration.prototype.update = function() {
           .setAuthor("GitHub Update", "https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png")
           .setDescription("Updating...")
         )
-        fs.writeFile('updateid.txt', message.channel.id, function() {})
 
         exec(`${process.env.GIT_PATH}git pull origin master`, async (err, stdout, stderr) => {
           await execute(`${process.env.NODE_PATH}npm i`)
           await ghmsg.edit($.embed()
             .setFooter(bot.user.tag, bot.user.displayAvatarURL())
             .setAuthor("GitHub Update", "https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png")
-            .setDescription("Now restarting the bot to apply changes.")
+            .setDescription("Would you like to restart the bot? (y | n)")
           ).catch(() => {})
-          process.exit(2)
+          message.channel.awaitMessages((m) => (m.content.toLowerCase() == "y" || m.content.toLowerCase() == "n") && m.author.id === message.author.id, {
+            max: 1,
+            time: 15000,
+            errors: ['time']
+          }).then((m) => {
+            if (m.first().content.toLowerCase() == "y") {
+              fs.writeFile('updateid.txt', message.channel.id, function() {})
+              process.exit(2)
+            } else throw "no"
+          }).catch((err) => {
+            ghmsg.delete().catch(() => {})
+            if (err == "no") {
+              message.channel.send($.embed("Okay.")).then(m => m.delete({
+                timeout: 3000
+              }))
+            }
+          })
         })
 
         function execute(str) {
           return new Promise((resolve, reject) => {
             exec(str, (err, stdout, stderr) => {
+              console.log(stdout)
+              console.log(stderr)
               resolve()
             })
           })

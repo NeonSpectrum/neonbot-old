@@ -67,6 +67,10 @@
     "info": "Restarts the bot.",
     "usage": "{0}restart"
   },
+  "reload": {
+    "info": "Reloads the modules of the bot.",
+    "usage": "{0}reload"
+  },
   "update": {
     "info": "Updates the bot with GitHub.",
     "usage": "{0}update"

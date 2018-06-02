@@ -1,5 +1,6 @@
 require('dotenv').config()
 const fs = require('fs')
+const reload = require('require-reload')(require)
 const moment = require('moment')
 const fetch = require('node-fetch')
 const colors = require('colors/safe')
@@ -57,34 +58,9 @@ bot.on('ready', async () => {
 
   $.log(`Loaded Settings in ${((Date.now() - time) / 1000).toFixed(2)} secs.\n`)
 
-  time = new Date()
-  try {
-    $.log(`Loading Administration Module...`)
-    Administration = require('./modules/administration')
-    $.log(`Loading Utilities Module...`)
-    Utilities = require('./modules/utilities')
-    $.log(`Loading Music Module...`)
-    Music = require('./modules/music')
-    $.log(`Loading Searches Module...`)
-    Searches = require('./modules/searches')
-    $.log(`Loading Games Module...`)
-    Games = require('./modules/games')
-    $.log(`Loading Events Module...\n`)
-    require('./modules/events')
-  } catch (err) {
-    $.warn(err)
-  }
+  await bot.loadModules()
 
-  bot.modules = {
-    "admin": getAllFuncs(new Administration()),
-    "music": getAllFuncs(new Music()),
-    "util": getAllFuncs(new Utilities()),
-    "search": getAllFuncs(new Searches()),
-    "games": getAllFuncs(new Games())
-  }
-
-  $.log(`Loaded All Modules in ${((Date.now() - time) / 1000).toFixed(2)} secs.\n`)
-
+  console.log(`${((Date.now() - time) / 1000).toFixed(2)} secs.`)
   $.log(`Logged in as ${bot.user.tag}\n`)
 
   for (var i = 0; i < bot.guilds.size; i++) {
@@ -101,6 +77,20 @@ bot.on('ready', async () => {
         temp.setAuthor("Restarted!")
       }
       bot.channels.get(conf.channel.debug).send(temp)
+    }
+    if (conf.music.autoresume) {
+      var playlist = await $.getMusicPlaylist(guilds[i])
+      if (!playlist) continue
+      var voiceChannel = playlist[0]
+      var music = new Music({
+        guild: bot.guilds.get(id),
+        channel: bot.channels.get(playlist[1]),
+        author: bot.user,
+        member: {
+          voiceChannel: bot.channels.get(voiceChannel)
+        }
+      })
+      music._processPlaylist(guilds[i], playlist.slice(2))
     }
   }
 
@@ -204,6 +194,41 @@ bot.on('error', (err) => {
 process.on('uncaughtException', (err) => {
   $.warn("Uncaught Exception: " + (err.stack || err))
 });
+
+bot.loadModules = (command) => {
+  return new Promise(resolve => {
+    time = new Date()
+
+    try {
+      $.log(`Loading Administration Module...`)
+      Administration = reload('./modules/administration')
+      $.log(`Loading Utilities Module...`)
+      Utilities = reload('./modules/utilities')
+      $.log(`Loading Music Module...`)
+      Music = reload('./modules/music')
+      $.log(`Loading Searches Module...`)
+      Searches = reload('./modules/searches')
+      $.log(`Loading Games Module...`)
+      Games = reload('./modules/games')
+      $.log(`Loading Events Module...\n`)
+      reload('./modules/events')
+    } catch (err) {
+      $.warn(err)
+    }
+
+    bot.modules = {
+      "admin": getAllFuncs(new Administration()),
+      "music": getAllFuncs(new Music()),
+      "util": getAllFuncs(new Utilities()),
+      "search": getAllFuncs(new Searches()),
+      "games": getAllFuncs(new Games())
+    }
+
+    $.log(`Loaded All Modules in ${((Date.now() - time) / 1000).toFixed(2)} secs.\n`)
+
+    resolve()
+  })
+}
 
 function getModule(command) {
   var modules = bot.modules
