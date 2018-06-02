@@ -730,7 +730,7 @@ Music.prototype._processAutoResume = async function(id, playlist) {
       }
     }
     msg.edit($.embed(`Done! Loaded ${playlist.length} ${playlist.length == 1 ? "song" : "songs"}.` + (error > 0 ? ` ${error} failed to load.` : ""))).then(m => m.delete({
-      timeout: 10000
+      timeout: 30000
     })).catch(() => {})
   }).catch((err) => {
     if (err == "no") message.channel.send($.embed("Okay.")).then(m => m.delete({
