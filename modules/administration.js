@@ -1,17 +1,17 @@
 const fs = require('fs')
-const Discord = require('discord.js')
 const exec = require('child_process').exec
 const bot = require("../bot")
-const errors = require("../assets/errors.js")
+const {
+  Embeds: EmbedsMode
+} = require('discord-paginationembed')
 const $ = require('../assets/functions')
 
 class Administration {
   constructor(message) {
     if (typeof message == "object") {
-      var server = {
+      this.server = {
         config: $.getServerConfig(message.guild.id)
       }
-      this.server = server
       this.message = message
       this.log = (content) => {
         $.log(content, message)
@@ -20,81 +20,77 @@ class Administration {
   }
 }
 
-Administration.prototype.addrole = function(args) {
+Administration.prototype.addrole = async function(args) {
   var message = this.message
 
-  if (!message.member.hasPermission("MANAGE_ROLES")) return errors.noPerms(message, "MANAGE_ROLES")
+  if (!message.member.hasPermission("MANAGE_ROLES")) return message.channel.send($.embed("Insufficient Permission."))
 
-  var rMember = message.guild.member(message.mentions.users.first()) || message.guild.members.get(args[0])
+  var user = message.guild.member(message.mentions.users.first()) || message.guild.members.get(args[0])
 
-  if (!rMember) return errors.cantfindUser(message.channel)
+  if (!user) return message.channel.send($.embed("User not found."))
 
   if (!args.slice(1).join(" ")) return message.channel.send($.embed("Specify a role!"))
 
-  var gRole = message.guild.roles.find(`name`, args.slice(1).join(" "))
+  var role = message.guild.roles.find(`name`, args.slice(1).join(" "))
 
-  if (!gRole) return message.channel.send($.embed("Couldn't find that role."))
+  if (!role) return message.channel.send($.embed("Couldn't find that role."))
 
-  if (rMember.roles.has(gRole.id)) return message.channel.send($.embed("They already have that role."))
+  if (user.roles.has(role.id)) return message.channel.send($.embed("They already have that role."))
 
-  await (rMember.roles.add(gRole.id))
+  await user.roles.add(role.id)
 
   message.channel.send($.embed()
-    .setDescription("Role Added")
-    .setField(`<@${rMember.id}>`, `they have been given the role ${gRole.name}`)
+    .setDescription("✔ Role Added")
+    .setField(`${user.toString()}>`, `they have been given the role ${role.name}`)
   )
 }
 
-Administration.prototype.removerole = function(args) {
+Administration.prototype.removerole = async function(args) {
   var message = this.message
 
-  if (!message.member.hasPermission("MANAGE_ROLES")) return errors.noPerms(message, "MANAGE_ROLES")
+  if (!message.member.hasPermission("MANAGE_ROLES")) return message.channel.send($.embed("Insufficient Permission."))
 
-  var rMember = message.guild.member(message.mentions.users.first()) || message.guild.members.get(args[0])
+  var user = message.guild.member(message.mentions.users.first()) || message.guild.members.get(args[0])
 
-  if (!rMember) return message.channel.send($.embed("Couldn't find that user."))
+  if (!user) return message.channel.send($.embed("Couldn't find that user."))
 
   if (!args.slice(1).join(" ")) return message.channel.send($.embed("Specify a role!"))
 
-  var gRole = message.guild.roles.find(`name`, args.slice(1).join(" "))
+  var role = message.guild.roles.find(`name`, args.slice(1).join(" "))
 
-  if (!gRole) return message.channel.send($.embed("Couldn't find that role."))
+  if (!role) return message.channel.send($.embed("Couldn't find that role."))
 
-  if (!rMember.roles.has(gRole.id)) return message.channel.send($.embed("They don't have that role."))
+  if (!user.roles.has(role.id)) return message.channel.send($.embed("They don't have that role."))
 
-  await (rMember.role.remove(gRole.id))
+  await user.role.remove(role.id)
 
   message.channel.send($.embed()
-    .setTitle("Removed Role")
-    .setDescription(`<@${rMember.id}>, We removed ${gRole.name} from them.`)
+    .setTitle("🚫 Removed Role")
+    .setDescription(`${user.toString()}, We removed ${role.name} from them.`)
   )
 }
 
 Administration.prototype.ban = function(args) {
   var message = this.message
 
-  if (!message.member.hasPermission("BAN_MEMBERS")) return errors.noPerms(message, "BAN_MEMBERS")
+  if (!message.member.hasPermission("BAN_MEMBERS")) return message.channel.send($.embed("Insufficient Permission."))
 
-  var bUser = message.guild.member(message.mentions.users.first() || message.guild.members.get(args[0]))
+  var user = message.guild.member(message.mentions.users.first() || message.guild.members.get(args[0]))
 
-  if (!bUser) return errors.cantfindUser(message.channel)
+  if (!user) return message.channel.send($.embed("User not found"))
 
-  if (bUser.id === bot.user.id) return errors.botuser(message)
+  if (user.id === bot.user.id) return message.channel.send($.embed("You cannot ban me."))
 
-  if (!args.slice(1).join(" ")) return errors.noReason(message.channel)
-
-  if (bUser.hasPermission("MANAGE_MESSAGES")) return errors.equalPerms(message, bUser, "MANAGE_MESSAGES")
-
-  message.guild.member(bUser)
+  message.guild.member(user)
     .ban(args.slice(1).join(" "))
 
   message.send($.embed()
-    .setDescription("~Ban~")
-    .addField("Banned User", `${bUser} with ID ${bUser.id}`)
+    .setTitle("🚫 Ban")
+    .setThumbnail(user.displayAvatarURL())
+    .addField("Banned User", `${user} with ID ${user.id}`)
     .addField("Banned By", `<@${message.author.id}> with ID ${message.author.id}`)
     .addField("Banned In", message.channel)
     .addField("Time", message.createdAt)
-    .addField("Reason", bReason)
   )
 }
 
@@ -102,7 +98,6 @@ Administration.prototype.prune = async function(args) {
   var message = this.message,
     server = this.server
 
-  if (!message.member.hasPermission("MANAGE_MESSAGES")) return errors.noPerms(message, "MANAGE_MESSAGES")
   if (!server.config.deleteoncmd) await message.delete().catch(() => {})
   if (message.mentions.users.first()) {
     if (!args[1] || !Number.isInteger(+args[1])) return message.channel.send($.embed(`Invalid Parameters ${server.config.prefix}clear <user> <1-100>`))
@@ -147,25 +142,21 @@ Administration.prototype.prune = async function(args) {
 Administration.prototype.kick = function(args) {
   var message = this.message
 
-  if (!message.member.hasPermission("KICK_MEMBERS")) return errors.noPerms(message, "KICK_MEMBERS")
+  if (!message.member.hasPermission("KICK_MEMBERS")) return message.channel.send($.embed("Insufficient Permission."))
 
-  var kUser = message.guild.member(message.mentions.users.first() || message.guild.members.get(args[0]))
+  var user = message.guild.member(message.mentions.users.first() || message.guild.members.get(args[0]))
 
-  if (!kUser) return errors.cantfindUser(message.channel)
+  if (!user) return message.channel.send($.embed("User not found."))
 
-  var kReason = args.join(" ").slice(22)
-
-  if (kUser.hasPermission("MANAGE_MESSAGES")) return errors.equalPerms(message, kUser, "MANAGE_MESSAGES")
-
-  message.guild.member(kUser).kick(kReason)
+  message.guild.member(user).kick()
 
   message.channel.send($.embed()
-    .setDescription("~Kick~")
-    .addField("Kicked User", `${kUser} with ID ${kUser.id}`)
+    .setDescription("🚫 Kick")
+    .setThumbnail(user.displayAvatarURL())
+    .addField("Kicked User", `${user} with ID ${user.id}`)
     .addField("Kicked By", `<@${message.author.id}> with ID ${message.author.id}`)
     .addField("Kicked In", message.channel)
-    .addField("Tiime", message.createdAt)
-    .addField("Reason", kReason)
+    .addField("Time", message.createdAt)
   )
 }
 
@@ -218,7 +209,7 @@ Administration.prototype.setstatus = function(args) {
     })
     message.channel.send($.embed(`Bot Status set to ${args[0]}`))
     this.log(`Bot Status set to ${args[0]}`)
-  }).catch(console.error)
+  })
 }
 
 Administration.prototype.setgame = function(args) {
@@ -260,6 +251,85 @@ Administration.prototype.setavatar = function(args) {
       this.log("Avatar error: " + err)
       message.channel.send($.embed("There was an error changing the avatar."))
     })
+}
+
+Administration.prototype.alias = async function(args) {
+  var message = this.message,
+    server = this.server
+
+  var alias = server.config.aliases.filter(x => x.name == args[0])[0]
+
+  if (args[1].startsWith(server.config.prefix)) {
+    args[1].replace(server.config.prefix, "{0}")
+  } else {
+    return message.channel.send($.embed(`Invalid command. It must starts with \`${server.config.prefix}\``))
+  }
+
+  if (alias) {
+    if (!$.isOwner(message.author.id) && alias.owner != message.author.id) {
+      return message.channel.send($.embed("You cannot edit this alias."))
+    }
+    alias.cmd = args.slice(1).join(" ")
+    server.config = await $.editAlias(message.guild.id, alias)
+  } else {
+    server.config = await $.addAlias(message.guild.id, message.author.id, args)
+  }
+
+  message.channel.send($.embed(`Message with exactly \`${args[0]}\` will now execute \`${args.slice(1).join(" ")}\``))
+}
+
+Administration.prototype.removealias = async function(args) {
+  var message = this.message,
+    server = this.server
+
+  var alias = server.config.aliases.filter(x => x.name == args[0])[0]
+  if (alias) {
+    if (!$.isOwner(message.author.id) && alias.owner != message.author.id) {
+      return message.channel.send($.embed("You cannot delete this alias."))
+    }
+    server.config = await $.deleteAlias(message.guild.id, alias.name)
+    message.channel.send($.embed(`Alias \`${alias.name}\` deleted.`))
+  } else {
+    message.channel.send($.embed(`Alias not found.`))
+  }
+}
+
+Administration.prototype.aliaslist = function() {
+  var message = this.message,
+    server = this.server,
+    aliases = server.config.aliases
+  try {
+    if (aliases.length != 0) {
+      var embeds = [],
+        temp = []
+
+      for (var i = 0; i < aliases.length; i++) {
+        var alias = aliases[i]
+        temp.push(`\`${i+1}\`. \`${alias.name}\` \`(${bot.users.get(alias.owner).tag})\`: \`${alias.cmd.replace("{0}",server.config.prefix)}\``)
+        if (i != 0 && (i + 1) % 10 == 0 || i == aliases.length - 1) {
+          embeds.push($.embed().setDescription(temp.join("\n\n")))
+          temp = []
+        }
+      }
+      if (Math.ceil(aliases.length / 10) == 1 && embeds[0]) {
+        message.channel.send(embeds[0]
+          .setTitle("📘 Alias List")
+        )
+      } else {
+        new EmbedsMode()
+          .setArray(embeds)
+          .setAuthorizedUser(message.author)
+          .setChannel(message.channel)
+          .setTitle("📘 Alias List")
+          .setColor("#59ABE3")
+          .build()
+      }
+    } else {
+      message.channel.send($.embed("Empty Alias List."))
+    }
+  } catch (err) {
+    console.log(err)
+  }
 }
 
 Administration.prototype.strictmode = async function(args) {
@@ -371,10 +441,10 @@ Administration.prototype.reload = function() {
   if (!$.isOwner(message.member.id)) return message.channel.send($.embed("You don't have a permission to reload the modules of the bot."))
   message.channel.send($.embed("Reloading all modules...")).then(async (m) => {
     var time = new Date()
-    await bot.loadModules()
-    m.edit($.embed(`Reloaded all modules in ${((Date.now() - time) / 1000).toFixed(2)} secs.`)).then(m => m.delete({
+    await bot.loadModules(true)
+    m.edit($.embed(`Reloaded all modules in ${((Date.now() - time) / 1000).toFixed(2)} secs.`)).then(n => n.delete({
       timeout: 5000
-    }))
+    })).catch(() => {})
   })
 }
 
@@ -402,15 +472,15 @@ Administration.prototype.update = function() {
         if (m.first().content.toLowerCase() == "n") throw "no"
         m.first().delete().catch(() => {})
         msg.delete().catch(() => {})
-        var ghmsg = await message.channel.send($.embed()
+        await msg.edit($.embed()
           .setFooter(bot.user.tag, bot.user.displayAvatarURL())
           .setAuthor("GitHub Update", "https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png")
           .setDescription("Updating...")
-        )
+        ).catch(() => {})
 
         exec(`${process.env.GIT_PATH}git pull`, async (err, stdout, stderr) => {
           await execute(`export PATH=$PATH:${process.env.NODE_PATH} && npm i`)
-          await ghmsg.edit($.embed()
+          await msg.edit($.embed()
             .setFooter(bot.user.tag, bot.user.displayAvatarURL())
             .setAuthor("GitHub Update", "https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png")
             .setDescription("Would you like to restart the bot? (y | n)")
@@ -425,8 +495,8 @@ Administration.prototype.update = function() {
                 process.exit(2)
               })
             } else throw "no"
-          }).catch((err) => {
-            ghmsg.delete().catch(() => {})
+          }).catch(async (err) => {
+            await msg.delete().catch(() => {})
             if (err == "no") {
               message.channel.send($.embed("Okay.")).then(m => m.delete({
                 timeout: 3000

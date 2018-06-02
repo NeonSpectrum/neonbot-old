@@ -1,10 +1,12 @@
 const fs = require('fs-extra')
 const Discord = require('discord.js')
 const moment = require('moment')
+const bot = require("../bot")
 const fetch = require('node-fetch')
 const colors = require('colors/safe')
 
-var servers, config, db, currentGuild
+var servers, config = bot.config,
+  db = bot.db
 
 var spotify = {
   token: null,
@@ -14,7 +16,6 @@ var spotify = {
 var $ = {}
 
 $.log = (content, message) => {
-  const guild = currentGuild
   if (message) {
     console.log(`${colors.yellow("------ " + moment().format('YYYY-MM-DD hh:mm:ss A') + " ------")}
    ${colors.cyan("Guild")}: ${message.channel.guild.name}
@@ -47,7 +48,7 @@ $.warn = (message, send = true) => {
 
 $.embed = (message) => {
   var e = new Discord.MessageEmbed().setColor("#59ABE3")
-  if (message !== undefined)
+  if (message)
     e.setDescription(message)
   return e
 }
@@ -56,15 +57,17 @@ $.isOwner = (id) => {
   return process.env.OWNER_ID.split(",").indexOf(id) > -1
 }
 
-$.processDatabase = (arr, items) => {
+$.processDatabase = (guilds) => {
   return new Promise(async (resolve, reject) => {
-    for (var i = 0; i < arr.length; i++) {
-      if (!items.find((x) => x.server_id == arr[i])) {
+    var items = await db.collection("servers").find({}).toArray()
+    for (var i = 0; i < guilds.length; i++) {
+      if (!items.find((x) => x.server_id == guilds[i])) {
         await db.collection("servers").insert({
-          server_id: arr[i],
+          server_id: guilds[i],
           prefix: process.env.PREFIX,
           deleteoncmd: false,
           strictmode: false,
+          aliases: [],
           channel: {},
           music: {
             volume: 100,
@@ -82,26 +85,9 @@ $.processDatabase = (arr, items) => {
   })
 }
 
-$.setDB = (x) => {
-  db = x
-}
-
-$.getDB = () => {
-  return db
-}
-
-$.setConfig = (x) => {
-  config = x
-}
-
-$.getConfig = () => {
-  return config
-}
-
 $.refreshConfig = () => {
   return new Promise((resolve, reject) => {
-    config = process.env
-    db.collection("settings").find({}).toArray(async (err, items) => {
+    db.collection("settings").find({}).toArray((err, items) => {
       config = items[0]
       resolve()
     })
@@ -143,6 +129,61 @@ $.updateServerConfig = (id, options) => {
       server_id: id
     }, {
       $set: options
+    }, async (err, res) => {
+      if (err) $.log("Updating to database: " + err)
+      await $.refreshServerConfig()
+      resolve($.getServerConfig(id))
+    })
+  })
+}
+
+$.addAlias = (id, owner, args) => {
+  return new Promise((resolve, reject) => {
+    db.collection("servers").update({
+      server_id: id
+    }, {
+      $push: {
+        aliases: {
+          name: args[0],
+          cmd: args.slice(1).join(" "),
+          owner: owner
+        }
+      }
+    }, async (err, res) => {
+      if (err) $.log("Updating to database: " + err)
+      await $.refreshServerConfig()
+      resolve($.getServerConfig(id))
+    })
+  })
+}
+
+$.editAlias = (id, alias) => {
+  return new Promise((resolve, reject) => {
+    db.collection("servers").update({
+      server_id: id,
+      "aliases.name": alias.name
+    }, {
+      $set: {
+        "aliases.$": alias
+      }
+    }, async (err, res) => {
+      if (err) $.log("Updating to database: " + err)
+      await $.refreshServerConfig()
+      resolve($.getServerConfig(id))
+    })
+  })
+}
+
+$.deleteAlias = (id, name) => {
+  return new Promise((resolve, reject) => {
+    db.collection("servers").update({
+      server_id: id
+    }, {
+      $pull: {
+        aliases: {
+          name: name
+        }
+      }
     }, async (err, res) => {
       if (err) $.log("Updating to database: " + err)
       await $.refreshServerConfig()
@@ -251,10 +292,6 @@ $.convertToSeconds = (str) => {
   return +arr.reduce((x, y) => +x + +y)
 }
 
-$.wait = (ms) => {
-  return new Promise((resolve, reject) => {
-    setTimeout(resolve, ms)
-  })
-}
+$.wait = (ms) => new Promise(resolve => setTimeout(resolve, ms))
 
 module.exports = $

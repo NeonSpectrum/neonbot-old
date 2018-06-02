@@ -1,6 +1,5 @@
 const bot = require('../bot')
-const errors = require("../assets/errors.js")
-const help = require("../assets/help.json")
+const help = require("../assets/help")
 const $ = require('../assets/functions')
 
 class Utilities {
@@ -88,15 +87,11 @@ Utilities.prototype.stats = function() {
 Utilities.prototype.say = function(args) {
   var message = this.message
 
-  if (!message.member.hasPermission("MANAGE_MESSAGES")) return errors.noPerms(message, "MANAGE_MESSAGES")
-
   message.channel.send(args.join(" "))
 }
 
 Utilities.prototype.speak = function(args) {
   var message = this.message
-
-  if (!message.member.hasPermission("MANAGE_MESSAGES")) return errors.noPerms(message, "MANAGE_MESSAGES")
 
   message.channel.send(args.join(" "), {
     tts: true

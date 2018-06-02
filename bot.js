@@ -4,14 +4,12 @@ const reload = require('require-reload')(require)
 const moment = require('moment')
 const fetch = require('node-fetch')
 const colors = require('colors/safe')
-const Discord = require("discord.js")
-const bot = new Discord.Client()
+const bot = new(require("discord.js")).Client()
 const MongoClient = require('mongodb').MongoClient
-const $ = require('./assets/functions')
-const package = require("./package.json")
+const package = require("./package")
 
-var Admin, Util, Music, Search, Games;
-var db, guildlist, config
+var $ = reload('./assets/functions')
+var Admin, Util, Music, Search, Games
 
 var loaded = false,
   time = new Date()
@@ -30,36 +28,30 @@ MongoClient.connect(`mongodb://${process.env.DB_USER}:${process.env.DB_PASS}@${p
     process.exit(10)
   }
   $.log(`MongoDB connection established on ${process.env.DB_HOST} in ${((Date.now() - time) / 1000).toFixed(2)} secs.\n`)
-  db = client.db(process.env.DB_NAME)
-  $.setDB(db)
+  var db = client.db(process.env.DB_NAME)
+  bot.db = db
 
+  time = new Date()
   var items = await db.collection("settings").find({}).toArray()
   if (items.length == 0) {
-    var insert = await db.collection('settings').insert({
+    items = (await db.collection('settings').insert({
       status: "online",
       game: {
         type: "",
         name: ""
       }
-    })
-    items = insert.ops
+    })).ops
   }
-  guildlist = await db.collection("servers").find({}).toArray()
-  config = items[0]
+  bot.config = items[0]
 
-  $.setConfig(config)
+  $ = reload('./assets/functions')
 
   bot.login(process.env.TOKEN)
 })
 
 bot.on('ready', async () => {
-  bot.servers = {
-    music: [],
-    games: []
-  }
-
   var guilds = Array.from(bot.guilds.keys())
-  await $.processDatabase(guilds, guildlist)
+  await $.processDatabase(guilds)
 
   $.log(`Loaded Settings in ${((Date.now() - time) / 1000).toFixed(2)} secs.\n`)
 
@@ -111,10 +103,10 @@ bot.on('ready', async () => {
 
   bot.user.setPresence({
     activity: {
-      name: config.game.name,
-      type: config.game.type.toUpperCase()
+      name: bot.config.game.name,
+      type: bot.config.game.type.toUpperCase()
     },
-    status: config.status
+    status: bot.config.status
   })
 
   loaded = true
@@ -146,6 +138,8 @@ bot.on('message', async message => {
       message.channel.send($.embed(`${message.author.toString()} ${json.conversation.say.bot}`));
     }
   }
+
+  message.content = await alias(message.content)
 
   if (!message.content.startsWith(server.prefix)) return
 
@@ -189,6 +183,23 @@ bot.on('message', async message => {
     }
     $.log("Command Executed " + message.content.trim(), message)
   }
+
+  function alias(msg) {
+    return new Promise(resolve => {
+      var alias = server.aliases.filter(x => x.name == msg)[0]
+      if (alias) {
+        alias.cmd = alias.cmd.replace("{0}", server.prefix)
+        message.channel.send($.embed(`Executing \`${alias.cmd}\``)).then(m => {
+          m.delete({
+            timeout: 3000
+          }).catch(() => {})
+          resolve(alias.cmd)
+        })
+      } else {
+        resolve(msg)
+      }
+    })
+  }
 })
 
 bot.on('error', (err) => {
@@ -199,11 +210,24 @@ process.on('uncaughtException', (err) => {
   $.warn("Uncaught Exception: " + (err.stack || err))
 });
 
-bot.loadModules = (command) => {
-  return new Promise(resolve => {
+bot.loadModules = (renew) => {
+  return new Promise(async resolve => {
+    loaded = false
     time = new Date()
 
+    if (!renew) {
+      var modules = ["games", "music", "events"]
+      for (var i = 0; i < modules.length; i++) {
+        bot[modules[i]] = {}
+      }
+    }
+
     try {
+      if (renew) {
+        $.log(`Loading Functions Module...`)
+        $ = reload('./assets/functions')
+        await $.refreshServerConfig()
+      }
       $.log(`Loading Administration Module...`)
       Administration = reload('./modules/administration')
       $.log(`Loading Utilities Module...`)
@@ -229,7 +253,7 @@ bot.loadModules = (command) => {
     }
 
     $.log(`Loaded All Modules in ${((Date.now() - time) / 1000).toFixed(2)} secs.\n`)
-
+    loaded = true
     resolve()
   })
 }

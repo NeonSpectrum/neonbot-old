@@ -2,9 +2,9 @@ const bot = require('../bot')
 const moment = require('moment')
 const $ = require('../assets/functions')
 const Music = require('./music')
-const db = $.getDB()
+const db = bot.db
 
-var members = []
+var members = bot.events
 
 bot.on('voiceStateUpdate', async (oldMember, newMember) => {
   if (newMember.user.bot) return

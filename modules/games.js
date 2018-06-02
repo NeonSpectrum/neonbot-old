@@ -3,7 +3,7 @@ const $ = require('../assets/functions')
 const jimp = require('jimp')
 const poke = require("pokemon")
 
-const servers = bot.servers.games
+const servers = bot.games
 
 class Games {
   constructor(message) {

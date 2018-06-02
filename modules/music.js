@@ -14,7 +14,7 @@ const yt = new Youtube(process.env.GOOGLE_API)
 
 const spotifyUri = require('spotify-uri');
 
-const servers = bot.servers.music
+const servers = bot.music
 
 class Music {
   constructor(message) {
@@ -118,7 +118,7 @@ Music.prototype.play = async function(args) {
     connect()
   } else if (args[0].match(/^(spotify:|https:\/\/[a-z]+\.spotify\.com\/)/g)) {
     var uri = spotifyUri.parse(args[0])
-    var token = await getSpotifyToken()
+    var token = await $.getSpotifyToken()
     if (uri.type == "playlist") {
       async function loop(offset) {
         var json = await $.fetchJSON(`https://api.spotify.com/v1/users/${uri.user}/playlists/${uri.id}/tracks?offset=${offset}&limit=100`, {
@@ -695,7 +695,7 @@ Music.prototype._processAutoResume = async function(id, playlist) {
   var message = this.message,
     player = this.player
 
-  var reqmsg = await message.channel.send($.embed("Auto Resume is enabled. Would you like to add the previous playlist to queue? (y | n)"))
+  var msg = await message.channel.send($.embed("Auto Resume is enabled. Would you like to add the previous playlist to queue? (y | n)"))
   message.channel.awaitMessages((m) => m.content.toLowerCase() == "y" || m.content.toLowerCase() == "n", {
     max: 1,
     time: 60000,
@@ -703,9 +703,8 @@ Music.prototype._processAutoResume = async function(id, playlist) {
   }).then(async (m) => {
     if (m.first().content.toLowerCase() == "n") throw "no"
     m.first().delete().catch(() => {})
-    reqmsg.delete().catch(() => {})
     $.log(`Auto Resume is enabled. Adding ${playlist.length} ${playlist.length == 1 ? "song" : "songs"} to the queue.`, message)
-    var msg = await message.channel.send($.embed(`Auto Resume is enabled. Adding ${playlist.length} ${playlist.length == 1 ? "song" : "songs"} to the queue.`))
+    msg.edit($.embed(`Adding ${playlist.length} ${playlist.length == 1 ? "song" : "songs"} to the queue.`)).catch(() => {})
     var error = 0
     for (var i = 0; i < playlist.length; i++) {
       try {
@@ -732,11 +731,11 @@ Music.prototype._processAutoResume = async function(id, playlist) {
     msg.edit($.embed(`Done! Loaded ${playlist.length} ${playlist.length == 1 ? "song" : "songs"}.` + (error > 0 ? ` ${error} failed to load.` : ""))).then(m => m.delete({
       timeout: 30000
     })).catch(() => {})
-  }).catch((err) => {
+  }).catch(async (err) => {
+    await msg.delete().catch(() => {})
     if (err == "no") message.channel.send($.embed("Okay.")).then(m => m.delete({
       timeout: 3000
     }).catch(() => {}))
-    reqmsg.delete().catch(() => {})
     $.removeMusicPlaylist(message.guild.id)
   })
 }
