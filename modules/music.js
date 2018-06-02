@@ -240,7 +240,8 @@ Music.prototype.play = async function(args) {
 
   function connect() {
     self._saveplaylist()
-    if (!message.guild.voiceConnection) {
+    if (!message.guild.voiceConnection || server.status == "clearqueue") {
+      server.status = null
       message.member.voiceChannel.join()
         .then((connection) => {
           server.connection = connection
@@ -629,14 +630,14 @@ Music.prototype._execute = function(connection, time) {
 
         if (Number.isInteger(server.status)) {
           server.currentQueue = server.status
-        } else if (server.status != "force" && server.status != "restart" && server.config.music.repeat != "single" || server.status == "skip") {
+        } else if (server.status != "restart" && server.config.music.repeat != "single" || server.status == "skip") {
           server.currentQueue += 1
         }
         server.status = null
         this._execute(connection)
       } else {
         if (server.status == "clearqueue") server.queue = []
-        server.status = null
+        else server.status = null
         server.stopped = false
         server.currentQueue = 0
       }
