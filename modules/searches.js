@@ -174,7 +174,7 @@ Searches.prototype.randomjoke = async function(args) {
 Searches.prototype.lol = async function(args) {
   var message = this.message
 
-  if (args[0] != "summoner" || args[0] != "champion") return message.channel.send($.embed("Invalid Parameters. (summoner <user> | champion <name>)"))
+  if (args[0] != "summoner" && args[0] != "champion") return message.channel.send($.embed("Invalid Parameters. (summoner <user> | champion <name>)"))
 
   if (args[0] == "summoner") {
     var msg = await message.channel.send($.embed("Searching..."))
@@ -188,20 +188,20 @@ Searches.prototype.lol = async function(args) {
       mostPlayed.push(c(this).attr("title"))
     })
     c("table.SummonersMostGameTable").find(".SummonerName>a").each(function() {
-      recentlyPlayed.push(c(this).html())
+      recentlyPlayed.push(c(this).text())
     })
 
     var data = {
       icon: `http:${c(".ProfileIcon>img.ProfileImage").attr("src")}`,
-      name: c(".Profile>.Information>.Name").html(),
+      name: c(".Profile>.Information>.Name").text(),
       rank: {
-        title: c(".TierRankInfo>.TierRank>.tierRank").html(),
+        title: c(".TierRankInfo>.TierRank>.tierRank").text() || "N/A",
         icon: `http:${c(".Medal>img.Image").attr("src")}`,
         info: {
-          points: c(".TierRankInfo>.TierInfo>.LeaguePoints").html(),
-          win: c(".TierRankInfo>.TierInfo>.WinLose>.wins").html(),
-          lose: c(".TierRankInfo>.TierInfo>.WinLose>.losses").html(),
-          ratio: c(".TierRankInfo>.TierInfo>.WinLose>.winratio").html()
+          points: c(".TierRankInfo>.TierInfo>.LeaguePoints").text() || "N/A",
+          win: c(".TierRankInfo>.TierInfo>.WinLose>.wins").text() || "N/A",
+          lose: c(".TierRankInfo>.TierInfo>.WinLose>.losses").text() || "N/A",
+          ratio: c(".TierRankInfo>.TierInfo>.WinLose>.winratio").text() || "N/A"
         }
       },
       mostPlayed: mostPlayed,

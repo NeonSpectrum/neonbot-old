@@ -598,12 +598,11 @@ Music.prototype._execute = function(connection, time) {
       } else {
         if (player.status == "clearqueue") player.queue = []
         else player.status = null
-        server.currentQueue = 0
+        player.currentQueue = 0
       }
     })
   } catch (err) {
     message.channel.send($.embed(`I can't play this song.`))
-    console.log(err)
   }
 }
 
