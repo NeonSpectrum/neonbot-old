@@ -596,9 +596,7 @@ Music.prototype._execute = function(connection, time) {
       )
 
       if (!player.stopped) {
-        this._processNext()
-        player.status = null
-        this._execute(connection)
+        this._processNext(connection)
       } else {
         if (player.status == "clearqueue") player.queue = []
         else player.status = null
@@ -612,12 +610,12 @@ Music.prototype._execute = function(connection, time) {
   }
 }
 
-Music.prototype._processNext = function() {
+Music.prototype._processNext = function(connection) {
   var message = this.message,
     player = this.player,
     music = player.config.music
 
-  if (music.repeat == "off" && !music.autoplay && player.isLast() && player.status != "skip" && !Number.isInteger(player.status)) {
+  if (music.repeat == "off" && !music.autoplay && (!music.shuffle || player.queue.length == 1) && player.isLast() && player.status != "skip" && !Number.isInteger(player.status)) {
     player.stopped = true
     return
   }
@@ -637,6 +635,9 @@ Music.prototype._processNext = function() {
   } else if (music.repeat != "single" || player.status == "skip") {
     player.currentQueue += 1
   }
+
+  player.status = null
+  this._execute(connection)
 }
 
 Music.prototype._savePlaylist = function() {
