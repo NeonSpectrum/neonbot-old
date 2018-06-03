@@ -9,7 +9,7 @@ const MongoClient = require('mongodb').MongoClient
 const package = reload("./package")
 
 var $ = reload('./assets/functions')
-var Admin, Util, Music, Search, Games
+var Admin, Util, Music, Search, Games, Events
 
 var loaded = false,
   time = new Date()
@@ -50,12 +50,15 @@ MongoClient.connect(`mongodb://${process.env.DB_USER}:${process.env.DB_PASS}@${p
 })
 
 bot.on('ready', async () => {
+  bot.eventList = []
+
   var guilds = Array.from(bot.guilds.keys())
   await $.processDatabase(guilds)
 
   $.log(`Loaded Settings in ${((Date.now() - time) / 1000).toFixed(2)} secs.\n`)
 
   await bot.loadModules()
+  bot.loadEvents()
 
   $.log(`Logged in as ${bot.user.tag}\n`)
 
@@ -74,20 +77,18 @@ bot.on('ready', async () => {
       }
       bot.channels.get(conf.channel.debug).send(temp)
     }
-    if (conf.music.autoresume) {
-      var playlist = await $.getMusicPlaylist(guilds[i])
-      if (!playlist) continue
-      var voiceChannel = playlist[0]
-      var music = new Music({
-        guild: bot.guilds.get(guilds[i]),
-        channel: bot.channels.get(playlist[1]),
-        author: bot.user,
-        member: {
-          voiceChannel: bot.channels.get(voiceChannel)
-        }
-      })
-      music._processAutoResume(guilds[i], playlist.slice(2))
-    }
+    var playlist = await $.getMusicPlaylist(guilds[i])
+    if (!playlist) continue
+    var voiceChannel = playlist[0]
+    var music = new Music({
+      guild: bot.guilds.get(guilds[i]),
+      channel: bot.channels.get(playlist[1]),
+      author: bot.user,
+      member: {
+        voiceChannel: bot.channels.get(voiceChannel)
+      }
+    })
+    music._processAutoResume(guilds[i], playlist.slice(2))
   }
 
   if (process.env.message == "updated") {
@@ -239,7 +240,7 @@ bot.loadModules = (renew) => {
       $.log(`Loading Games Module...`)
       Games = reload('./modules/games')
       $.log(`Loading Events Module...\n`)
-      reload('./modules/events')
+      Events = reload('./modules/events')
     } catch (err) {
       $.warn(err)
     }
@@ -255,6 +256,27 @@ bot.loadModules = (renew) => {
     $.log(`Loaded All Modules in ${((Date.now() - time) / 1000).toFixed(2)} secs.\n`)
     loaded = true
     resolve()
+  })
+}
+
+bot.loadEvents = () => {
+  bot.on("voiceStateUpdate", (x, y) => {
+    Events.voiceStateUpdate(x, y)
+  })
+  bot.on("presenceUpdate", (x, y) => {
+    Events.presenceUpdate(x, y)
+  })
+  bot.on("guildMemberAdd", (x) => {
+    Events.guildMemberAdd(x)
+  })
+  bot.on("guildMemberRemove", (x) => {
+    Events.guildMemberRemove(x)
+  })
+  bot.on("guildCreate", (x) => {
+    Events.guildCreate(x)
+  })
+  bot.on("messageDelete", (x) => {
+    Events.messageDelete(x)
   })
 }
 

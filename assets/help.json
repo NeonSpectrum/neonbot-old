@@ -159,10 +159,6 @@
     "info": "Force restart the song.",
     "usage": "{0}restartsong"
   },
-  "autoresume": {
-    "info": "Enables auto resume when the bot reconnects.",
-    "usage": "{0}autoresume <enable | disable>"
-  },
   "google": {
     "info": "Searches the keyword in Google.",
     "usage": "{0}google <keyword>"

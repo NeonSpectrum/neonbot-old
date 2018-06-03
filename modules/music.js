@@ -25,7 +25,7 @@ class Music {
           autoplayid: [],
           connection: null,
           currentQueue: 0,
-          currentChannel: null,
+          currentChannel: (message.channel && message.channel.id) || null,
           previnfo: null,
           config: $.getServerConfig(message.guild.id),
           lastPlayingMessage: null,
@@ -345,13 +345,11 @@ Music.prototype.removesong = async function(args) {
     if (+args[0] >= player.currentQueue) {
       player.currentQueue -= 1
     }
-    if (music.autoresume) {
-      $.storeMusicPlaylist({
-        guild: message.guild.id,
-        voice: message.member.voiceChannel.id,
-        msg: message.channel.id
-      }, player.queue.map(x => x.url))
-    }
+    $.storeMusicPlaylist({
+      guild: message.guild.id,
+      voice: message.member.voiceChannel.id,
+      msg: message.channel.id
+    }, player.queue.map(x => x.url))
   }
 }
 
@@ -452,18 +450,21 @@ Music.prototype.pause = async function() {
   var message = this.message,
     player = this.player,
     music = player.config.music
-
-  if (player && player.dispatcher && !player.dispatcher.paused && player.queue.length > 0) {
-    if (!message.member.voiceChannel) return message.channel.send($.embed("You must be in the voice channel!"))
-    player.dispatcher.pause()
-    if (message.channel) {
-      player.lastPauseMessage = await message.channel.send($.embed(`Player paused. \`${player.config.prefix}resume\` to resume.`))
-      this.log("Player paused!")
-    } else {
-      if (player.lastAutoMessage) player.lastAutoMessage.delete().catch(() => {})
-      player.lastAutoMessage = await bot.channels.get(player.currentChannel).send($.embed(`Player has automatically paused because there are no users connected.`))
-      $.log("Player has automatically paused because there are no users connected.", player.lastAutoMessage)
+  try {
+    if (player && player.dispatcher && !player.dispatcher.paused && player.queue.length > 0) {
+      if (message.member && !message.member.voiceChannel) return message.channel.send($.embed("You must be in the voice channel!"))
+      player.dispatcher.pause()
+      if (message.channel) {
+        player.lastPauseMessage = await message.channel.send($.embed(`Player paused. \`${player.config.prefix}resume\` to resume.`))
+        this.log("Player paused!")
+      } else {
+        if (player.lastAutoMessage) player.lastAutoMessage.delete().catch(() => {})
+        player.lastAutoMessage = await bot.channels.get(player.currentChannel).send($.embed(`Player has automatically paused because there are no users connected.`))
+        $.log("Player has automatically paused because there are no users connected.", player.lastAutoMessage)
+      }
     }
+  } catch (err) {
+    console.log(err)
   }
 }
 
@@ -473,9 +474,8 @@ Music.prototype.resume = async function() {
     music = player.config.music
 
   if (player && player.dispatcher && player.dispatcher.paused && player.queue.length > 0) {
-    if (!message.member.voiceChannel) return message.channel.send($.embed("You must be in the voice channel!"))
-    player.dispatcher.resume()
     if (message.channel) {
+      if (!message.member.voiceChannel) return message.channel.send($.embed("You must be in the voice channel!"))
       if (player.lastPauseMessage) {
         player.lastPauseMessage.delete()
         player.lastPauseMessage = null
@@ -489,6 +489,7 @@ Music.prototype.resume = async function() {
       player.lastAutoMessage = await bot.channels.get(player.currentChannel).send($.embed(`Player has automatically resumed.`))
       $.log("Player has automatically resumed.", player.lastAutoMessage)
     }
+    player.dispatcher.resume()
   }
 }
 
@@ -544,20 +545,6 @@ Music.prototype.restartsong = function() {
     player.status = player.currentQueue
     player.dispatcher.end()
   }
-}
-
-Music.prototype.autoresume = async function(args) {
-  var message = this.message,
-    player = this.player,
-    music = player.config.music
-
-  if (!$.isOwner(message.member.id)) return message.channel.send($.embed("You don't have a permission to set the autoresume mode."))
-  if (!args[0] || (args[0] != "enable" && args[0] != "disable")) return message.channel.send($.embed(`Auto Resume is ${music.autoresume ? "enabled" : "disabled"} (enable | disable).`))
-
-  player.config = await $.updateServerConfig(message.guild.id, {
-    "music.autoresume": args[0] == "enable" ? true : false
-  })
-  message.channel.send($.embed(`Auto Resume is now ${music.autoresume ? "enabled" : "disabled"}.`))
 }
 
 Music.prototype._execute = function(connection, time) {
@@ -657,13 +644,11 @@ Music.prototype._savePlaylist = function() {
     player = this.player,
     music = player.config.music
 
-  if (music.autoresume) {
-    $.storeMusicPlaylist({
-      guild: message.guild.id,
-      voice: message.member.voiceChannel.id,
-      msg: message.channel.id
-    }, player.queue.map(x => x.url))
-  }
+  $.storeMusicPlaylist({
+    guild: message.guild.id,
+    voice: message.member.voiceChannel.id,
+    msg: message.channel.id
+  }, player.queue.map(x => x.url))
 }
 
 Music.prototype._processAutoplay = async function() {

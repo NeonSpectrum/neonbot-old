@@ -6,7 +6,9 @@ const db = bot.db
 
 var members = bot.events
 
-bot.on('voiceStateUpdate', async (oldMember, newMember) => {
+var Events = {}
+
+Events.voiceStateUpdate = async (oldMember, newMember) => {
   if (newMember.user.bot) return
   if (!members[newMember.user.id]) {
     members[newMember.user.id] = {
@@ -47,7 +49,7 @@ bot.on('voiceStateUpdate', async (oldMember, newMember) => {
       bot.channels.get(config.channel.voicetts).send(msg.replace(/\*\*/g, ""), {
         tts: true
       }).then(msg => msg.delete({
-        timeout: 5000
+        timeout: 3000
       }).catch(() => {}))
     }
     if (bot.channels.get(config.channel.log)) {
@@ -57,10 +59,9 @@ bot.on('voiceStateUpdate', async (oldMember, newMember) => {
       )
     }
   }
+}
 
-})
-
-bot.on('presenceUpdate', (oldMember, newMember) => {
+Events.presenceUpdate = (oldMember, newMember) => {
   if (newMember.user.bot) return
 
   var config = $.getServerConfig(newMember.guild.id),
@@ -76,9 +77,9 @@ bot.on('presenceUpdate', (oldMember, newMember) => {
       .setDescription(`\`${moment().format('YYYY-MM-DD hh:mm:ss A')}\`:bust_in_silhouette:${msg}.`)
     )
   }
-})
+}
 
-bot.on('guildMemberAdd', (member) => {
+Events.guildMemberAdd = (member) => {
   var config = $.getServerConfig(member.guild.id)
   var channel = member.guild.channels.find((x) => x.rawPosition == 0 && x.type == "text")
 
@@ -95,9 +96,9 @@ bot.on('guildMemberAdd', (member) => {
       .setDescription(`\`${moment().format('YYYY-MM-DD hh:mm:ss A')}\` ${member.user.username} joined the server.`)
     )
   }
-})
+}
 
-bot.on('guildMemberRemove', (member) => {
+Events.guildMemberRemove = (member) => {
   var config = $.getServerConfig(member.guild.id)
   var channel = member.guild.channels.find((x) => x.rawPosition == 0 && x.type == "text")
 
@@ -113,15 +114,15 @@ bot.on('guildMemberRemove', (member) => {
       .setDescription(`\`${moment().format('YYYY-MM-DD hh:mm:ss A')}\` ${member.user.username} left the server.`)
     )
   }
-})
+}
 
-bot.on('guildCreate', async (guild) => {
+Events.guildCreate = async (guild) => {
   var guilds = Array.from(bot.guilds.keys())
   var guildlist = await db.collection("servers").find({}).toArray()
   $.processDatabase(guilds, guildlist)
-})
+}
 
-bot.on('messageDelete', (message) => {
+Events.messageDelete = (message) => {
   var config = $.getServerConfig(message.guild.id)
 
   if (config.channel.msgdelete && message.content) {
@@ -132,6 +133,6 @@ bot.on('messageDelete', (message) => {
       .setFooter(moment().format('YYYY-MM-DD hh:mm:ss A'))
     )
   }
-})
+}
 
-module.exports = bot
+module.exports = Events
