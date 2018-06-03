@@ -237,6 +237,7 @@ Music.prototype.play = async function(args) {
     self._savePlaylist()
     if (!message.guild.voiceConnection || player.status == "clearqueue") {
       player.status = null
+      player.stopped = false
       message.member.voiceChannel.join()
         .then((connection) => {
           player.connection = connection
