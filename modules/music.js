@@ -248,7 +248,7 @@ Music.prototype.play = async function(args) {
         })
     } else if (player.stopped) {
       player.stopped = false
-      player.currentQueue += 1
+      player.currentQueue = player.queue.length - 1
       self._execute(player.connection)
     }
   }
@@ -598,7 +598,7 @@ Music.prototype._execute = function(connection, time) {
       } else {
         if (player.status == "clearqueue") player.queue = []
         else player.status = null
-        player.currentQueue = 0
+        server.currentQueue = 0
       }
     })
   } catch (err) {
