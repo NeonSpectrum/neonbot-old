@@ -617,14 +617,16 @@ Music.prototype._processNext = function(connection) {
     return
   }
 
-  if (player.isLast() && music.autoplay && music.repeat != "all") {
-    this._processAutoplay()
-  } else if (music.shuffle && (!player.status || player.status == "skip") && music.repeat != "single" && !Number.isInteger(player.status)) {
-    do {
-      player.status = Math.floor(Math.random() * player.queue.length)
-    } while (player.status == player.currentQueue && player.queue.length > 1)
-  } else if (music.repeat == "all" && player.isLast()) {
-    player.status = 0
+  if (!Number.isInteger(player.status)) {
+    if (player.isLast() && music.autoplay && music.repeat != "all") {
+      this._processAutoplay()
+    } else if (music.shuffle && (!player.status || player.status == "skip") && music.repeat != "single") {
+      do {
+        player.status = Math.floor(Math.random() * player.queue.length)
+      } while (player.status == player.currentQueue && player.queue.length > 1)
+    } else if (music.repeat == "all" && player.isLast()) {
+      player.status = 0
+    }
   }
 
   if (Number.isInteger(player.status)) {
