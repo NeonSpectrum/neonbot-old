@@ -53,7 +53,6 @@ class Music {
 Music.prototype.play = async function(args) {
   var message = this.message,
     player = this.player,
-    music = player.config.music,
     self = this
 
   if (!message.member.voiceChannel) return message.channel.send($.embed("You must be in a voice channel!"))
@@ -256,8 +255,7 @@ Music.prototype.play = async function(args) {
 
 Music.prototype.stop = function() {
   var message = this.message,
-    player = this.player,
-    music = player.config.music
+    player = this.player
 
   if (player.dispatcher) {
     if (!message.member.voiceChannel) return message.channel.send($.embed("You must be in the voice channel!"))
@@ -316,8 +314,7 @@ Music.prototype.seek = function(args) {
 
 Music.prototype.removesong = async function(args) {
   var message = this.message,
-    player = this.player,
-    music = player.config.music
+    player = this.player
 
   if (player.dispatcher) {
     if (!message.member.voiceChannel) return message.channel.send($.embed("You must be in the voice channel!"))
@@ -448,8 +445,7 @@ Music.prototype.shuffle = async function(args) {
 
 Music.prototype.pause = async function() {
   var message = this.message,
-    player = this.player,
-    music = player.config.music
+    player = this.player
   try {
     if (player && player.dispatcher && !player.dispatcher.paused && player.queue.length > 0) {
       if (message.member && !message.member.voiceChannel) return message.channel.send($.embed("You must be in the voice channel!"))
@@ -470,8 +466,7 @@ Music.prototype.pause = async function() {
 
 Music.prototype.resume = async function() {
   var message = this.message,
-    player = this.player,
-    music = player.config.music
+    player = this.player
 
   if (player && player.dispatcher && player.dispatcher.paused && player.queue.length > 0) {
     if (message.channel) {
@@ -486,7 +481,9 @@ Music.prototype.resume = async function() {
       this.log("Player resumed!")
     } else {
       if (player.lastAutoMessage) player.lastAutoMessage.delete().catch(() => {})
-      player.lastAutoMessage = await bot.channels.get(player.currentChannel).send($.embed(`Player has automatically resumed.`))
+      player.lastAutoMessage = await bot.channels.get(player.currentChannel).send($.embed(`Player has automatically resumed.`)).then(s => s.delete({
+        timeout: 5000
+      }).catch(() => {}))
       $.log("Player has automatically resumed.", player.lastAutoMessage)
     }
     player.dispatcher.resume()
@@ -622,7 +619,7 @@ Music.prototype._processNext = function(connection) {
 
   if (player.isLast() && music.autoplay && music.repeat != "all") {
     this._processAutoplay()
-  } else if (music.shuffle && (!player.status || player.status == "skip") && music.repeat != "single") {
+  } else if (music.shuffle && (!player.status || player.status == "skip") && music.repeat != "single" && !Number.isInteger(player.status)) {
     do {
       player.status = Math.floor(Math.random() * player.queue.length)
     } while (player.status == player.currentQueue && player.queue.length > 1)
