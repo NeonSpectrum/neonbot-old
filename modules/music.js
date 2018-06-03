@@ -597,7 +597,6 @@ Music.prototype._execute = function(connection, time) {
       } else {
         if (player.status == "clearqueue") player.queue = []
         else player.status = null
-        player.stopped = false
         player.currentQueue = 0
       }
     })
