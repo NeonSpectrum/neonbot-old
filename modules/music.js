@@ -527,11 +527,15 @@ Music.prototype.nowplaying = function() {
 }
 
 Music.prototype.leave = function() {
-  var message = this.message
+  var message = this.message,
+    player = this.player
 
   if (!$.isOwner(message.member.id)) return message.channel.send($.embed("You don't have a permission to make the bot leave."))
   if (!message.member.voiceChannel) return message.channel.send($.embed("You must be in the voice channel!"))
-  if (message.guild.voiceConnection) message.guild.voiceConnection.disconnect()
+  if (message.guild.voiceConnection) {
+    message.guild.voiceConnection.disconnect()
+    delete servers[message.guild.id]
+  }
 }
 
 Music.prototype.restartsong = function() {
