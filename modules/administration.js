@@ -469,8 +469,9 @@ Administration.prototype.update = function() {
         time: 15000,
         errors: ['time']
       }).then(async (m) => {
-        if (m.first().content.toLowerCase() == "n") throw "no"
+        var ans = m.first().content.toLowerCase()
         m.first().delete().catch(() => {})
+        if (ans == "n") throw "no"
         await msg.edit($.embed()
           .setFooter(bot.user.tag, bot.user.displayAvatarURL())
           .setAuthor("GitHub Update", "https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png")
@@ -489,16 +490,17 @@ Administration.prototype.update = function() {
             time: 15000,
             errors: ['time']
           }).then(async (m) => {
-            if (m.first().content.toLowerCase() == "y") {
-              await msg.edit($.embed()
-                .setFooter(bot.user.tag, bot.user.displayAvatarURL())
-                .setAuthor("GitHub Update", "https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png")
-                .setDescription("Restarting the bot...")
-              ).catch(() => {})
-              fs.writeFile('updateid.txt', message.channel.id, function() {
-                process.exit(2)
-              })
-            } else throw "no"
+            ans = m.first().content.toLowerCase()
+            m.first().delete().catch(() => {})
+            if (ans == "n") throw "no"
+            await msg.edit($.embed()
+              .setFooter(bot.user.tag, bot.user.displayAvatarURL())
+              .setAuthor("GitHub Update", "https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png")
+              .setDescription("Restarting the bot...")
+            ).catch(() => {})
+            fs.writeFile('updateid.txt', message.channel.id, function() {
+              process.exit(2)
+            })
           }).catch(async (err) => {
             await msg.delete().catch(() => {})
             if (err == "no") {

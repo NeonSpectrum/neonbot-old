@@ -691,8 +691,9 @@ Music.prototype._processAutoResume = async function(id, playlist) {
     time: 60000,
     errors: ['time']
   }).then(async (m) => {
-    if (m.first().content.toLowerCase() == "n") throw "no"
+    var ans = m.first().content.toLowerCase()
     m.first().delete().catch(() => {})
+    if (ans == "n") throw "no"
     $.log(`Auto Resume is enabled. Adding ${playlist.length} ${playlist.length == 1 ? "song" : "songs"} to the queue.`, message)
     msg.edit($.embed(`Adding ${playlist.length} ${playlist.length == 1 ? "song" : "songs"} to the queue.`)).catch(() => {})
     var error = 0
