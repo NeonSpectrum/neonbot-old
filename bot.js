@@ -15,7 +15,7 @@ var loaded = false,
   time = new Date()
 
 if (!process.env.TOKEN || !process.env.PREFIX || !process.env.OWNER_ID) {
-  console.log(colors.red("Missing Credentials in environment..."))
+  $.warn("Missing Credentials in environment...", false)
   process.exit(10)
 }
 
@@ -24,7 +24,7 @@ $.log(`Starting ${package.name} v${package.version}`)
 
 MongoClient.connect(`mongodb://${process.env.DB_USER}:${process.env.DB_PASS}@${process.env.DB_HOST}/${process.env.DB_NAME}`, async (err, client) => {
   if (err) {
-    console.log(colors.red(`${err}\nFailed to establish connection to ${process.env.DB_HOST}`))
+    $.warn(`${err}\nFailed to establish connection to ${process.env.DB_HOST}`, false)
     process.exit(10)
   }
   $.log(`MongoDB connection established on ${process.env.DB_HOST} in ${((Date.now() - time) / 1000).toFixed(2)} secs.\n`)

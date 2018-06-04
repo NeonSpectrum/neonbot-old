@@ -29,7 +29,7 @@ $.log = (content, message) => {
 }
 
 $.warn = (message, send = true) => {
-  console.log(`${colors.yellow(moment().format('YYYY-MM-DD hh:mm:ss A'))}${typeof message == "object" ? ` | ${message.channel.guild.name}` : ""} | ${colors.red(message)}`)
+  console.log(`${colors.yellow(moment().format('YYYY-MM-DD hh:mm:ss A'))} | ${colors.red(message)}`)
   if (send) {
     var guilds = Array.from(bot.guilds.keys())
     for (var i = 0; i < guilds.length; i++) {
@@ -38,7 +38,7 @@ $.warn = (message, send = true) => {
         bot.channels.get(conf.channel.debug).send($.embed()
           .setAuthor("Error", "https://i.imgur.com/1vOMHlr.png")
           .setDescription(message)
-          .setFooter(bot.user.tag, `https://cdn.discordapp.com/avatars/${bot.user.id}/${bot.user.avatar}.png?size=16`)
+          .setFooter(bot.user.tag, bot.user.displayAvatarURL())
         )
       }
     }

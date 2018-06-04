@@ -302,37 +302,34 @@ Administration.prototype.aliaslist = function() {
   var message = this.message,
     server = this.server,
     aliases = server.config.aliases
-  try {
-    if (aliases.length != 0) {
-      var embeds = [],
-        temp = []
 
-      for (var i = 0; i < aliases.length; i++) {
-        var alias = aliases[i]
-        temp.push(`\`${i+1}\`. \`${alias.name}\` \`(${bot.users.get(alias.owner).tag})\`: \`${alias.cmd.replace("{0}",server.config.prefix)}\``)
-        if (i != 0 && (i + 1) % 10 == 0 || i == aliases.length - 1) {
-          embeds.push($.embed().setDescription(temp.join("\n\n")))
-          temp = []
-        }
+  if (aliases.length != 0) {
+    var embeds = [],
+      temp = []
+
+    for (var i = 0; i < aliases.length; i++) {
+      var alias = aliases[i]
+      temp.push(`\`${i+1}\`. \`${alias.name}\` \`(${bot.users.get(alias.owner).tag})\`: \`${alias.cmd.replace("{0}",server.config.prefix)}\``)
+      if (i != 0 && (i + 1) % 10 == 0 || i == aliases.length - 1) {
+        embeds.push($.embed().setDescription(temp.join("\n\n")))
+        temp = []
       }
-      if (Math.ceil(aliases.length / 10) == 1 && embeds[0]) {
-        message.channel.send(embeds[0]
-          .setTitle("📘 Alias List")
-        )
-      } else {
-        new EmbedsMode()
-          .setArray(embeds)
-          .setAuthorizedUser(message.author)
-          .setChannel(message.channel)
-          .setTitle("📘 Alias List")
-          .setColor("#59ABE3")
-          .build()
-      }
-    } else {
-      message.channel.send($.embed("Empty Alias List."))
     }
-  } catch (err) {
-    console.log(err)
+    if (Math.ceil(aliases.length / 10) == 1 && embeds[0]) {
+      message.channel.send(embeds[0]
+        .setTitle("📘 Alias List")
+      )
+    } else {
+      new EmbedsMode()
+        .setArray(embeds)
+        .setAuthorizedUser(message.author)
+        .setChannel(message.channel)
+        .setTitle("📘 Alias List")
+        .setColor("#59ABE3")
+        .build()
+    }
+  } else {
+    message.channel.send($.embed("Empty Alias List."))
   }
 }
 
