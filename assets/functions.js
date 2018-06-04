@@ -29,7 +29,6 @@ $.log = (content, message) => {
 }
 
 $.warn = (message, send = true) => {
-  const bot = require('../bot')
   console.log(`${colors.yellow(moment().format('YYYY-MM-DD hh:mm:ss A'))}${typeof message == "object" ? ` | ${message.channel.guild.name}` : ""} | ${colors.red(message)}`)
   if (send) {
     var guilds = Array.from(bot.guilds.keys())

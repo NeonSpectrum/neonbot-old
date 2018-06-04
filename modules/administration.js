@@ -182,16 +182,13 @@ Administration.prototype.setname = async function(args) {
 
   if (!$.isOwner(message.member.id)) return message.channel.send($.embed("You don't have a permission to set name."))
   if (args.join(" ").length > 32 || args.join(" ").length < 3) return message.channel.send($.embed("Username must be greater than 2 and less than 32"))
-  await bot.user.setUsername(args.slice(1).join(" "), {
-    type: args[0].toUpperCase()
-  })
 
   bot.user.setUsername(args.join(" "))
     .then(() => {
       message.channel.send($.embed(`Username set to ${args.join(" ")}.`))
       this.log(`Username set to ${args.join(" ")}`)
     }).catch((err) => {
-      $.warn(err)
+      console.log(err)
       message.channel.send($.embed("There was an error changing the username."))
     })
 }
