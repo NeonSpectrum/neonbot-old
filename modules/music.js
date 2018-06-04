@@ -615,6 +615,8 @@ Music.prototype._processNext = function(connection) {
     player = this.player,
     music = player.config.music
 
+  if (player.status == "reset") return delete servers[message.guild.id]
+
   if (music.repeat == "off" && !music.autoplay && (!music.shuffle || player.queue.length == 1) && player.isLast() && player.status != "skip" && !Number.isInteger(player.status)) {
     player.stopped = true
     return
