@@ -188,7 +188,7 @@ Administration.prototype.setname = async function(args) {
       message.channel.send($.embed(`Username set to ${args.join(" ")}.`))
       this.log(`Username set to ${args.join(" ")}`)
     }).catch((err) => {
-      console.log(err)
+      $.warn(err)
       message.channel.send($.embed("There was an error changing the username."))
     })
 }
