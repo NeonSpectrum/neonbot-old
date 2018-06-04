@@ -190,6 +190,9 @@ Administration.prototype.setname = async function(args) {
     .then(() => {
       message.channel.send($.embed(`Username set to ${args.join(" ")}.`))
       this.log(`Username set to ${args.join(" ")}`)
+    }).catch((err) => {
+      $.warn(err)
+      message.channel.send($.embed("There was an error changing the username."))
     })
 }
 
@@ -209,6 +212,9 @@ Administration.prototype.setstatus = function(args) {
     })
     message.channel.send($.embed(`Bot Status set to ${args[0]}`))
     this.log(`Bot Status set to ${args[0]}`)
+  }).catch((err) => {
+    $.warn(err)
+    message.channel.send($.embed("There was an error changing the status."))
   })
 }
 
@@ -229,7 +235,9 @@ Administration.prototype.setgame = function(args) {
     })
     message.channel.send($.embed(`Game set to ${args[0]}, ${args.slice(1).join(" ")}.`))
     this.log(`Game set to ${args.slice(1).join(" ")}`)
-
+  }).catch((err) => {
+    $.warn(err)
+    message.channel.send($.embed("There was an error setting the game."))
   })
 }
 
@@ -246,9 +254,8 @@ Administration.prototype.setavatar = function(args) {
         .setTitle("Avatar changed to")
         .setImage(args[0])
       )
-    })
-    .catch((err) => {
-      this.log("Avatar error: " + err)
+    }).catch((err) => {
+      $.warn(err)
       message.channel.send($.embed("There was an error changing the avatar."))
     })
 }

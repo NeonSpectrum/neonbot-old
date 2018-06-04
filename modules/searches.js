@@ -46,7 +46,7 @@ Searches.prototype.google = async function(args) {
     var items = res.items
     var temp = []
     for (var i = 0; i < items.length; i++) {
-      temp.push(`[**${items[i].title}**](${items[i].link})\n${items[i].snippet.replace(/<\/?[^>]+(>|$)/g, "")}\n`)
+      temp.push(`[${items[i].title}](${items[i].link})\n${items[i].snippet.replace(/<\/?[^>]+(>|$)/g, "")}\n`)
     }
     msg.delete().catch(() => {})
     message.channel.send($.embed()
