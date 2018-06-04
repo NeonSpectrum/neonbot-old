@@ -1,6 +1,6 @@
 {
   "name": "NeonBot",
-  "version": "2.3.3",
+  "version": "2.3.4",
   "description": "",
   "main": "bot.js",
   "scripts": {
@@ -44,8 +44,5 @@
     "urban-dictionary": "^1.0.6",
     "uws": "^9.148.0",
     "ytdl-core": "^0.20.2"
-  },
-  "nodemonConfig": {
-    "watch": "bot.js"
   }
 }

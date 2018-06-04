@@ -62,6 +62,17 @@ bot.on('ready', async () => {
 
   $.log(`Logged in as ${bot.user.tag}\n`)
 
+  if (process.env.message == "updated") {
+    var temp = $.embed()
+      .setFooter(bot.user.tag, bot.user.displayAvatarURL())
+      .setAuthor("GitHub Update", "https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png")
+      .setDescription("Updated!")
+    fs.readFile('updateid.txt', 'utf8', function(err, data) {
+      bot.channels.get(data).send(temp)
+      fs.unlink('updateid.txt', function() {})
+    });
+  }
+
   for (var i = 0; i < bot.guilds.size; i++) {
     var channelsize = bot.guilds.get(guilds[i]).channels.filter(s => s.type != "category").size
     var usersize = bot.guilds.get(guilds[i]).members.size
@@ -89,17 +100,6 @@ bot.on('ready', async () => {
       }
     })
     music._processAutoResume(guilds[i], playlist.slice(2))
-  }
-
-  if (process.env.message == "updated") {
-    var temp = $.embed()
-      .setFooter(bot.user.tag, bot.user.displayAvatarURL())
-      .setAuthor("GitHub Update", "https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png")
-      .setDescription("Updated!")
-    fs.readFile('updateid.txt', 'utf8', function(err, data) {
-      bot.channels.get(data).send(temp)
-      fs.unlink('updateid.txt', function() {})
-    });
   }
 
   bot.user.setPresence({
