@@ -533,7 +533,7 @@ Music.prototype.leave = function() {
   if (!$.isOwner(message.member.id)) return message.channel.send($.embed("You don't have a permission to make the bot leave."))
   if (!message.member.voiceChannel) return message.channel.send($.embed("You must be in the voice channel!"))
   if (message.guild.voiceConnection) {
-    server.status = "reset"
+    player.status = "reset"
     message.guild.voiceConnection.disconnect()
   }
 }
