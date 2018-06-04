@@ -23,6 +23,10 @@
     "info": "Remove a role of the user.",
     "usage": "{0}removerole <user> <role>"
   },
+  "setnickname": {
+    "info": "Set the nickname of the user.",
+    "usage": "{0}setnickname <@user> <name> | {0}setnickname <name>"
+  },
   "setname": {
     "info": "Set the username of the bot.",
     "usage": "{0}setname <name>"

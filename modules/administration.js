@@ -176,7 +176,27 @@ Administration.prototype.prefix = async function(args) {
   )
 }
 
-Administration.prototype.setname = async function(args) {
+Administration.prototype.setnickname = function(args) {
+  var message = this.message,
+    server = this.server
+
+  var user = message.guild.member(message.mentions.users.first()) || message.guild.member(message.author)
+  var name = message.mentions.users.first() ? args.slice(1).join(" ") : args.join(" ")
+
+  user.setNickname(name)
+    .then(() => {
+      message.channel.send($.embed(`${user.toString()}, Your nickname has been set to ${name || "default"}.`))
+      this.log(`${user.tag}'s nickname has been set to ${name || "default"}`)
+    }).catch((err) => {
+      $.warn(err)
+      if (err.message.indexOf("Privilege is too low") > -1)
+        message.channel.send($.embed("You don't have a permission to set nickname."))
+      else
+        message.channel.send($.embed("There was an error changing the nickname."))
+    })
+}
+
+Administration.prototype.setname = function(args) {
   var message = this.message,
     server = this.server
 
