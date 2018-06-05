@@ -88,7 +88,7 @@ Administration.prototype.ban = function(args) {
     .setTitle("🚫 Ban")
     .setThumbnail(user.displayAvatarURL())
     .addField("Banned User", `${user} with ID ${user.id}`)
-    .addField("Banned By", `<@${message.author.id}> with ID ${message.author.id}`)
+    .addField("Banned By", `${message.author.toString()} with ID ${message.author.id}`)
     .addField("Banned In", message.channel)
     .addField("Time", message.createdAt)
   )
@@ -154,7 +154,7 @@ Administration.prototype.kick = function(args) {
     .setDescription("🚫 Kick")
     .setThumbnail(user.displayAvatarURL())
     .addField("Kicked User", `${user} with ID ${user.id}`)
-    .addField("Kicked By", `<@${message.author.id}> with ID ${message.author.id}`)
+    .addField("Kicked By", `${message.author.toString()} with ID ${message.author.id}`)
     .addField("Kicked In", message.channel)
     .addField("Time", message.createdAt)
   )
@@ -164,7 +164,7 @@ Administration.prototype.prefix = async function(args) {
   var message = this.message,
     server = this.server
 
-  if (!$.isOwner(message.member.id)) return message.channel.send($.embed("You don't have a permission to set prefix."))
+  if (!$.isOwner(message.member.id) || !message.member.hasPermission("MANAGE_GUILD")) return message.channel.send($.embed("You don't have a permission to set prefix."))
   if (!args[0]) return message.channel.send($.embed(`Usage: ${server.config.prefix}prefix <desired prefix here>`))
 
   server.config = await $.updateServerConfig(message.guild.id, {
@@ -180,13 +180,14 @@ Administration.prototype.setnickname = function(args) {
   var message = this.message,
     server = this.server
 
-  var user = message.guild.member(message.mentions.users.first()) || message.guild.member(message.author)
+  var member = message.guild.member(message.mentions.users.first()) || message.guild.member(message.author)
+  if (member.user.id != message.author.id && !member.hasPermission("MANAGE_NICKNAMES")) return message.channel.send($.embed("You don't have a permission to change the nickname of other members."))
   var name = message.mentions.users.first() ? args.slice(1).join(" ") : args.join(" ")
 
-  user.setNickname(name)
+  member.setNickname(name)
     .then(() => {
-      message.channel.send($.embed(`${user.toString()}, Your nickname has been set to ${name || "default"}.`))
-      this.log(`${user.tag}'s nickname has been set to ${name || "default"}`)
+      message.channel.send($.embed(`${member.toString()}, Your nickname has been set to ${name || "default"}.`))
+      this.log(`${member.user.tag}'s nickname has been set to ${name || "default"}`)
     }).catch((err) => {
       $.warn(err)
       if (err.message.indexOf("Privilege is too low") > -1)

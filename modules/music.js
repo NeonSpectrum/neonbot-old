@@ -39,7 +39,14 @@ class Music {
           disableFinish: false,
           stopped: false,
           seek: 0,
-          isLast: () => servers[message.guild.id].queue.length - 1 == servers[message.guild.id].currentQueue
+          isLast: () => servers[message.guild.id].queue.length - 1 == servers[message.guild.id].currentQueue,
+          resendDeleteMessage: async () => {
+            var player = servers[message.guild.id]
+            if (player.dispatcher && player.dispatcher.paused) {
+              if (player.lastPauseMessage) player.lastPauseMessage.delete().catch(() => {})
+              player.lastPauseMessage = await message.channel.send($.embed(`Player paused. \`${player.config.prefix}resume\` to resume.`))
+            }
+          }
         }
       } else {
         servers[message.guild.id].currentChannel = (message.channel && message.channel.id) || servers[message.guild.id].currentChannel
@@ -62,7 +69,8 @@ Music.prototype.play = async function(args) {
   if (!message.member.voiceChannel) return message.channel.send($.embed("You must be in a voice channel!"))
   if (!args[0] && !player.stopped) return message.channel.send($.embed("Please provide a keyword or link."))
 
-  if (Number.isInteger(+args[0]) || player.queue.length != 0) {
+  if (Number.isInteger(+args[0]) || (player.stopped && player.queue.length != 0)) {
+    this.resume()
     var index = Number.isInteger(+args[0]) ? +args[0] : 1
     if (!player.queue[index - 1]) return message.channel.send($.embed(`Error! There are only ${player.queue.length} songs.`))
     if (!$.isOwner(message.author.id) && player.queue[currentQueue].requested.id != message.author.id && !player.queue[currentQueue].requested.bot && !player.stopped) {
@@ -77,25 +85,24 @@ Music.prototype.play = async function(args) {
       player.dispatcher.end()
     }
   } else if (args[0].match(/^.*(youtu.be\/|list=)([^#\&\?]*).*/g)) {
+    var videos
+
     try {
-      playlist = await yt.getPlaylist(args[0])
-      videos = await playlist.getVideos()
+      videos = await (await yt.getPlaylist(args[0])).getVideos()
     } catch (err) {
       return message.channel.send($.embed(`Invalid Playlist URL`))
     }
+
+    if (videos.length == 0) return message.channel.send($.embed("No videos found in the playlist."))
 
     var msg = await message.channel.send($.embed(`Adding ${videos.length} ${videos.length == 1 ? "song" : "songs"} to the queue.`))
     var error = 0
 
     for (var i = 0; i < videos.length; i++) {
-      try {
-        this._addToQueue(await ytdl.getInfo(videos[i].id))
-        connect()
-      } catch (err) {
-        error++
-      }
+      this._addToQueue(await ytdl.getInfo(videos[i].id))
+      if (i == 0) connect()
     }
-    msg.edit($.embed(`Done! Loaded ${videos.length} ${videos.length == 1 ? "song" : "songs"}.` + (error > 0 ? ` ${error} failed to load.` : ""))).then(m => m.delete({
+    msg.edit($.embed(`Done! Loaded ${videos.length} ${videos.length == 1 ? "song" : "songs"}.`)).then(m => m.delete({
       timeout: 10000
     })).catch(() => {})
   } else if (args[0].match(/^(https?\:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+$/g)) {
@@ -107,7 +114,7 @@ Music.prototype.play = async function(args) {
     ).then(m => m.delete({
       timeout: 5000
     }).catch(() => {}))
-    self._addToQueue(info)
+    this._addToQueue(info)
     connect()
   } else if (args[0].match(/^(spotify:|https:\/\/[a-z]+\.spotify\.com\/)/g)) {
     var uri = spotifyUri.parse(args[0])
@@ -123,19 +130,24 @@ Music.prototype.play = async function(args) {
         if (json.items) {
           msg = msg || await message.channel.send($.embed(`Adding ${json.total} ${json.total == 1 ? "song" : "songs"} to the queue.`))
           var error = 0
-          for (var i = 0; i < json.items.length; i++) {
+          for (var i = 0, connected = false; i < json.items.length; i++) {
             var videos = await yt.searchVideos(`${json.items[i].track.artists[0].name} ${json.items[i].track.name}`)
             if (videos.length == 0) {
               error++
               continue
             }
             self._addToQueue(await ytdl.getInfo(videos[0].url))
-            connect()
+            if (!connected) {
+              connected = true
+              connect()
+            }
           }
           if (json.next) loop(offset + 100)
-          else msg.edit($.embed(`Done! Loaded ${json.total} ${json.total == 1 ? "song" : "songs"}.` + (error > 0 ? ` ${error} failed to load.` : ""))).then(m => m.delete({
-            timeout: 10000
-          })).catch(() => {})
+          else {
+            msg.edit($.embed(`Done! Loaded ${json.total} ${json.total == 1 ? "song" : "songs"}.` + (error > 0 ? ` ${error} failed to load.` : ""))).then(m => m.delete({
+              timeout: 10000
+            })).catch(() => {})
+          }
         } else {
           message.channel.send($.embed("I can't play this song."))
         }
@@ -151,8 +163,7 @@ Music.prototype.play = async function(args) {
       if (videos.length == 0) {
         return message.channel.send($.embed("I can't find a song from that spotify link."))
       }
-      var info = await ytdl.getInfo(videos[0].url)
-      self._addToQueue(info)
+      self._addToQueue(await ytdl.getInfo(videos[0].url))
       message.channel.send($.embed()
         .setAuthor(`Added song to queue #${player.queue.length + 1}`, "https://i.imgur.com/SBMH84I.png")
         .setTitle(info.title)
@@ -165,14 +176,11 @@ Music.prototype.play = async function(args) {
       message.channel.send($.embed("I can't play that spotify link."))
     }
   } else {
-    try {
-      var videos = await yt.searchVideos(args.join(" "))
-    } catch (err) {
-      return message.channel.send($.embed("Cannot find any videos"))
-    }
-    if (videos.length == 0) {
-      return message.channel.send($.embed("Cannot find any videos"))
-    }
+    var videos = await yt.searchVideos(args.join(" "))
+    if (videos.length == 0) return message.channel.send($.embed("Cannot find any videos")).then(m => m.delete({
+      timeout: 5000
+    }).catch(() => {}))
+
     var temp = $.embed().setAuthor("Choose 1-5 below.", "https://i.imgur.com/SBMH84I.png")
     var songSearchList = []
     for (var i = 0, j = 1; i < videos.length; i++, j++) {
@@ -213,7 +221,7 @@ Music.prototype.play = async function(args) {
   }
 
   function connect() {
-    self._savePlaylist()
+    player.resendDeleteMessage()
     if (!message.guild.voiceConnection || player.status == "clear") {
       player.status = null
       player.stopped = false
@@ -261,6 +269,7 @@ Music.prototype.skip = function() {
     if (!$.isOwner(message.author.id) && player.queue[player.currentQueue].requested.id != message.author.id && !player.queue[player.currentQueue].requested.bot) {
       return message.channel.send($.embed("Please respect the one who queued the song."))
     }
+    this.resume()
     player.status = "skip"
     player.dispatcher.end()
     this.log("Player skipped!")
@@ -379,9 +388,9 @@ Music.prototype.volume = async function(args) {
     player.config = await $.updateServerConfig(message.guild.id, {
       "music.volume": +args[0]
     })
-    message.channel.send($.embed(`Volume is now set to ${music.volume}%`))
+    message.channel.send($.embed(`Volume is now set to ${player.dispatcher.volume * 100}%`))
   } else {
-    message.channel.send($.embed(`Volume is set to ${music.volume}%`))
+    message.channel.send($.embed(`Volume is set to ${player.dispatcher.volume * 100}%`))
   }
 }
 
@@ -692,7 +701,7 @@ Music.prototype._processAutoResume = async function(id, playlist) {
     var ans = m.first().content.toLowerCase()
     m.first().delete().catch(() => {})
     if (ans == "n") throw "no"
-    $.log(`Auto Resume is enabled. Adding ${playlist.length} ${playlist.length == 1 ? "song" : "songs"} to the queue.`, message)
+    $.log(`Adding ${playlist.length} ${playlist.length == 1 ? "song" : "songs"} to the queue.`, message)
     msg.edit($.embed(`Adding ${playlist.length} ${playlist.length == 1 ? "song" : "songs"} to the queue.`)).catch(() => {})
     var error = 0
     for (var i = 0; i < playlist.length; i++) {
