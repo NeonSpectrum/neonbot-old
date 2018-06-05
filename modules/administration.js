@@ -98,7 +98,7 @@ Administration.prototype.prune = async function(args) {
   var message = this.message,
     server = this.server
 
-  if (!server.config.deleteoncmd) await message.delete().catch(() => {})
+  await message.delete().catch(() => {})
   if (message.mentions.users.first()) {
     if (!args[1] || !Number.isInteger(+args[1])) return message.channel.send($.embed(`Invalid Parameters ${server.config.prefix}clear <user> <1-100>`))
     else if (args[1] > 100 && args[1] < 1) return message.channel.send($.embed("Parameters must be `1-100`."))
