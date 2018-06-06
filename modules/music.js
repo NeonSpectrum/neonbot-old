@@ -308,9 +308,14 @@ Music.prototype.removesong = async function(args) {
       message.channel.send($.embed("Cleared queue.")).then(m => m.delete({
         timeout: 5000
       }))
-      player.status = "clear"
-      player.stopped = true
-      player.dispatcher.end()
+      if (!player.stopped) {
+        player.status = "clear"
+        player.stopped = true
+        player.dispatcher.end()
+      } else {
+        player.queue = []
+        player.stopped = false
+      }
       $.removeMusicPlaylist(message.guild.id)
     } else {
       if (+args[0] <= 0 || +args[0] > player.queue.length) return message.channel.send($.embed("There is no song in that index."))
@@ -514,7 +519,8 @@ Music.prototype.leave = function() {
   if (!$.isOwner(message.member.id)) return message.channel.send($.embed("You don't have a permission to make the bot leave."))
   if (!message.member.voiceChannel) return message.channel.send($.embed("You must be in the voice channel!"))
   if (message.guild.voiceConnection) {
-    player.status = "reset"
+    if (player.stopped) player.queue = []
+    else player.status = "reset"
     message.guild.voiceConnection.disconnect()
   }
 }
