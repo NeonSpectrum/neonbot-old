@@ -630,7 +630,6 @@ Music.prototype._processNext = function(connection) {
   player.currentQueue = player.requestIndex || player.currentQueue
   player.status = null
   player.requestIndex = null
-  player.seek = 0
   this._execute(connection)
 }
 
