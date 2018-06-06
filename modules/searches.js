@@ -510,6 +510,7 @@ Searches.prototype.lyrics = async function(args) {
       try {
         await msg.react(reactionlist[i])
       } catch (err) {
+        $.warn(err)
         break
       }
     }

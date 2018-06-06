@@ -222,9 +222,7 @@ Music.prototype.play = async function(args) {
 
   function connect() {
     player.resendDeleteMessage()
-    if (!message.guild.voiceConnection || player.status == "clear") {
-      player.status = null
-      player.stopped = false
+    if (!message.guild.voiceConnection) {
       message.member.voiceChannel.join()
         .then((connection) => {
           player.connection = connection
@@ -302,41 +300,27 @@ Music.prototype.removesong = async function(args) {
 
   if (player.dispatcher) {
     if (!message.member.voiceChannel) return message.channel.send($.embed("You must be in the voice channel!"))
-    if (!args[0]) return message.channel.send($.embed("Invalid Parameters. (<index> | all)"))
+    if (!args[0]) return message.channel.send($.embed("Invalid Parameters. <index>"))
 
-    if (args[0].toLowerCase() == "all") {
-      message.channel.send($.embed("Cleared queue.")).then(m => m.delete({
-        timeout: 5000
-      }))
-      if (!player.stopped) {
-        player.status = "clear"
-        player.stopped = true
-        player.dispatcher.end()
-      } else {
-        player.queue = []
-        player.stopped = false
-      }
-      $.removeMusicPlaylist(message.guild.id)
-    } else {
-      if (+args[0] <= 0 || +args[0] > player.queue.length) return message.channel.send($.embed("There is no song in that index."))
-      var index = +args[0] - 1
-      if (!$.isOwner(message.author.id) && player.queue[index].requested.id != message.author.id && !player.queue[index].requested.bot) {
-        return message.channel.send($.embed("You cannot remove this song. You're not the one who requested it."))
-      }
-      await message.channel.send($.embed()
-        .setAuthor("Removed Song #" + +args[0], "https://i.imgur.com/SBMH84I.png")
-        .setFooter(player.queue[index].requested.tag, player.queue[index].requested.displayAvatarURL())
-        .setTitle(player.queue[index].title)
-        .setURL(player.queue[index].url)
-      )
-
-      player.status = "dontshowstop"
-      player.queue.splice(index, 1)
-
-      if (index == player.currentQueue) this._execute(player.connection)
-
-      this._savePlaylist()
+    if (+args[0] <= 0 || +args[0] > player.queue.length) return message.channel.send($.embed("There is no song in that index."))
+    var index = +args[0] - 1
+    if (!$.isOwner(message.author.id) && player.queue[index].requested.id != message.author.id && !player.queue[index].requested.bot) {
+      return message.channel.send($.embed("You cannot remove this song. You're not the one who requested it."))
     }
+    await message.channel.send($.embed()
+      .setAuthor("Removed Song #" + +args[0], "https://i.imgur.com/SBMH84I.png")
+      .setFooter(player.queue[index].requested.tag, player.queue[index].requested.displayAvatarURL())
+      .setTitle(player.queue[index].title)
+      .setURL(player.queue[index].url)
+    )
+
+    player.disableFinish = true
+    player.queue.splice(index, 1)
+
+    if (index < player.currentQueue) player.currentQueue -= 1
+    else if (index == player.currentQueue) this._execute(player.connection)
+
+    this._savePlaylist()
   }
 }
 
@@ -512,15 +496,16 @@ Music.prototype.nowplaying = function() {
   message.channel.send(temp)
 }
 
-Music.prototype.leave = function() {
+Music.prototype.reset = function() {
   var message = this.message,
     player = this.player
 
-  if (!$.isOwner(message.member.id)) return message.channel.send($.embed("You don't have a permission to make the bot leave."))
   if (!message.member.voiceChannel) return message.channel.send($.embed("You must be in the voice channel!"))
   if (message.guild.voiceConnection) {
-    if (player.stopped) player.queue = []
-    else player.status = "reset"
+    if (player.stopped) {
+      delete servers[message.guild.id]
+      message.channel.send($.embed("Player has been reset."))
+    } else player.status = "reset"
     message.guild.voiceConnection.disconnect()
   }
 }
@@ -606,14 +591,15 @@ Music.prototype._processFinish = async function(connection) {
     .setTitle(player.queue[player.currentQueue].title)
     .setURL(player.queue[player.currentQueue].url)
   )
-  if (!player.stopped) {
+
+  if (player.status == "reset") {
+    delete servers[message.guild.id]
+    return message.channel.send($.embed("Player has been reset."))
+  } else if (!player.stopped) {
     this._processNext(connection)
   } else {
-    if (player.status == "clear") player.queue = []
-    else {
-      player.status = null
-      player.requestIndex = null
-    }
+    player.status = null
+    player.requestIndex = null
     player.currentQueue = 0
     player.shuffled = []
   }
@@ -623,8 +609,6 @@ Music.prototype._processNext = function(connection) {
   var message = this.message,
     player = this.player,
     music = player.config.music
-
-  if (player.status == "reset") return delete servers[message.guild.id]
 
   if (music.repeat == "off" && !music.autoplay && (!player.shuffle || player.queue.length == 1) && player.isLast() && player.status != "skip" && !Number.isInteger(player.requestIndex)) {
     player.stopped = true

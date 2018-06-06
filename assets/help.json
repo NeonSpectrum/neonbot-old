@@ -155,9 +155,9 @@
     "info": "Shows the current song information.",
     "usage": "{0}nowplaying"
   },
-  "leave": {
-    "info": "Leaves the voice channel.",
-    "usage": "{0}leave"
+  "reset": {
+    "info": "Resets the player.",
+    "usage": "{0}reset"
   },
   "restartsong": {
     "info": "Force restart the song.",
