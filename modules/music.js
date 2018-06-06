@@ -564,6 +564,7 @@ Music.prototype._execute = async function(connection, seconds = 0) {
     })
 
     player.dispatcher.on("finish", () => {
+      player.dispatcher.destroy()
       if (!player.disableFinish) self._processFinish(connection)
       else player.disableFinish = false
     })
