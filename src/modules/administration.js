@@ -181,7 +181,7 @@ Administration.prototype.setnickname = function(args) {
     server = this.server
 
   var member = message.guild.member(message.mentions.users.first()) || message.guild.member(message.author)
-  if (member.user.id != message.author.id && !member.hasPermission("MANAGE_NICKNAMES")) return message.channel.send($.embed("You don't have a permission to change the nickname of other members."))
+  if (member.user.id != message.author.id && !message.member.hasPermission("MANAGE_NICKNAMES")) return message.channel.send($.embed("You don't have a permission to change the nickname of other members."))
   var name = message.mentions.users.first() ? args.slice(1).join(" ") : args.join(" ")
 
   member.setNickname(name)

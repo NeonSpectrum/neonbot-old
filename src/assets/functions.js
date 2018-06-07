@@ -218,13 +218,23 @@ $.removeMusicPlaylist = (id) => {
 
 $.fetchJSON = (url, obj) => {
   return new Promise(async resolve => {
-    resolve(await (await fetch(url, obj)).json())
+    try {
+      var res = await fetch(url, obj)
+      resolve(await res.json())
+    } catch (err) {
+      $.warn(err)
+    }
   })
 }
 
 $.fetchHTML = (url, obj) => {
   return new Promise(async resolve => {
-    resolve(await (await fetch(url, obj)).text())
+    try {
+      var res = await fetch(url, obj)
+      resolve(await res.text())
+    } catch (err) {
+      $.warn(err)
+    }
   })
 }
 

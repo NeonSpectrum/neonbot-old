@@ -63,5 +63,5 @@ typings/
 
 # End of https://www.gitignore.io/api/node
 
-/musiclist
+src/musiclist
 package-lock.json

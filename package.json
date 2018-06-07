@@ -1,16 +1,17 @@
 {
   "name": "NeonBot",
-  "version": "2.3.4",
+  "version": "2.3.5",
   "description": "",
-  "main": "bot.js",
+  "main": "src/bot.js",
   "scripts": {
-    "start": "node bot.js",
+    "start": "node src/bot.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "NeonSpectrum",
   "license": "ISC",
   "dependencies": {
-    "ffmpeg-binaries": "^3.2.2-3"
+    "ffmpeg-binaries": "^3.2.2-3",
+    "nodemon": "^1.17.5"
   },
   "devDependencies": {
     "bufferutil": "^3.0.4",

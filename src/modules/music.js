@@ -163,7 +163,7 @@ Music.prototype.play = async function(args) {
       if (videos.length == 0) {
         return message.channel.send($.embed("I can't find a song from that spotify link."))
       }
-      self._addToQueue(await ytdl.getInfo(videos[0].url))
+      var info = await ytdl.getInfo(videos[0].url)
       message.channel.send($.embed()
         .setAuthor(`Added song to queue #${player.queue.length + 1}`, "https://i.imgur.com/SBMH84I.png")
         .setTitle(info.title)
@@ -171,6 +171,7 @@ Music.prototype.play = async function(args) {
       ).then(m => m.delete({
         timeout: 5000
       }).catch(() => {}))
+      self._addToQueue(info)
       connect()
     } else {
       message.channel.send($.embed("I can't play that spotify link."))
@@ -378,6 +379,7 @@ Music.prototype.volume = async function(args) {
       "music.volume": +args[0]
     })
     message.channel.send($.embed(`Volume is now set to ${player.dispatcher.volume * 100}%`))
+    this.log(`Volume is now set to ${player.dispatcher.volume * 100}%`)
   } else {
     message.channel.send($.embed(`Volume is set to ${player.dispatcher.volume * 100}%`))
   }
@@ -385,35 +387,35 @@ Music.prototype.volume = async function(args) {
 
 Music.prototype.repeat = async function(args) {
   var message = this.message,
-    player = this.player,
-    music = player.config.music
+    player = this.player
 
   if (args[0] && args[0].toLowerCase() != "off" && args[0].toLowerCase() != "single" && args[0].toLowerCase() != "all") {
     message.channel.send($.embed("Invalid parameters. (off | single | all)"))
   } else if (!args[0]) {
-    message.channel.send($.embed(`Repeat is set to ${music.repeat}.`))
+    message.channel.send($.embed(`Repeat is set to ${player.config.music.repeat}.`))
   } else {
     player.config = await $.updateServerConfig(message.guild.id, {
       "music.repeat": args[0]
     })
-    message.channel.send($.embed(`Repeat is now set to ${music.repeat}.`))
+    message.channel.send($.embed(`Repeat is now set to ${player.config.music.repeat}.`))
+    this.log(`Repeat is now set to ${player.config.music.repeat}.`)
   }
 }
 
 Music.prototype.shuffle = async function(args) {
   var message = this.message,
-    player = this.player,
-    music = player.config.music
+    player = this.player
 
   if (args[0] && args[0].toLowerCase() != "off" && args[0].toLowerCase() != "on") {
     message.channel.send($.embed("Invalid parameters. (off | on)"))
   } else if (!args[0]) {
-    message.channel.send($.embed(`Shuffle is set to ${music.shuffle ? "on" : "off"}.`))
+    message.channel.send($.embed(`Shuffle is set to ${player.config.music.shuffle ? "on" : "off"}.`))
   } else {
     player.config = await $.updateServerConfig(message.guild.id, {
       "music.shuffle": args[0] == "on" ? true : false
     })
-    message.channel.send($.embed(`Shuffle is now set to ${music.shuffle ? "on" : "off"}.`))
+    message.channel.send($.embed(`Shuffle is now set to ${player.config.music.shuffle ? "on" : "off"}.`))
+    this.log(`Shuffle is now set to ${player.config.music.shuffle ? "on" : "off"}.`)
   }
 }
 
@@ -466,13 +468,13 @@ Music.prototype.autoplay = async function(args) {
     player = this.player,
     music = player.config.music
 
-  if (!args[0]) return message.channel.send($.embed(`Autoplay is set to ${music.autoplay ? "on" : "off"}.`))
+  if (!args[0]) return message.channel.send($.embed(`Autoplay is set to ${player.config.music.autoplay ? "on" : "off"}.`))
   if (args[0] != "on" && args[0] != "off") return message.channel.send($.embed("Invalid Parameters (on | off)."))
   player.config = await $.updateServerConfig(message.guild.id, {
     "music.autoplay": args[0] == "on" ? true : false
   })
-  message.channel.send($.embed("Autoplay is now " + (music.autoplay ? "enabled" : "disabled") + "."))
-  this.log("Autoplay " + (music.autoplay ? "enabled" : "disabled") + ".")
+  message.channel.send($.embed("Autoplay is now " + (player.config.music.autoplay ? "enabled" : "disabled") + "."))
+  this.log("Autoplay " + (player.config.autoplay ? "enabled" : "disabled") + ".")
 }
 
 Music.prototype.nowplaying = function() {
@@ -490,7 +492,7 @@ Music.prototype.nowplaying = function() {
       .setDescription(player.queue[player.currentQueue].title)
       .setThumbnail(info.thumbnail_url)
       .addField("Time", `${$.formatSeconds(player.dispatcher.streamTime / 1000 + player.seek)} - ${$.formatSeconds(info.length_seconds)}`)
-      .addField("Description", (info.description.length > 500 ? info.description.substring(0, 500) + "..." : info.description))
+      .addField("Description", info.description)
       .setFooter(footer.join(" | "), requested.displayAvatarURL())
   }
   message.channel.send(temp)
@@ -530,9 +532,7 @@ Music.prototype._execute = async function(connection, seconds = 0) {
   player.seek = seconds
 
   try {
-    player.dispatcher = connection.play(ytdl(player.queue[player.currentQueue].url, process.env.DEVELOPMENT ? {
-      filter: "audioonly"
-    } : {
+    player.dispatcher = connection.play(ytdl(player.queue[player.currentQueue].url, {
       quality: "highestaudio",
       begin: player.seek * 1000
     }), {
@@ -549,9 +549,10 @@ Music.prototype._execute = async function(connection, seconds = 0) {
     })
 
     player.dispatcher.on("finish", () => {
-      player.dispatcher.destroy()
-      if (!player.disableFinish) self._processFinish(connection)
-      else player.disableFinish = false
+      if (!player.disableFinish) {
+        player.dispatcher.destroy()
+        self._processFinish(connection)
+      } else player.disableFinish = false
     })
   } catch (err) {
     $.warn(err)
@@ -594,7 +595,7 @@ Music.prototype._processFinish = async function(connection) {
 
   if (player.status == "reset") {
     delete servers[message.guild.id]
-    return message.channel.send($.embed("Player has been reset."))
+    message.channel.send($.embed("Player has been reset."))
   } else if (!player.stopped) {
     this._processNext(connection)
   } else {
@@ -605,7 +606,7 @@ Music.prototype._processFinish = async function(connection) {
   }
 }
 
-Music.prototype._processNext = function(connection) {
+Music.prototype._processNext = async function(connection) {
   var message = this.message,
     player = this.player,
     music = player.config.music
@@ -617,17 +618,15 @@ Music.prototype._processNext = function(connection) {
 
   if (!player.requestIndex) {
     if (player.isLast() && music.autoplay && music.repeat != "all" && !music.shuffle) {
-      this._processAutoplay()
+      await this._processAutoplay()
     } else if (music.shuffle && (!player.status || player.status == "skip") && music.repeat != "single") {
       this._processShuffle()
     } else if (music.repeat == "all" && player.isLast()) {
       player.requestIndex = 0
     }
-  } else if (music.repeat != "single") {
-    player.currentQueue += 1
   }
 
-  player.currentQueue = player.requestIndex || player.currentQueue
+  player.currentQueue = player.requestIndex != null ? player.requestIndex : player.currentQueue + (music.repeat != "single" ? 1 : 0)
   player.status = null
   player.requestIndex = null
   this._execute(connection)
@@ -656,26 +655,28 @@ Music.prototype._savePlaylist = function() {
   }, player.queue.map(x => x.url))
 }
 
-Music.prototype._processAutoplay = async function() {
-  var message = this.message,
-    player = this.player,
-    music = player.config.music
+Music.prototype._processAutoplay = function() {
+  return new Promise(async resolve => {
+    var message = this.message,
+      player = this.player,
+      music = player.config.music
 
-  var info = player.queue[player.currentQueue].info
-  if (player.autoplayid.indexOf(info.video_id) == -1) player.autoplayid.push(info.video_id)
+    var info = player.queue[player.currentQueue].info
+    if (player.autoplayid.indexOf(info.video_id) == -1) player.autoplayid.push(info.video_id)
 
-  for (var i = 0; i < info.related_videos.length; i++) {
-    var id = info.related_videos[i].id || info.related_videos[i].video_id
-    if (player.autoplayid.indexOf(id) == -1) {
-      player.autoplayid.push(id)
-      this._addToQueue(await ytdl.getInfo(id), true)
-      break
-    } else if (i == info.related_videos.length - 1) {
-      player.autoplayid = []
-      i = -1
+    for (var i = 0; i < info.related_videos.length; i++) {
+      var id = info.related_videos[i].id || info.related_videos[i].video_id
+      if (player.autoplayid.indexOf(id) == -1) {
+        player.autoplayid.push(id)
+        this._addToQueue(await ytdl.getInfo(id), true)
+        break
+      } else if (i == info.related_videos.length - 1) {
+        player.autoplayid = []
+        i = -1
+      }
     }
-  }
-  player.currentQueue += 1
+    resolve()
+  })
 }
 
 Music.prototype._processAutoResume = async function(id, playlist) {
@@ -732,7 +733,13 @@ Music.prototype._addToQueue = function(info, isBot) {
     title: info.title,
     url: info.video_url,
     requested: isBot ? bot.user : message.author,
-    info: info
+    info: {
+      video_id: info.video_id,
+      thumbnail_url: info.thumbnail_url,
+      description: info.description.length > 500 ? info.description.substring(0, 500) + "..." : info.description,
+      length_seconds: info.length_seconds,
+      related_videos: info.related_videos
+    }
   })
 
   this._savePlaylist()

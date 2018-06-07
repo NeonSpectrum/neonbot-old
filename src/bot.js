@@ -6,7 +6,7 @@ const fetch = require('node-fetch')
 const colors = require('colors/safe')
 const bot = new(require("discord.js")).Client()
 const MongoClient = require('mongodb').MongoClient
-const package = reload("./package")
+const package = reload("../package")
 
 var $ = reload('./assets/functions')
 var Admin, Util, Music, Search, Games, Events

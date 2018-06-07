@@ -503,7 +503,8 @@ Searches.prototype.lyrics = async function(args) {
         if (i == 0) temp.setTitle(c("div.lyricsh h2 b").text())
         await message.channel.send(temp)
       }
-    }).catch(() => {
+    }).catch((err) => {
+      $.warn(err)
       msg.delete().catch(() => {})
     });
     for (var i = 0; i < reactionlist.length; i++) {

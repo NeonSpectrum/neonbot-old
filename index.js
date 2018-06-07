@@ -2,12 +2,12 @@ require('dotenv').config()
 var {
   spawn,
   exec
-} = require('child_process');
+} = require('child_process')
 
-var env = {}
+var env = {};
 
-function loop() {
-  var child = spawn(`${process.env.NODE_PATH}node`, ['bot'], {
+(function run() {
+  var child = spawn(`${process.env.NODE_PATH}node`, ['src/bot'], {
     env: env
   });
 
@@ -32,7 +32,6 @@ function loop() {
       case 0:
         env.message = "restarted"
     }
-    loop()
+    run()
   });
-}
-loop()
+})()
