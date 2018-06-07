@@ -300,7 +300,7 @@ Music.prototype.removesong = async function(args) {
 
   if (player.dispatcher) {
     if (!message.member.voiceChannel) return message.channel.send($.embed("You must be in the voice channel!"))
-    if (!args[0]) return message.channel.send($.embed("Invalid Parameters. <index>"))
+    if (!args[0] || !Number.isInteger(args[0])) return message.channel.send($.embed("Invalid Parameters. <index>"))
 
     if (+args[0] <= 0 || +args[0] > player.queue.length) return message.channel.send($.embed("There is no song in that index."))
     var index = +args[0] - 1
