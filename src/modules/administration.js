@@ -474,18 +474,18 @@ Administration.prototype.update = function() {
   var message = this.message
 
   if (!$.isOwner(message.member.id)) return message.channel.send($.embed("You don't have a permission to update the bot."))
+  var embed = $.embed()
+    .setFooter(bot.user.tag, bot.user.displayAvatarURL())
+    .setAuthor("GitLab Update", "https://i.gifer.com/DgvQ.gif")
+
   exec(`${process.env.GIT_PATH}git remote show origin`, async (err, stdout, stderr) => {
     if (stdout.indexOf("out of date") == -1) {
       message.channel.send($.embed().setFooter(bot.user.tag, bot.user.displayAvatarURL())
-        .setAuthor("GitHub Update", "https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png")
+        .setAuthor("GitLab Update", "https://i.gifer.com/DgvQ.gif")
         .setDescription("Already up to date.")
       )
     } else {
-      var msg = await message.channel.send($.embed()
-        .setFooter(bot.user.tag, bot.user.displayAvatarURL())
-        .setAuthor("GitHub Update", "https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png")
-        .setDescription("There is an update available. Update? (y | n)")
-      )
+      var msg = await message.channel.send(embed.setDescription("There is an update available. Update? (y | n)"))
       message.channel.awaitMessages((m) => (m.content.toLowerCase() == "y" || m.content.toLowerCase() == "n") && m.author.id === message.author.id, {
         max: 1,
         time: 15000,
@@ -494,19 +494,11 @@ Administration.prototype.update = function() {
         var ans = m.first().content.toLowerCase()
         m.first().delete().catch(() => {})
         if (ans == "n") throw "no"
-        await msg.edit($.embed()
-          .setFooter(bot.user.tag, bot.user.displayAvatarURL())
-          .setAuthor("GitHub Update", "https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png")
-          .setDescription("Updating...")
-        ).catch(() => {})
+        await msg.edit(embed.setDescription("Updating...")).catch(() => {})
 
         exec(`${process.env.GIT_PATH}git pull`, async (err, stdout, stderr) => {
           await execute(`export PATH=$PATH:${process.env.NODE_PATH} && npm i`)
-          await msg.edit($.embed()
-            .setFooter(bot.user.tag, bot.user.displayAvatarURL())
-            .setAuthor("GitHub Update", "https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png")
-            .setDescription("Would you like to restart the bot? (y | n)")
-          ).catch(() => {})
+          await msg.edit(embed.setDescription("Would you like to restart the bot? (y | n)")).catch(() => {})
           message.channel.awaitMessages((m) => (m.content.toLowerCase() == "y" || m.content.toLowerCase() == "n") && m.author.id === message.author.id, {
             max: 1,
             time: 15000,
@@ -515,11 +507,7 @@ Administration.prototype.update = function() {
             ans = m.first().content.toLowerCase()
             m.first().delete().catch(() => {})
             if (ans == "n") throw "no"
-            await msg.edit($.embed()
-              .setFooter(bot.user.tag, bot.user.displayAvatarURL())
-              .setAuthor("GitHub Update", "https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png")
-              .setDescription("Restarting the bot...")
-            ).catch(() => {})
+            await msg.edit(embed.setDescription("Restarting the bot...")).catch(() => {})
             fs.writeFile('updateid.txt', message.channel.id, function() {
               process.exit(2)
             })

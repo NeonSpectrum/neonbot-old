@@ -65,7 +65,7 @@ bot.on('ready', async () => {
   if (process.env.message == "updated") {
     var temp = $.embed()
       .setFooter(bot.user.tag, bot.user.displayAvatarURL())
-      .setAuthor("GitHub Update", "https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png")
+      .setAuthor("GitLab Update", "https://i.gifer.com/DgvQ.gif")
       .setDescription("Updated!")
     fs.readFile('updateid.txt', 'utf8', function(err, data) {
       bot.channels.get(data).send(temp)
