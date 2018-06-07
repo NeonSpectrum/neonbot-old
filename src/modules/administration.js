@@ -225,7 +225,7 @@ Administration.prototype.setstatus = function(args) {
   bot.user.setPresence({
     status: args[0].toLowerCase()
   }).then(async () => {
-    server.config = await $.updateConfig({
+    await $.updateConfig({
       "status": args[0].toLowerCase()
     })
     message.channel.send($.embed(`Bot Status set to ${args[0]}`))
@@ -247,7 +247,7 @@ Administration.prototype.setgame = function(args) {
   bot.user.setActivity(args.slice(1).join(" "), {
     type: args[0].toUpperCase()
   }).then(async () => {
-    server.config = await $.updateConfig({
+    await $.updateConfig({
       "game.type": args[0].toUpperCase(),
       "game.name": args.slice(1).join(" ")
     })

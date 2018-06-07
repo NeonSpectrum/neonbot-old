@@ -115,9 +115,9 @@ $.updateConfig = (options) => {
     db.collection("settings").update({}, {
       $set: options
     }, async (err, res) => {
-      if (err) $.log("Updating to database: " + err)
+      if (err) $.warn("Updating to database: " + err)
       await $.refreshConfig()
-      resolve($.getConfig())
+      resolve()
     })
   })
 }
@@ -129,7 +129,7 @@ $.updateServerConfig = (id, options) => {
     }, {
       $set: options
     }, async (err, res) => {
-      if (err) $.log("Updating to database: " + err)
+      if (err) $.warn("Updating to database: " + err)
       await $.refreshServerConfig()
       resolve($.getServerConfig(id))
     })
