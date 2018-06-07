@@ -675,6 +675,7 @@ Music.prototype._processAutoplay = async function() {
       i = -1
     }
   }
+  player.currentQueue += 1
 }
 
 Music.prototype._processAutoResume = async function(id, playlist) {

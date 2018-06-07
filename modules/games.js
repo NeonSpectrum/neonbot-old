@@ -204,7 +204,11 @@ Games.prototype.connect4 = async function() {
       time: 30000,
       errors: ['time']
     }).then((m) => {
-      movePlayer(connect4.players.indexOf(m.first().author.id), m.first().content - 1)
+      var moved = movePlayer(connect4.players.indexOf(m.first().author.id), m.first().content - 1)
+      if (!moved) {
+        message.channel.send($.embed(`${m.first().content} is full!`))
+        return waitForAnswer()
+      }
       var winner = checkWinner()
       if (!winner) {
         nextPlayer()
