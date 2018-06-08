@@ -506,7 +506,9 @@ Music.prototype.reset = function() {
   if (message.guild.voiceConnection) {
     if (player.stopped) {
       delete servers[message.guild.id]
-      message.channel.send($.embed("Player has been reset."))
+      message.channel.send($.embed("Player has been reset.")).then(m => m.delete({
+        timeout: 10000
+      }).catch(() => {}))
     } else player.status = "reset"
     message.guild.voiceConnection.disconnect()
   }
