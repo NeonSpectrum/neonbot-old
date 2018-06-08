@@ -63,12 +63,12 @@ bot.on('ready', async () => {
   $.log(`Logged in as ${bot.user.tag}\n`)
 
   if (process.env.message == "updated") {
-    var temp = $.embed()
-      .setFooter(bot.user.tag, bot.user.displayAvatarURL())
-      .setAuthor("GitLab Update", "https://i.gifer.com/DgvQ.gif")
-      .setDescription("Updated!")
     fs.readFile('updateid.txt', 'utf8', function(err, data) {
-      bot.channels.get(data).send(temp)
+      bot.channels.get(data).send($.embed()
+        .setFooter(bot.user.tag, bot.user.displayAvatarURL())
+        .setAuthor("GitLab Update", "https://i.gifer.com/DgvQ.gif")
+        .setDescription("Updated!")
+      )
       fs.unlink('updateid.txt', function() {})
     });
   }

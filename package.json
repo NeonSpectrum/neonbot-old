@@ -10,8 +10,7 @@
   "author": "NeonSpectrum",
   "license": "ISC",
   "dependencies": {
-    "ffmpeg-binaries": "^3.2.2-3",
-    "nodemon": "^1.17.5"
+    "ffmpeg-binaries": "^3.2.2-3"
   },
   "devDependencies": {
     "bufferutil": "^3.0.4",
@@ -40,6 +39,7 @@
     "prism-media": "^0.2.1",
     "require-reload": "^0.2.2",
     "simple-youtube-api": "^5.0.1",
+    "snekfetch": "^4.0.2",
     "spotify-uri": "^1.0.0",
     "steamid": "^1.1.0",
     "urban-dictionary": "^1.0.6",
