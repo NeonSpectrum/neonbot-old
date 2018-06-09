@@ -456,8 +456,8 @@ Searches.prototype.lyrics = async function(args) {
 
   var c = cheerio.load(html)
   var lyricSearchList = []
-  c("td.visitedlyr a").each(function(i) {
-    if (i < 5 && c(this).attr("href").indexOf("/lyrics/") > -1) {
+  c("td.visitedlyr a").each(function() {
+    if (lyricSearchList.length <= 5 && c(this).attr("href").indexOf("/lyrics/") > -1) {
       lyricSearchList.push({
         title: c(this).text(),
         url: c(this).attr("href")

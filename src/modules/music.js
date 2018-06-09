@@ -498,7 +498,7 @@ Music.prototype.nowplaying = function() {
   message.channel.send(temp)
 }
 
-Music.prototype.reset = function() {
+Music.prototype.reset = async function() {
   var message = this.message,
     player = this.player
 
