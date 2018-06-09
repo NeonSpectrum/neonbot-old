@@ -423,7 +423,7 @@ Music.prototype.pause = async function() {
   var message = this.message,
     player = this.player
 
-  if (player && player.dispatcher && !player.dispatcher.paused && player.queue.length > 0) {
+  if (player && player.dispatcher && !player.dispatcher.paused && player.queue.length > 0 && !player.stopped) {
     if (message.member && !message.member.voiceChannel) return message.channel.send($.embed("You must be in the voice channel!"))
     player.dispatcher.pause()
     if (message.channel) {
@@ -441,9 +441,9 @@ Music.prototype.resume = async function() {
   var message = this.message,
     player = this.player
 
-  if (player && player.dispatcher && player.dispatcher.paused && player.queue.length > 0) {
+  if (player && player.dispatcher && player.dispatcher.paused && player.queue.length > 0 && !player.stopped) {
+    if (message.member && !message.member.voiceChannel) return message.channel.send($.embed("You must be in the voice channel!"))
     if (message.channel) {
-      if (!message.member.voiceChannel) return message.channel.send($.embed("You must be in the voice channel!"))
       if (player.lastPauseMessage) {
         player.lastPauseMessage.delete()
         player.lastPauseMessage = null
@@ -504,6 +504,8 @@ Music.prototype.reset = function() {
 
   if (!message.member.voiceChannel) return message.channel.send($.embed("You must be in the voice channel!"))
   if (message.guild.voiceConnection) {
+    if (player.lastPlayingMessage) await player.lastPlayingMessage.delete().catch(() => {})
+    if (player.lastFinishedMessage) await player.lastFinishedMessage.delete().catch(() => {})
     if (player.stopped) {
       delete servers[message.guild.id]
       message.channel.send($.embed("Player has been reset.")).then(m => m.delete({
@@ -596,6 +598,7 @@ Music.prototype._processFinish = async function(connection) {
   )
 
   if (player.status == "reset") {
+    await player.lastFinishedMessage.delete().catch(() => {})
     delete servers[message.guild.id]
     message.channel.send($.embed("Player has been reset."))
   } else if (!player.stopped) {
