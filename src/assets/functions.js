@@ -53,7 +53,7 @@ $.embed = (message) => {
 }
 
 $.isOwner = (id) => {
-  return process.env.OWNER_ID.split(",").indexOf(id) > -1
+  return bot.env.OWNER_ID.split(",").indexOf(id) > -1
 }
 
 $.processDatabase = (guilds) => {
@@ -63,7 +63,7 @@ $.processDatabase = (guilds) => {
       if (!items.find((x) => x.server_id == guilds[i])) {
         await db.collection("servers").insert({
           server_id: guilds[i],
-          prefix: process.env.PREFIX,
+          prefix: bot.env.PREFIX,
           deleteoncmd: false,
           strictmode: false,
           aliases: [],
@@ -244,7 +244,7 @@ $.getSpotifyToken = () => {
       var json = await $.fetchJSON('https://accounts.spotify.com/api/token', {
         method: 'POST',
         headers: {
-          'Authorization': `Basic ${new Buffer(process.env.SPOTIFY_CLIENT_ID + ':' + process.env.SPOTIFY_CLIENT_SECRET).toString('base64')}`,
+          'Authorization': `Basic ${new Buffer(bot.env.SPOTIFY_CLIENT_ID + ':' + bot.env.SPOTIFY_CLIENT_SECRET).toString('base64')}`,
           'Accept': 'application/json',
           'Content-Type': 'application/x-www-form-urlencoded'
         },

@@ -478,7 +478,7 @@ Administration.prototype.update = function() {
     .setFooter(bot.user.tag, bot.user.displayAvatarURL())
     .setAuthor("GitLab Update", "https://i.gifer.com/DgvQ.gif")
 
-  exec(`${process.env.GIT_PATH}git remote show origin`, async (err, stdout, stderr) => {
+  exec(`${bot.env.GIT_PATH}git remote show origin`, async (err, stdout, stderr) => {
     if (stdout.indexOf("out of date") == -1) {
       message.channel.send($.embed().setFooter(bot.user.tag, bot.user.displayAvatarURL())
         .setAuthor("GitLab Update", "https://i.gifer.com/DgvQ.gif")
@@ -496,8 +496,8 @@ Administration.prototype.update = function() {
         if (ans == "n") throw "no"
         await msg.edit(embed.setDescription("Updating...")).catch(() => {})
 
-        exec(`${process.env.GIT_PATH}git pull`, async (err, stdout, stderr) => {
-          await execute(`export PATH=$PATH:${process.env.NODE_PATH} && npm i`)
+        exec(`${bot.env.GIT_PATH}git pull`, async (err, stdout, stderr) => {
+          await execute(`export PATH=$PATH:${bot.env.NODE_PATH} && npm i`)
           await msg.edit(embed.setDescription("Would you like to restart the bot? (y | n)")).catch(() => {})
           message.channel.awaitMessages((m) => (m.content.toLowerCase() == "y" || m.content.toLowerCase() == "n") && m.author.id === message.author.id, {
             max: 1,

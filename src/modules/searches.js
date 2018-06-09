@@ -12,11 +12,11 @@ const SteamID = require('steamid');
 const GoogleSearch = require('google-search')
 const translate = require('google-translate-api');
 const googleSearch = new GoogleSearch({
-  key: process.env.GOOGLE_API,
+  key: bot.env.GOOGLE_API,
   cx: '010420937032738550228:8287l8l_wec'
 })
 const GoogleImages = require('google-images')
-const googleImages = new GoogleImages('010420937032738550228:8287l8l_wec', process.env.GOOGLE_API)
+const googleImages = new GoogleImages('010420937032738550228:8287l8l_wec', bot.env.GOOGLE_API)
 const ud = require('urban-dictionary')
 
 class Searches {
@@ -480,7 +480,7 @@ Searches.prototype.lyrics = async function(args) {
       var i = reactionlist.indexOf(collected.first()._emoji.name)
       msg.delete().catch(() => {})
       msg = await message.channel.send($.embed("Processing..."))
-      var proxy = process.env.PROXY.split(":")
+      var proxy = bot.env.PROXY.split(":")
       html = await $.fetchHTML(lyricSearchList[i].url, {
         agent: proxy[0] ? new HttpsProxyAgent({
           host: proxy[0],

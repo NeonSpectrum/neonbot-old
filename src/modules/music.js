@@ -10,7 +10,7 @@ const ytdl = require('ytdl-core')
 const $ = require('../assets/functions')
 
 const Youtube = require('simple-youtube-api')
-const yt = new Youtube(process.env.GOOGLE_API)
+const yt = new Youtube(bot.env.GOOGLE_API)
 
 const spotifyUri = require('spotify-uri');
 

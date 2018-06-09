@@ -1,6 +1,6 @@
-require('dotenv').config()
 const fs = require('fs')
 const reload = require('require-reload')(require)
+const dotenv = require('dotenv')
 const moment = require('moment')
 const fetch = require('node-fetch')
 const colors = require('colors/safe')
@@ -14,7 +14,9 @@ var Admin, Util, Music, Search, Games, Events
 var loaded = false,
   time = new Date()
 
-if (!process.env.TOKEN || !process.env.PREFIX || !process.env.OWNER_ID) {
+bot.env = dotenv.parse(fs.readFileSync('./.env'))
+
+if (!bot.env.TOKEN || !bot.env.PREFIX || !bot.env.OWNER_ID) {
   $.warn("Missing Credentials in environment...", false)
   process.exit(10)
 }
@@ -22,13 +24,13 @@ if (!process.env.TOKEN || !process.env.PREFIX || !process.env.OWNER_ID) {
 displayAscii()
 $.log(`Starting ${package.name} v${package.version}`)
 
-MongoClient.connect(`mongodb://${process.env.DB_USER}:${process.env.DB_PASS}@${process.env.DB_HOST}/${process.env.DB_NAME}`, async (err, client) => {
+MongoClient.connect(`mongodb://${bot.env.DB_USER}:${bot.env.DB_PASS}@${bot.env.DB_HOST}/${bot.env.DB_NAME}`, async (err, client) => {
   if (err) {
-    $.warn(`${err}\nFailed to establish connection to ${process.env.DB_HOST}`, false)
+    $.warn(`${err}\nFailed to establish connection to ${bot.env.DB_HOST}`, false)
     process.exit(10)
   }
-  $.log(`MongoDB connection established on ${process.env.DB_HOST} in ${((Date.now() - time) / 1000).toFixed(2)} secs.\n`)
-  var db = client.db(process.env.DB_NAME)
+  $.log(`MongoDB connection established on ${bot.env.DB_HOST} in ${((Date.now() - time) / 1000).toFixed(2)} secs.\n`)
+  var db = client.db(bot.env.DB_NAME)
   bot.db = db
 
   time = new Date()
@@ -46,7 +48,7 @@ MongoClient.connect(`mongodb://${process.env.DB_USER}:${process.env.DB_PASS}@${p
 
   $ = reload('./assets/functions')
 
-  bot.login(process.env.TOKEN)
+  bot.login(bot.env.TOKEN)
 })
 
 bot.on('ready', async () => {
@@ -62,7 +64,7 @@ bot.on('ready', async () => {
 
   $.log(`Logged in as ${bot.user.tag}\n`)
 
-  if (process.env.message == "updated") {
+  if (bot.env.message == "updated") {
     fs.readFile('updateid.txt', 'utf8', function(err, data) {
       bot.channels.get(data).send($.embed()
         .setFooter(bot.user.tag, bot.user.displayAvatarURL())
@@ -78,12 +80,12 @@ bot.on('ready', async () => {
     var usersize = bot.guilds.get(guilds[i]).members.size
     $.log(`Connected to "${bot.guilds.get(guilds[i]).name}" with ${channelsize} ${channelsize == 1 ? "channel" : "channels"} and ${usersize} ${usersize == 1 ? "user" : "users"}${i == bot.guilds.size - 1 ? "\n" : ""}`)
     var conf = $.getServerConfig(guilds[i])
-    if (conf.channel.debug && process.env.message && process.env.message != "updated") {
+    if (conf.channel.debug && bot.env.message && bot.env.message != "updated") {
       var temp = $.embed().setFooter(bot.user.tag, bot.user.displayAvatarURL())
-      if (process.env.message == "crashed") {
+      if (bot.env.message == "crashed") {
         temp.setAuthor("Error", "https://i.imgur.com/1vOMHlr.png")
           .setDescription("Server Crashed. Restarted.")
-      } else if (process.env.message == "restarted") {
+      } else if (bot.env.message == "restarted") {
         temp.setAuthor("Restarted!")
       }
       bot.channels.get(conf.channel.debug).send(temp)
@@ -225,6 +227,7 @@ bot.loadModules = (renew) => {
 
     try {
       if (renew) {
+        bot.env = dotenv.parse(fs.readFileSync('./.env'))
         $.log(`Loading Functions Module...`)
         $ = reload('./assets/functions')
         await $.refreshServerConfig()
