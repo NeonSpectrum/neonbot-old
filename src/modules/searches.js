@@ -477,8 +477,9 @@ Searches.prototype.lyrics = async function(args) {
       time: 15000,
       errors: ['time']
     }).then(async (collected) => {
-      var i = reactionlist.indexOf(collected.first()._emoji.name)
-      msg.delete().catch(() => {})
+      collected.first().message.delete().catch(() => {})
+      if (collected.first().emoji.name == "🗑") return
+      var i = reactionlist.indexOf(collected.first().emoji.name)
       msg = await message.channel.send($.embed("Processing..."))
       var proxy = bot.env.PROXY.split(":")
       html = await $.fetchHTML(lyricSearchList[i].url, {
@@ -506,7 +507,7 @@ Searches.prototype.lyrics = async function(args) {
     }).catch((err) => {
       $.warn(err)
       msg.delete().catch(() => {})
-    });
+    })
     for (var i = 0; i < reactionlist.length; i++) {
       try {
         await msg.react(reactionlist[i])

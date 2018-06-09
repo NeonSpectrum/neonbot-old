@@ -204,14 +204,14 @@ Music.prototype.play = async function(args) {
       if (collected.first().emoji.name == "🗑") return
       var i = reactionlist.indexOf(collected.first().emoji.name)
       message.channel.send($.embed(songSearchList[i].title).setTitle(`You have selected #${i+1}. Adding song to queue #${player.queue.length+1}`))
-        .then(msg => msg.delete({
+        .then(m => m.delete({
           timeout: 5000
         }).catch(() => {}))
       this._addToQueue(await ytdl.getInfo(songSearchList[i].url))
       connect()
     }).catch(() => {
       msg.delete().catch(() => {})
-    });
+    })
     for (var i = 0; i < reactionlist.length; i++) {
       try {
         await msg.react(reactionlist[i])
