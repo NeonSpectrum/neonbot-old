@@ -96,15 +96,13 @@ Administration.prototype.ban = function (args) {
 
 Administration.prototype.prune = async function (args) {
   const message = this.message
-  const server = this.server
 
   await message.delete().catch(() => {})
   if (message.mentions.users.first()) {
-    if (!args[1] || !Number.isInteger(+args[1])) return message.channel.send($.embed(`Invalid Parameters ${server.config.prefix}clear <user> <1-100>`))
-    else if (args[1] > 100 && args[1] < 1) return message.channel.send($.embed('Parameters must be `1-100`.'))
-
-    let msg = await message.channel.send($.embed(`Please wait while I'm deleting ${args[1]} ${message.mentions.users.first().username}'s ${args[0] === 1 ? 'message' : 'messages'}...`))
-    await bulkDeleteMessagesFrom(message.mentions.users.first().id, message.channel, +args[1])
+    if (args[1] && args[1] > 100 && args[1] < 1) return message.channel.send($.embed('Parameters must be `1-100`.'))
+    let count = +args[1] || 10
+    let msg = await message.channel.send($.embed(`Please wait while I'm deleting ${count} ${message.mentions.users.first().username}'s ${count === 1 ? 'message' : 'messages'}...`))
+    await bulkDeleteMessagesFrom(message.mentions.users.first().id, message.channel, count)
     msg.edit($.embed(`Done deleting ${message.mentions.users.first().username}'s ${args[0] === 1 ? 'message' : 'messages'}.`)).then(s => s.delete({
       timeout: 3000
     }).catch(() => {}))
@@ -116,18 +114,19 @@ Administration.prototype.prune = async function (args) {
     await bulkDeleteMessagesFrom(bot.user.id, message.channel, 10, {
       filter: msg.id
     })
-    msg.edit($.embed('Done deleting bot messages.')).then(s => s.delete({
+    msg.edit($.embed('Done deleting bot messages.')).then(m => m.delete({
       timeout: 3000
     }).catch(() => {})).catch(() => {})
   }
 
   async function bulkDeleteMessagesFrom (user, channel, length, options) {
     return new Promise(async (resolve, reject) => {
-      var count = 0
+      let count = 0
       do {
-        var temp = await channel.messages.fetch({
+        let temp = await channel.messages.fetch({
           limit: 100
         })
+        if (temp.size === 0) break
         temp = temp.filter(s => s.author.id === user && (options && options.filter ? s.id !== options.filter : true))
         temp = Array.from(temp.keys()).slice(0, length - count)
         await channel.bulkDelete(temp).catch(() => {})

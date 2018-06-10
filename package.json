@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node src/bot.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "ffmpeg": "npm i ffmpeg-binaries -g"
+    "ffmpeg": "npm i ffmpeg-binaries --no-save"
   },
   "author": "NeonSpectrum",
   "license": "MIT",
