@@ -1,28 +1,27 @@
 const fs = require('fs')
 const reload = require('require-reload')(require)
 const dotenv = require('dotenv')
-const moment = require('moment')
 const fetch = require('node-fetch')
 const colors = require('colors/safe')
-const bot = new(require("discord.js")).Client()
+const bot = new (require('discord.js')).Client()
 const MongoClient = require('mongodb').MongoClient
-const package = reload("../package")
 
 var $ = reload('./assets/functions')
-var Admin, Util, Music, Search, Games, Events
+var Administration, Utilities, Music, Searches, Games, Events
 
-var loaded = false,
-  time = new Date()
+var loaded = false
+var time = new Date()
 
 bot.env = dotenv.parse(fs.readFileSync('./.env'))
+bot.package = reload('../package')
 
 if (!bot.env.TOKEN || !bot.env.PREFIX || !bot.env.OWNER_ID) {
-  $.warn("Missing Credentials in environment...", false)
+  $.warn('Missing Credentials in environment...', false)
   process.exit(10)
 }
 
 displayAscii()
-$.log(`Starting ${package.name} v${package.version}`)
+$.log(`Starting ${bot.package.name} v${bot.package.version}`)
 
 MongoClient.connect(`mongodb://${bot.env.DB_USER}:${bot.env.DB_PASS}@${bot.env.DB_HOST}/${bot.env.DB_NAME}`, async (err, client) => {
   if (err) {
@@ -34,13 +33,13 @@ MongoClient.connect(`mongodb://${bot.env.DB_USER}:${bot.env.DB_PASS}@${bot.env.D
   bot.db = db
 
   time = new Date()
-  var items = await db.collection("settings").find({}).toArray()
-  if (items.length == 0) {
+  var items = await db.collection('settings').find({}).toArray()
+  if (items.length === 0) {
     items = (await db.collection('settings').insert({
-      status: "online",
+      status: 'online',
       game: {
-        type: "",
-        name: ""
+        type: '',
+        name: ''
       }
     })).ops
   }
@@ -53,6 +52,7 @@ MongoClient.connect(`mongodb://${bot.env.DB_USER}:${bot.env.DB_PASS}@${bot.env.D
 
 bot.on('ready', async () => {
   bot.eventList = []
+  bot.commandExecuted = 0
 
   var guilds = Array.from(bot.guilds.keys())
   await $.processDatabase(guilds)
@@ -64,29 +64,30 @@ bot.on('ready', async () => {
 
   $.log(`Logged in as ${bot.user.tag}\n`)
 
-  if (bot.env.message == "updated") {
-    fs.readFile('updateid.txt', 'utf8', function(err, data) {
+  if (bot.env.message === 'updated') {
+    fs.readFile('updateid.txt', 'utf8', function (err, data) {
+      if (err) return $.warn(err)
       bot.channels.get(data).send($.embed()
         .setFooter(bot.user.tag, bot.user.displayAvatarURL())
-        .setAuthor("GitLab Update", "https://i.gifer.com/DgvQ.gif")
-        .setDescription("Updated!")
+        .setAuthor('GitLab Update', 'https://i.gifer.com/DgvQ.gif')
+        .setDescription('Updated!')
       )
-      fs.unlink('updateid.txt', function() {})
-    });
+      fs.unlink('updateid.txt', function () {})
+    })
   }
 
   for (var i = 0; i < bot.guilds.size; i++) {
-    var channelsize = bot.guilds.get(guilds[i]).channels.filter(s => s.type != "category").size
+    var channelsize = bot.guilds.get(guilds[i]).channels.filter(s => s.type !== 'category').size
     var usersize = bot.guilds.get(guilds[i]).members.size
-    $.log(`Connected to "${bot.guilds.get(guilds[i]).name}" with ${channelsize} ${channelsize == 1 ? "channel" : "channels"} and ${usersize} ${usersize == 1 ? "user" : "users"}${i == bot.guilds.size - 1 ? "\n" : ""}`)
+    $.log(`Connected to "${bot.guilds.get(guilds[i]).name}" with ${channelsize} ${channelsize === 1 ? 'channel' : 'channels'} and ${usersize} ${usersize === 1 ? 'user' : 'users'}${i === bot.guilds.size - 1 ? '\n' : ''}`)
     var conf = $.getServerConfig(guilds[i])
-    if (conf.channel.debug && bot.env.message && bot.env.message != "updated") {
+    if (conf.channel.debug && bot.env.message && bot.env.message !== 'updated') {
       var temp = $.embed().setFooter(bot.user.tag, bot.user.displayAvatarURL())
-      if (bot.env.message == "crashed") {
-        temp.setAuthor("Error", "https://i.imgur.com/1vOMHlr.png")
-          .setDescription("Server Crashed. Restarted.")
-      } else if (bot.env.message == "restarted") {
-        temp.setAuthor("Restarted!")
+      if (bot.env.message === 'crashed') {
+        temp.setAuthor('Error', 'https://i.imgur.com/1vOMHlr.png')
+          .setDescription('Server Crashed. Restarted.')
+      } else if (bot.env.message === 'restarted') {
+        temp.setAuthor('Restarted!')
       }
       bot.channels.get(conf.channel.debug).send(temp)
     }
@@ -119,26 +120,26 @@ bot.on('message', async message => {
   var server = $.getServerConfig(message.guild.id)
   if (!loaded) return
   if (message.author.bot) return
-  if (message.channel.type === "dm") {
-    if (message.content.trim() == "invite") {
+  if (message.channel.type === 'dm') {
+    if (message.content.trim() === 'invite') {
       bot.generateInvite(['ADMINISTRATOR'])
         .then(link => {
           message.reply(`Generated bot invite link: ${link}`)
-        });
+        })
     }
     return
   }
-  if (!$.isOwner(message.author.id) && message.member.roles.filter(s => s.name != "@everyone").size == 0 && server.strictmode) {
-    message.channel.send($.embed("You must have at least one role to command me."))
+  if (!$.isOwner(message.author.id) && message.member.roles.filter(s => s.name !== '@everyone').size === 0 && server.strictmode) {
+    message.channel.send($.embed('You must have at least one role to command me.'))
     return
   }
 
-  if (message.content.startsWith(bot.user.toString().replace("@", "@!"))) {
-    var content = message.content.replace(bot.user.toString().replace("@", "@!"), "").trim()
+  if (message.content.startsWith(bot.user.toString().replace('@', '@!'))) {
+    var content = message.content.replace(bot.user.toString().replace('@', '@!'), '').trim()
     if (content) {
-      const response = await fetch(`https://program-o.com/v3/chat.php?say=${content}`);
-      const json = await response.json();
-      message.channel.send($.embed(`${message.author.toString()} ${json.conversation.say.bot}`));
+      const response = await fetch(`https://program-o.com/v3/chat.php?say=${content}`)
+      const json = await response.json()
+      message.channel.send($.embed(`${message.author.toString()} ${json.conversation.say.bot}`))
     }
   }
 
@@ -150,7 +151,7 @@ bot.on('message', async message => {
   var cmd = messageArray[0].substring(server.prefix.length).toLowerCase()
   var args = messageArray.slice(1)
 
-  if (cmd.startsWith("_")) return
+  if (cmd.startsWith('_')) return
 
   switch (getModule(cmd)) {
     case 'admin':
@@ -163,35 +164,36 @@ bot.on('message', async message => {
       var music = new Music(message)
       music[cmd](args)
       break
-    case "util":
+    case 'util':
       processBeforeCommand()
       var utils = new Utilities(message)
       utils[cmd](args)
       break
-    case "search":
+    case 'search':
       processBeforeCommand()
       var search = new Searches(message)
       search[cmd](args)
       break
-    case "games":
+    case 'games':
       processBeforeCommand()
       var games = new Games(message)
       games[cmd](args)
       break
   }
 
-  function processBeforeCommand() {
+  function processBeforeCommand () {
     if (server.deleteoncmd) {
       message.delete().catch(() => {})
     }
-    $.log("Command Executed " + message.content.trim(), message)
+    bot.commandExecuted += 1
+    $.log('Command Executed ' + message.content.trim(), message)
   }
 
-  function alias(msg) {
+  function alias (msg) {
     return new Promise(resolve => {
-      var alias = server.aliases.filter(x => x.name == msg)[0]
+      var alias = server.aliases.filter(x => x.name === msg)[0]
       if (alias) {
-        alias.cmd = alias.cmd.replace("{0}", server.prefix)
+        alias.cmd = alias.cmd.replace('{0}', server.prefix)
         message.channel.send($.embed(`Executing \`${alias.cmd}\``)).then(m => {
           m.delete({
             timeout: 3000
@@ -206,12 +208,12 @@ bot.on('message', async message => {
 })
 
 bot.on('error', (err) => {
-  $.warn("Bot Error: " + err)
+  $.warn('Bot Error: ' + err)
 })
 
 process.on('uncaughtException', (err) => {
-  $.warn("Uncaught Exception: " + (err.stack || err))
-});
+  $.warn('Uncaught Exception: ' + (err.stack || err))
+})
 
 bot.loadModules = (renew) => {
   return new Promise(async resolve => {
@@ -219,7 +221,7 @@ bot.loadModules = (renew) => {
     time = new Date()
 
     if (!renew) {
-      var modules = ["games", "music", "events"]
+      var modules = ['games', 'music', 'events']
       for (var i = 0; i < modules.length; i++) {
         bot[modules[i]] = {}
       }
@@ -228,6 +230,7 @@ bot.loadModules = (renew) => {
     try {
       if (renew) {
         bot.env = dotenv.parse(fs.readFileSync('./.env'))
+        bot.package = reload('../package')
         $.log(`Loading Functions Module...`)
         $ = reload('./assets/functions')
         await $.refreshServerConfig()
@@ -249,11 +252,11 @@ bot.loadModules = (renew) => {
     }
 
     bot.modules = {
-      "admin": getAllFuncs(new Administration()),
-      "music": getAllFuncs(new Music()),
-      "util": getAllFuncs(new Utilities()),
-      "search": getAllFuncs(new Searches()),
-      "games": getAllFuncs(new Games())
+      'admin': getAllFuncs(new Administration()),
+      'music': getAllFuncs(new Music()),
+      'util': getAllFuncs(new Utilities()),
+      'search': getAllFuncs(new Searches()),
+      'games': getAllFuncs(new Games())
     }
 
     $.log(`Loaded All Modules in ${((Date.now() - time) / 1000).toFixed(2)} secs.\n`)
@@ -263,43 +266,44 @@ bot.loadModules = (renew) => {
 }
 
 bot.loadEvents = () => {
-  bot.on("voiceStateUpdate", (x, y) => {
+  bot.on('voiceStateUpdate', (x, y) => {
     Events.voiceStateUpdate(x, y)
   })
-  bot.on("presenceUpdate", (x, y) => {
+  bot.on('presenceUpdate', (x, y) => {
     Events.presenceUpdate(x, y)
   })
-  bot.on("guildMemberAdd", (x) => {
+  bot.on('guildMemberAdd', (x) => {
     Events.guildMemberAdd(x)
   })
-  bot.on("guildMemberRemove", (x) => {
+  bot.on('guildMemberRemove', (x) => {
     Events.guildMemberRemove(x)
   })
-  bot.on("guildCreate", (x) => {
+  bot.on('guildCreate', (x) => {
     Events.guildCreate(x)
   })
-  bot.on("messageDelete", (x) => {
+  bot.on('messageDelete', (x) => {
     Events.messageDelete(x)
   })
 }
 
-function getModule(command) {
+function getModule (command) {
   var modules = bot.modules
   var modulekeys = Object.keys(modules)
   for (var i = 0; i < modulekeys.length; i++) {
     var commandkeys = modules[Object.keys(modules)[i]]
     for (var j = 0; j < commandkeys.length; j++) {
-      if (command === commandkeys[j])
+      if (command === commandkeys[j]) {
         return Object.keys(modules)[i]
+      }
     }
   }
 }
 
-function getAllFuncs(obj) {
-  return Object.getOwnPropertyNames(Object.getPrototypeOf(obj)).filter((x) => x != "constructor" && !x.startsWith("_"))
+function getAllFuncs (obj) {
+  return Object.getOwnPropertyNames(Object.getPrototypeOf(obj)).filter((x) => x !== 'constructor' && !x.startsWith('_'))
 }
 
-function displayAscii() {
+function displayAscii () {
   console.log(colors.rainbow(`
  __    _  _______  _______  __    _  _______  _______  _______   
 |  |  | ||       ||       ||  |  | ||  _    ||       ||       |

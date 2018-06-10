@@ -5,14 +5,12 @@
   "main": "src/bot.js",
   "scripts": {
     "start": "node src/bot.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "ffmpeg": "npm i ffmpeg-binaries -g"
   },
   "author": "NeonSpectrum",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
-    "ffmpeg-binaries": "^3.2.2-3"
-  },
-  "devDependencies": {
     "bufferutil": "^3.0.4",
     "cheerio": "^1.0.0-rc.2",
     "child_process": "^1.0.2",
@@ -33,7 +31,6 @@
     "mongodb": "^3.0.7",
     "node-fetch": "^2.1.2",
     "node-opus": "^0.2.7",
-    "npm": "^5.10.0",
     "overwatch-js": "^1.7.0",
     "pokemon": "^1.2.2",
     "prism-media": "^0.2.1",
@@ -45,5 +42,8 @@
     "urban-dictionary": "^1.0.6",
     "uws": "^9.148.0",
     "ytdl-core": "^0.20.2"
+  },
+  "engines": {
+    "node": ">=8.0.0"
   }
 }
