@@ -2,21 +2,21 @@ require('dotenv').config()
 var { spawn } = require('child_process')
 
 var env = {}
-
-;(function run () {
+;(function run() {
   var child = spawn(`${process.env.NODE_PATH}node`, ['src/bot'], {
-    env: env
+    env: env,
+    PATH: process.env.PATH
   })
 
-  child.stdout.on('data', function (data) {
+  child.stdout.on('data', function(data) {
     process.stdout.write(data.toString())
   })
 
-  child.stderr.on('data', function (data) {
+  child.stderr.on('data', function(data) {
     process.stdout.write(data.toString())
   })
 
-  child.on('close', function (code) {
+  child.on('close', function(code) {
     switch (code) {
       case 10:
         return
