@@ -1,16 +1,12 @@
 require('dotenv').config()
 var { spawn } = require('child_process')
 
-var env = {}
+var env = process.env
 
 function run() {
-  var child = spawn(
-    `export PATH=$PATH:${process.env.PATH} && ${process.env.NODE_PATH}node`,
-    ['src/bot'],
-    {
-      env: env
-    }
-  )
+  var child = spawn(`node`, ['src/bot'], {
+    env: env
+  })
 
   child.stdout.on('data', function(data) {
     process.stdout.write(data.toString())
