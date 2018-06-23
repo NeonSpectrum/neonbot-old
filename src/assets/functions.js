@@ -17,35 +17,46 @@ var $ = {}
 
 $.log = (content, message) => {
   if (message) {
-    console.log(`${colors.yellow('------ ' + moment().format('YYYY-MM-DD hh:mm:ss A') + ' ------')}
+    console.log(`${colors.yellow(
+      '------ ' + moment().format('YYYY-MM-DD hh:mm:ss A') + ' ------'
+    )}
    ${colors.cyan('Guild')}: ${message.channel.guild.name}
    ${colors.cyan('Channel')}: ${message.channel.name}
    ${colors.cyan('User')}: ${message.author.tag}
    ${colors.cyan('Message')}: ${content}
 `)
   } else {
-    console.log(`${colors.yellow(moment().format('YYYY-MM-DD hh:mm:ss A'))} | ${colors.cyan(content)}`)
+    console.log(
+      `${colors.yellow(
+        moment().format('YYYY-MM-DD hh:mm:ss A')
+      )} | ${colors.cyan(content)}`
+    )
   }
 }
 
 $.warn = (message, send = true) => {
-  console.log(`${colors.yellow(moment().format('YYYY-MM-DD hh:mm:ss A'))} | ${colors.red(message)}`)
+  console.log(
+    `${colors.yellow(moment().format('YYYY-MM-DD hh:mm:ss A'))} | ${colors.red(
+      message
+    )}`
+  )
   if (send) {
     var guilds = Array.from(bot.guilds.keys())
     for (var i = 0; i < guilds.length; i++) {
       var conf = $.getServerConfig(guilds[i])
       if (conf.channel.debug) {
-        bot.channels.get(conf.channel.debug).send($.embed()
-          .setAuthor('Error', 'https://i.imgur.com/1vOMHlr.png')
-          .setDescription(message)
-          .setFooter(bot.user.tag, bot.user.displayAvatarURL())
+        bot.channels.get(conf.channel.debug).send(
+          $.embed()
+            .setAuthor('Error', 'https://i.imgur.com/1vOMHlr.png')
+            .setDescription(message)
+            .setFooter(bot.user.tag, bot.user.displayAvatarURL())
         )
       }
     }
   }
 }
 
-$.embed = (message) => {
+$.embed = message => {
   var e = new Discord.MessageEmbed().setColor('#59ABE3')
   if (message) {
     e.setDescription(message)
@@ -53,15 +64,18 @@ $.embed = (message) => {
   return e
 }
 
-$.isOwner = (id) => {
+$.isOwner = id => {
   return bot.env.OWNER_ID.split(',').indexOf(id) > -1
 }
 
-$.processDatabase = (guilds) => {
+$.processDatabase = guilds => {
   return new Promise(async (resolve, reject) => {
-    var items = await db.collection('servers').find({}).toArray()
+    var items = await db
+      .collection('servers')
+      .find({})
+      .toArray()
     for (var i = 0; i < guilds.length; i++) {
-      if (!items.find((x) => x.server_id === guilds[i])) {
+      if (!items.find(x => x.server_id === guilds[i])) {
         await db.collection('servers').insert({
           server_id: guilds[i],
           prefix: bot.env.PREFIX,
@@ -87,15 +101,18 @@ $.processDatabase = (guilds) => {
 
 $.refreshConfig = () => {
   return new Promise((resolve, reject) => {
-    db.collection('settings').find({}).toArray((err, items) => {
-      if (err) return $.warn(err)
-      bot.config = items[0]
-      resolve()
-    })
+    db
+      .collection('settings')
+      .find({})
+      .toArray((err, items) => {
+        if (err) return $.warn(err)
+        bot.config = items[0]
+        resolve()
+      })
   })
 }
 
-$.getServerConfig = (id) => {
+$.getServerConfig = id => {
   for (var i = 0; i < servers.length; i++) {
     if (servers[i].server_id === id) {
       return servers[i]
@@ -105,100 +122,127 @@ $.getServerConfig = (id) => {
 
 $.refreshServerConfig = () => {
   return new Promise((resolve, reject) => {
-    db.collection('servers').find({}).toArray((err, items) => {
-      if (err) return $.warn(err)
-      servers = items
-      resolve()
-    })
+    db
+      .collection('servers')
+      .find({})
+      .toArray((err, items) => {
+        if (err) return $.warn(err)
+        servers = items
+        resolve()
+      })
   })
 }
 
-$.updateConfig = (options) => {
+$.updateConfig = options => {
   return new Promise((resolve, reject) => {
-    db.collection('settings').update({}, {
-      $set: options
-    }, async (err, res) => {
-      if (err) $.warn(err)
-      resolve()
-    })
+    db.collection('settings').update(
+      {},
+      {
+        $set: options
+      },
+      async (err, res) => {
+        if (err) $.warn(err)
+        resolve()
+      }
+    )
   })
 }
 
 $.updateServerConfig = (id, options) => {
   return new Promise((resolve, reject) => {
-    db.collection('servers').update({
-      server_id: id
-    }, {
-      $set: options
-    }, async (err, res) => {
-      if (err) $.warn(err)
-      await $.refreshServerConfig()
-      resolve($.getServerConfig(id))
-    })
+    db.collection('servers').update(
+      {
+        server_id: id
+      },
+      {
+        $set: options
+      },
+      async (err, res) => {
+        if (err) $.warn(err)
+        await $.refreshServerConfig()
+        resolve($.getServerConfig(id))
+      }
+    )
   })
 }
 
 $.addAlias = (id, owner, args) => {
   return new Promise((resolve, reject) => {
-    db.collection('servers').update({
-      server_id: id
-    }, {
-      $push: {
-        aliases: {
-          name: args[0],
-          cmd: args.slice(1).join(' '),
-          owner: owner
+    db.collection('servers').update(
+      {
+        server_id: id
+      },
+      {
+        $push: {
+          aliases: {
+            name: args[0],
+            cmd: args.slice(1).join(' '),
+            owner: owner
+          }
         }
+      },
+      async (err, res) => {
+        if (err) $.log(err)
+        await $.refreshServerConfig()
+        resolve($.getServerConfig(id))
       }
-    }, async (err, res) => {
-      if (err) $.log(err)
-      await $.refreshServerConfig()
-      resolve($.getServerConfig(id))
-    })
+    )
   })
 }
 
 $.editAlias = (id, alias) => {
   return new Promise((resolve, reject) => {
-    db.collection('servers').update({
-      server_id: id,
-      'aliases.name': alias.name
-    }, {
-      $set: {
-        'aliases.$': alias
+    db.collection('servers').update(
+      {
+        server_id: id,
+        'aliases.name': alias.name
+      },
+      {
+        $set: {
+          'aliases.$': alias
+        }
+      },
+      async (err, res) => {
+        if (err) return $.warn(err)
+        await $.refreshServerConfig()
+        resolve($.getServerConfig(id))
       }
-    }, async (err, res) => {
-      if (err) return $.warn(err)
-      await $.refreshServerConfig()
-      resolve($.getServerConfig(id))
-    })
+    )
   })
 }
 
 $.deleteAlias = (id, name) => {
   return new Promise((resolve, reject) => {
-    db.collection('servers').update({
-      server_id: id
-    }, {
-      $pull: {
-        aliases: {
-          name: name
+    db.collection('servers').update(
+      {
+        server_id: id
+      },
+      {
+        $pull: {
+          aliases: {
+            name: name
+          }
         }
+      },
+      async (err, res) => {
+        if (err) return $.warn(err)
+        await $.refreshServerConfig()
+        resolve($.getServerConfig(id))
       }
-    }, async (err, res) => {
-      if (err) return $.warn(err)
-      await $.refreshServerConfig()
-      resolve($.getServerConfig(id))
-    })
+    )
   })
 }
 
 $.storeMusicPlaylist = (id, arr) => {
   var content = [id.voice, id.msg].concat(arr)
-  fs.outputFile(`musiclist/${id.guild}.txt`, content.join('\r\n'), function () {})
+  fs.outputFile(
+    `musiclist/${id.guild}.txt`,
+    content.join('\r\n'),
+    function () {}
+  )
 }
 
-$.getMusicPlaylist = (id) => {
+$.getMusicPlaylist = id => {
   return new Promise((resolve, reject) => {
     var file = `musiclist/${id}.txt`
     if (fs.existsSync(file)) {
@@ -212,7 +256,7 @@ $.getMusicPlaylist = (id) => {
   })
 }
 
-$.removeMusicPlaylist = (id) => {
+$.removeMusicPlaylist = id => {
   var file = `musiclist/${id}.txt`
   if (fs.existsSync(file)) {
     fs.unlink(file, function () {})
@@ -247,8 +291,10 @@ $.getSpotifyToken = () => {
       var json = await $.fetchJSON('https://accounts.spotify.com/api/token', {
         method: 'POST',
         headers: {
-          'Authorization': `Basic ${Buffer.from(bot.env.SPOTIFY_CLIENT_ID + ':' + bot.env.SPOTIFY_CLIENT_SECRET).toString('base64')}`,
-          'Accept': 'application/json',
+          Authorization: `Basic ${Buffer.from(
+            bot.env.SPOTIFY_CLIENT_ID + ':' + bot.env.SPOTIFY_CLIENT_SECRET
+          ).toString('base64')}`,
+          Accept: 'application/json',
           'Content-Type': 'application/x-www-form-urlencoded'
         },
         body: 'grant_type=client_credentials'
@@ -263,8 +309,8 @@ $.getSpotifyToken = () => {
 $.formatSeconds = (secs, format) => {
   var secNum = parseInt(secs, 10)
   var hours = Math.floor(secNum / 3600)
-  var minutes = Math.floor((secNum - (hours * 3600)) / 60)
-  var seconds = secNum - (hours * 3600) - (minutes * 60)
+  var minutes = Math.floor((secNum - hours * 3600) / 60)
+  var seconds = secNum - hours * 3600 - minutes * 60
 
   if (hours < 10) {
     hours = '0' + hours
@@ -293,7 +339,7 @@ $.formatSeconds = (secs, format) => {
   }
 }
 
-$.convertToSeconds = (str) => {
+$.convertToSeconds = str => {
   var arr = str.split(':')
   if (arr.length === 3) {
     arr[0] = arr[0] * 3600
@@ -304,6 +350,6 @@ $.convertToSeconds = (str) => {
   return +arr.reduce((x, y) => +x + +y)
 }
 
-$.wait = (ms) => new Promise(resolve => setTimeout(resolve, ms))
+$.wait = ms => new Promise(resolve => setTimeout(resolve, ms))
 
 module.exports = $

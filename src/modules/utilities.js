@@ -12,7 +12,7 @@ class Utilities {
       }
       this.server = server
       this.message = message
-      this.log = (content) => {
+      this.log = content => {
         $.log(content, message)
       }
     }
@@ -24,7 +24,15 @@ Utilities.prototype.help = function (args) {
   const server = this.server
 
   if (help[args[0]]) {
-    message.channel.send($.embed().addField(`${args[0]} - ${help[args[0]].info}`, `\`Usage:\` \`${help[args[0]].usage.replace(/\{0\}/g, server.config.prefix)}\``))
+    message.channel.send(
+      $.embed().addField(
+        `${args[0]} - ${help[args[0]].info}`,
+        `\`Usage:\` \`${help[args[0]].usage.replace(
+          /\{0\}/g,
+          server.config.prefix
+        )}\``
+      )
+    )
   } else {
     message.channel.send($.embed('Cannot find command'))
   }
@@ -34,7 +42,11 @@ Utilities.prototype.cmds = function (args) {
   const message = this.message
   const server = this.server
 
-  if (!bot.modules[args[0]]) return message.channel.send($.embed(`Invalid Module. (${Object.keys(bot.modules).join(' | ')})`))
+  if (!bot.modules[args[0]]) {
+    return message.channel.send(
+      $.embed(`Invalid Module. (${Object.keys(bot.modules).join(' | ')})`)
+    )
+  }
 
   var command = bot.modules[args[0]]
   var modules
@@ -57,7 +69,12 @@ Utilities.prototype.cmds = function (args) {
   }
   var temp = $.embed().setTitle('📘 Command list for ' + modules)
   for (var i = 0; i < command.length; i++) {
-    temp.addField(`${command[i]} - ${(help[command[i]] && help[command[i]].info) || 'N/A'}`, `\`Usage:\` \`${(help[command[i]] && help[command[i]].usage.replace(/\{0\}/g, server.config.prefix)) || 'N/A'}\``)
+    temp.addField(
+      `${command[i]} - ${(help[command[i]] && help[command[i]].info) || 'N/A'}`,
+      `\`Usage:\` \`${(help[command[i]] &&
+        help[command[i]].usage.replace(/\{0\}/g, server.config.prefix)) ||
+        'N/A'}\``
+    )
   }
   message.channel.send(temp)
 }
@@ -65,9 +82,10 @@ Utilities.prototype.cmds = function (args) {
 Utilities.prototype.ping = function () {
   const message = this.message
 
-  message.channel.send($.embed()
-    .setDescription('Pong!')
-    .addField('Your ping is', Date.now() - message.createdTimestamp + ' ms')
+  message.channel.send(
+    $.embed()
+      .setDescription('Pong!')
+      .addField('Your ping is', Date.now() - message.createdTimestamp + ' ms')
   )
 }
 
@@ -79,21 +97,37 @@ Utilities.prototype.stats = function () {
   var usersize = 0
 
   for (let i = 0; i < guilds.length; i++) {
-    channelsize += bot.guilds.get(guilds[i]).channels.filter(s => s.type !== 'category').size
+    channelsize += bot.guilds
+      .get(guilds[i])
+      .channels.filter(s => s.type !== 'category').size
     usersize += bot.guilds.get(guilds[i]).members.size
   }
 
-  message.channel.send($.embed()
-    .setAuthor(`${bot.package.name} v${bot.package.version}`, bot.user.displayAvatarURL())
-    .addField('Username', bot.user.tag, true)
-    .addField('Created On', moment(bot.user.createdAt).format('MMM DD, YYYY hh:mm:ss A'), true)
-    .addField('Created By', 'NeonSpectrum', true)
-    .addField('Guilds', guilds.length, true)
-    .addField('Channels', channelsize, true)
-    .addField('Users', usersize, true)
-    .addField('Command Executed', bot.commandExecuted, true)
-    .addField('Ram Usage', `Approximately ${Math.round(process.memoryUsage().heapUsed / 1024 / 1024 * 100) / 100} MB`, true)
-    .addField('Uptime', $.formatSeconds(Math.floor(bot.uptime / 1000)), true)
+  message.channel.send(
+    $.embed()
+      .setAuthor(
+        `${bot.package.name} v${bot.package.version}`,
+        bot.user.displayAvatarURL()
+      )
+      .addField('Username', bot.user.tag, true)
+      .addField(
+        'Created On',
+        moment(bot.user.createdAt).format('MMM DD, YYYY hh:mm:ss A'),
+        true
+      )
+      .addField('Created By', 'NeonSpectrum', true)
+      .addField('Guilds', guilds.length, true)
+      .addField('Channels', channelsize, true)
+      .addField('Users', usersize, true)
+      .addField('Command Executed', bot.commandExecuted, true)
+      .addField(
+        'Ram Usage',
+        `Approximately ${Math.round(
+          process.memoryUsage().heapUsed / 1024 / 1024 * 100
+        ) / 100} MB`,
+        true
+      )
+      .addField('Uptime', $.formatSeconds(Math.floor(bot.uptime / 1000)), true)
   )
 }
 
@@ -114,13 +148,17 @@ Utilities.prototype.speak = function (args) {
 Utilities.prototype.serverinfo = function () {
   const message = this.message
 
-  message.channel.send($.embed()
-    .setThumbnail(message.guild.iconURL())
-    .addField('Server Name', message.guild.name)
-    .addField('Created On', message.guild.createdAt)
-    .addField('You Joined', message.member.joinedAt)
-    .addField('Total Channels', message.guild.channels.filter(s => s.type !== 'category').size)
-    .addField('Total Members', message.guild.memberCount)
+  message.channel.send(
+    $.embed()
+      .setThumbnail(message.guild.iconURL())
+      .addField('Server Name', message.guild.name)
+      .addField('Created On', message.guild.createdAt)
+      .addField('You Joined', message.member.joinedAt)
+      .addField(
+        'Total Channels',
+        message.guild.channels.filter(s => s.type !== 'category').size
+      )
+      .addField('Total Members', message.guild.memberCount)
   )
 }
 

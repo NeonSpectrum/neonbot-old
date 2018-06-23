@@ -1,11 +1,9 @@
 require('dotenv').config()
-var {
-  spawn
-} = require('child_process')
+var { spawn } = require('child_process')
 
-var env = {};
+var env = {}
 
-(function run () {
+;(function run () {
   var child = spawn(`${process.env.NODE_PATH}node`, ['src/bot'], {
     env: env
   })

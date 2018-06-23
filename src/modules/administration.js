@@ -21,7 +21,9 @@ class Administration {
 Administration.prototype.addrole = async function (args) {
   var message = this.message
 
-  if (!message.member.hasPermission('MANAGE_ROLES')) { return message.channel.send($.embed('Insufficient Permission.')) }
+  if (!message.member.hasPermission('MANAGE_ROLES')) {
+    return message.channel.send($.embed('Insufficient Permission.'))
+  }
 
   var user =
     message.guild.member(message.mentions.users.first()) ||
@@ -29,13 +31,17 @@ Administration.prototype.addrole = async function (args) {
 
   if (!user) return message.channel.send($.embed('User not found.'))
 
-  if (!args.slice(1).join(' ')) { return message.channel.send($.embed('Specify a role!')) }
+  if (!args.slice(1).join(' ')) {
+    return message.channel.send($.embed('Specify a role!'))
+  }
 
   var role = message.guild.roles.find(`name`, args.slice(1).join(' '))
 
   if (!role) return message.channel.send($.embed("Couldn't find that role."))
 
-  if (user.roles.has(role.id)) { return message.channel.send($.embed('They already have that role.')) }
+  if (user.roles.has(role.id)) {
+    return message.channel.send($.embed('They already have that role.'))
+  }
 
   await user.roles.add(role.id)
 
@@ -52,7 +58,9 @@ Administration.prototype.addrole = async function (args) {
 Administration.prototype.removerole = async function (args) {
   var message = this.message
 
-  if (!message.member.hasPermission('MANAGE_ROLES')) { return message.channel.send($.embed('Insufficient Permission.')) }
+  if (!message.member.hasPermission('MANAGE_ROLES')) {
+    return message.channel.send($.embed('Insufficient Permission.'))
+  }
 
   var user =
     message.guild.member(message.mentions.users.first()) ||
@@ -60,13 +68,17 @@ Administration.prototype.removerole = async function (args) {
 
   if (!user) return message.channel.send($.embed("Couldn't find that user."))
 
-  if (!args.slice(1).join(' ')) { return message.channel.send($.embed('Specify a role!')) }
+  if (!args.slice(1).join(' ')) {
+    return message.channel.send($.embed('Specify a role!'))
+  }
 
   var role = message.guild.roles.find(`name`, args.slice(1).join(' '))
 
   if (!role) return message.channel.send($.embed("Couldn't find that role."))
 
-  if (!user.roles.has(role.id)) { return message.channel.send($.embed("They don't have that role.")) }
+  if (!user.roles.has(role.id)) {
+    return message.channel.send($.embed("They don't have that role."))
+  }
 
   await user.role.remove(role.id)
 
@@ -80,7 +92,9 @@ Administration.prototype.removerole = async function (args) {
 Administration.prototype.ban = function (args) {
   var message = this.message
 
-  if (!message.member.hasPermission('BAN_MEMBERS')) { return message.channel.send($.embed('Insufficient Permission.')) }
+  if (!message.member.hasPermission('BAN_MEMBERS')) {
+    return message.channel.send($.embed('Insufficient Permission.'))
+  }
 
   var user = message.guild.member(
     message.mentions.users.first() || message.guild.members.get(args[0])
@@ -88,7 +102,9 @@ Administration.prototype.ban = function (args) {
 
   if (!user) return message.channel.send($.embed('User not found'))
 
-  if (user.id === bot.user.id) { return message.channel.send($.embed('You cannot ban me.')) }
+  if (user.id === bot.user.id) {
+    return message.channel.send($.embed('You cannot ban me.'))
+  }
 
   message.guild.member(user).ban(args.slice(1).join(' '))
 
@@ -111,7 +127,9 @@ Administration.prototype.prune = async function (args) {
 
   await message.delete().catch(() => {})
   if (message.mentions.users.first()) {
-    if (args[1] && args[1] > 100 && args[1] < 1) { return message.channel.send($.embed('Parameters must be `1-100`.')) }
+    if (args[1] && args[1] > 100 && args[1] < 1) {
+      return message.channel.send($.embed('Parameters must be `1-100`.'))
+    }
     let count = +args[1] || 10
     let msg = await message.channel.send(
       $.embed(
@@ -141,7 +159,9 @@ Administration.prototype.prune = async function (args) {
           .catch(() => {})
       )
   } else if (Number.isInteger(+args[0])) {
-    if (args[0] > 100 && args[0] < 1) { return message.channel.send($.embed('Parameters must be `1-100`.')) }
+    if (args[0] > 100 && args[0] < 1) {
+      return message.channel.send($.embed('Parameters must be `1-100`.'))
+    }
     message.channel.bulkDelete(+args[0]).catch(() => {})
   } else {
     let msg = await message.channel.send(
@@ -187,7 +207,9 @@ Administration.prototype.prune = async function (args) {
 Administration.prototype.kick = function (args) {
   const message = this.message
 
-  if (!message.member.hasPermission('KICK_MEMBERS')) { return message.channel.send($.embed('Insufficient Permission.')) }
+  if (!message.member.hasPermission('KICK_MEMBERS')) {
+    return message.channel.send($.embed('Insufficient Permission.'))
+  }
 
   var user = message.guild.member(
     message.mentions.users.first() || message.guild.members.get(args[0])
@@ -403,7 +425,9 @@ Administration.prototype.setavatar = function (args) {
     !args[0].match(
       /[-a-zA-Z0-9@:%_+.~#?&//=]{2,256}\.[a-z]{2,4}\b(\/[-a-zA-Z0-9@:%_+.~#?&//=]*)?/gi
     )
-  ) { return message.channel.send($.embed('Invalid URL.')) }
+  ) {
+    return message.channel.send($.embed('Invalid URL.'))
+  }
 
   bot.user
     .setAvatar(args[0])
@@ -580,8 +604,12 @@ Administration.prototype.vcrole = async function (args) {
       $.embed("You don't have a permission to set voice channel role.")
     )
   }
-  if (args[0] && !message.guild.roles.exists('name', args[0])) { return message.channel.send($.embed('Invalid Role Name.')) }
-  if (!message.member.voiceChannel) { return message.channel.send($.embed('You must be in a voice channel.')) }
+  if (args[0] && !message.guild.roles.exists('name', args[0])) {
+    return message.channel.send($.embed('Invalid Role Name.'))
+  }
+  if (!message.member.voiceChannel) {
+    return message.channel.send($.embed('You must be in a voice channel.'))
+  }
 
   server.config = await $.updateServerConfig(message.guild.id, {
     ['music.roles.' + message.member.voiceChannel.id]: args[0]
