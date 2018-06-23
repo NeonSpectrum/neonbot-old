@@ -5,7 +5,7 @@ const { Embeds: EmbedsMode } = require('discord-paginationembed')
 const $ = require('../assets/functions')
 
 class Administration {
-  constructor (message) {
+  constructor(message) {
     if (typeof message === 'object') {
       this.server = {
         config: $.getServerConfig(message.guild.id)
@@ -18,7 +18,7 @@ class Administration {
   }
 }
 
-Administration.prototype.addrole = async function (args) {
+Administration.prototype.addrole = async function(args) {
   var message = this.message
 
   if (!message.member.hasPermission('MANAGE_ROLES')) {
@@ -55,7 +55,7 @@ Administration.prototype.addrole = async function (args) {
   )
 }
 
-Administration.prototype.removerole = async function (args) {
+Administration.prototype.removerole = async function(args) {
   var message = this.message
 
   if (!message.member.hasPermission('MANAGE_ROLES')) {
@@ -89,7 +89,7 @@ Administration.prototype.removerole = async function (args) {
   )
 }
 
-Administration.prototype.ban = function (args) {
+Administration.prototype.ban = function(args) {
   var message = this.message
 
   if (!message.member.hasPermission('BAN_MEMBERS')) {
@@ -122,7 +122,7 @@ Administration.prototype.ban = function (args) {
   )
 }
 
-Administration.prototype.prune = async function (args) {
+Administration.prototype.prune = async function(args) {
   const message = this.message
 
   await message.delete().catch(() => {})
@@ -182,29 +182,34 @@ Administration.prototype.prune = async function (args) {
       .catch(() => {})
   }
 
-  async function bulkDeleteMessagesFrom (user, channel, length, options) {
+  async function bulkDeleteMessagesFrom(user, channel, length, options) {
     return new Promise(async (resolve, reject) => {
       let count = 0
       do {
-        let temp = await channel.messages.fetch({
-          limit: 100
-        })
-        if (temp.size === 0) break
-        temp = temp.filter(
-          s =>
-            s.author.id === user &&
-            (options && options.filter ? s.id !== options.filter : true)
-        )
-        temp = Array.from(temp.keys()).slice(0, length - count)
-        await channel.bulkDelete(temp).catch(() => {})
-        count += temp.length
+        try {
+          let temp = await channel.messages.fetch({
+            limit: 100
+          })
+          if (temp.size === 0) break
+          temp = temp.filter(
+            s =>
+              s.author.id === user &&
+              (options && options.filter ? s.id !== options.filter : true)
+          )
+          temp = Array.from(temp.keys()).slice(0, length - count)
+          await channel.bulkDelete(temp).catch(() => {})
+          count += temp.length
+        } catch (err) {
+          $.warn(err)
+          break
+        }
       } while (count !== length && temp.length !== 0)
       resolve(count)
     })
   }
 }
 
-Administration.prototype.kick = function (args) {
+Administration.prototype.kick = function(args) {
   const message = this.message
 
   if (!message.member.hasPermission('KICK_MEMBERS')) {
@@ -233,7 +238,7 @@ Administration.prototype.kick = function (args) {
   )
 }
 
-Administration.prototype.prefix = async function (args) {
+Administration.prototype.prefix = async function(args) {
   const message = this.message
   const server = this.server
 
@@ -258,7 +263,7 @@ Administration.prototype.prefix = async function (args) {
   message.channel.send($.embed(`Set to ${args[0]}`).setTitle('Prefix Set!'))
 }
 
-Administration.prototype.setnickname = function (args) {
+Administration.prototype.setnickname = function(args) {
   const message = this.message
 
   var member =
@@ -305,7 +310,7 @@ Administration.prototype.setnickname = function (args) {
     })
 }
 
-Administration.prototype.setname = function (args) {
+Administration.prototype.setname = function(args) {
   const message = this.message
 
   if (!$.isOwner(message.member.id)) {
@@ -331,7 +336,7 @@ Administration.prototype.setname = function (args) {
     })
 }
 
-Administration.prototype.setstatus = function (args) {
+Administration.prototype.setstatus = function(args) {
   const message = this.message
 
   if (!$.isOwner(message.member.id)) {
@@ -371,7 +376,7 @@ Administration.prototype.setstatus = function (args) {
     })
 }
 
-Administration.prototype.setgame = function (args) {
+Administration.prototype.setgame = function(args) {
   const message = this.message
 
   if (!$.isOwner(message.member.id)) {
@@ -413,7 +418,7 @@ Administration.prototype.setgame = function (args) {
     })
 }
 
-Administration.prototype.setavatar = function (args) {
+Administration.prototype.setavatar = function(args) {
   var message = this.message
 
   if (!$.isOwner(message.member.id)) {
@@ -445,7 +450,7 @@ Administration.prototype.setavatar = function (args) {
     })
 }
 
-Administration.prototype.alias = async function (args) {
+Administration.prototype.alias = async function(args) {
   const message = this.message
   const server = this.server
 
@@ -480,7 +485,7 @@ Administration.prototype.alias = async function (args) {
   )
 }
 
-Administration.prototype.removealias = async function (args) {
+Administration.prototype.removealias = async function(args) {
   const message = this.message
   const server = this.server
 
@@ -496,7 +501,7 @@ Administration.prototype.removealias = async function (args) {
   }
 }
 
-Administration.prototype.aliaslist = function () {
+Administration.prototype.aliaslist = function() {
   const message = this.message
   const server = this.server
   const aliases = server.config.aliases
@@ -533,7 +538,7 @@ Administration.prototype.aliaslist = function () {
   }
 }
 
-Administration.prototype.strictmode = async function (args) {
+Administration.prototype.strictmode = async function(args) {
   const message = this.message
   const server = this.server
 
@@ -564,7 +569,7 @@ Administration.prototype.strictmode = async function (args) {
   )
 }
 
-Administration.prototype.deleteoncmd = async function (args) {
+Administration.prototype.deleteoncmd = async function(args) {
   const message = this.message
   const server = this.server
 
@@ -595,7 +600,7 @@ Administration.prototype.deleteoncmd = async function (args) {
   )
 }
 
-Administration.prototype.vcrole = async function (args) {
+Administration.prototype.vcrole = async function(args) {
   const message = this.message
   const server = this.server
 
@@ -629,7 +634,7 @@ Administration.prototype.vcrole = async function (args) {
   }
 }
 
-Administration.prototype.voicetts = async function (args) {
+Administration.prototype.voicetts = async function(args) {
   const message = this.message
   const server = this.server
 
@@ -660,7 +665,7 @@ Administration.prototype.voicetts = async function (args) {
   )
 }
 
-Administration.prototype.logchannel = async function (args) {
+Administration.prototype.logchannel = async function(args) {
   const message = this.message
   const server = this.server
 
@@ -691,7 +696,7 @@ Administration.prototype.logchannel = async function (args) {
   )
 }
 
-Administration.prototype.logmsgdelete = async function (args) {
+Administration.prototype.logmsgdelete = async function(args) {
   const message = this.message
   const server = this.server
 
@@ -722,7 +727,7 @@ Administration.prototype.logmsgdelete = async function (args) {
   )
 }
 
-Administration.prototype.debug = async function (args) {
+Administration.prototype.debug = async function(args) {
   const message = this.message
   const server = this.server
 
@@ -753,7 +758,7 @@ Administration.prototype.debug = async function (args) {
   )
 }
 
-Administration.prototype.restart = function () {
+Administration.prototype.restart = function() {
   var message = this.message
 
   if (!$.isOwner(message.member.id)) {
@@ -764,7 +769,7 @@ Administration.prototype.restart = function () {
   process.exit(0)
 }
 
-Administration.prototype.reload = function () {
+Administration.prototype.reload = function() {
   var message = this.message
 
   if (!$.isOwner(message.member.id)) {
@@ -775,14 +780,13 @@ Administration.prototype.reload = function () {
   message.channel.send($.embed('Reloading all modules...')).then(async m => {
     var time = new Date()
     await bot.loadModules(true)
-    m
-      .edit(
-        $.embed(
-          `Reloaded all modules in ${((Date.now() - time) / 1000).toFixed(
-            2
-          )} secs.`
-        )
+    m.edit(
+      $.embed(
+        `Reloaded all modules in ${((Date.now() - time) / 1000).toFixed(
+          2
+        )} secs.`
       )
+    )
       .then(n =>
         n.delete({
           timeout: 5000
@@ -792,7 +796,7 @@ Administration.prototype.reload = function () {
   })
 }
 
-Administration.prototype.update = function () {
+Administration.prototype.update = function() {
   var message = this.message
 
   if (!$.isOwner(message.member.id)) {
@@ -833,8 +837,7 @@ Administration.prototype.update = function () {
           )
           .then(async m => {
             var ans = m.first().content.toLowerCase()
-            m
-              .first()
+            m.first()
               .delete()
               .catch(() => {})
             if (ans === 'n') throw new Error('no')
@@ -864,15 +867,14 @@ Administration.prototype.update = function () {
                 )
                 .then(async m => {
                   ans = m.first().content.toLowerCase()
-                  m
-                    .first()
+                  m.first()
                     .delete()
                     .catch(() => {})
                   if (ans === 'n') throw new Error('no')
                   await msg
                     .edit(embed.setDescription('Restarting the bot...'))
                     .catch(() => {})
-                  fs.writeFile('updateid.txt', message.channel.id, function () {
+                  fs.writeFile('updateid.txt', message.channel.id, function() {
                     process.exit(2)
                   })
                 })
@@ -888,7 +890,7 @@ Administration.prototype.update = function () {
                 })
             })
 
-            function execute (str) {
+            function execute(str) {
               return new Promise((resolve, reject) => {
                 exec(str, (err, stdout, stderr) => {
                   if (err) return $.warn(err)
