@@ -475,7 +475,7 @@ Music.prototype.removesong = async function(args) {
     if (!message.member.voiceChannel) {
       return message.channel.send($.embed('You must be in the voice channel!'))
     }
-    if (!args[0] || !Number.isInteger(args[0])) {
+    if (!args[0] || !Number.isInteger(+args[0])) {
       return message.channel.send($.embed('Invalid Parameters. <index>'))
     }
 

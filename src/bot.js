@@ -23,32 +23,38 @@ if (!bot.env.TOKEN || !bot.env.PREFIX || !bot.env.OWNER_ID) {
 displayAscii()
 $.log(`Starting ${bot.package.name} v${bot.package.version}`)
 
-MongoClient.connect(`mongodb://${bot.env.DB_USER}:${bot.env.DB_PASS}@${bot.env.DB_HOST}/${bot.env.DB_NAME}`, async (err, client) => {
-  if (err) {
-    $.warn(`${err}\nFailed to establish connection to ${bot.env.DB_HOST}`, false)
-    process.exit(10)
+MongoClient.connect(
+  `mongodb://${bot.env.DB_USER}:${bot.env.DB_PASS}@${bot.env.DB_HOST}/${bot.env.DB_NAME}`,
+  async (err, client) => {
+    if (err) {
+      $.warn(`${err}\nFailed to establish connection to ${bot.env.DB_HOST}`, false)
+      process.exit(10)
+    }
+    $.log(`MongoDB connection established on ${bot.env.DB_HOST} in ${((Date.now() - time) / 1000).toFixed(2)} secs.\n`)
+    var db = client.db(bot.env.DB_NAME)
+    bot.db = db
+
+    time = new Date()
+    var items = await db
+      .collection('settings')
+      .find({})
+      .toArray()
+    if (items.length === 0) {
+      items = (await db.collection('settings').insert({
+        status: 'online',
+        game: {
+          type: '',
+          name: ''
+        }
+      })).ops
+    }
+    bot.config = items[0]
+
+    $ = reload('./assets/functions')
+
+    bot.login(bot.env.TOKEN)
   }
-  $.log(`MongoDB connection established on ${bot.env.DB_HOST} in ${((Date.now() - time) / 1000).toFixed(2)} secs.\n`)
-  var db = client.db(bot.env.DB_NAME)
-  bot.db = db
-
-  time = new Date()
-  var items = await db.collection('settings').find({}).toArray()
-  if (items.length === 0) {
-    items = (await db.collection('settings').insert({
-      status: 'online',
-      game: {
-        type: '',
-        name: ''
-      }
-    })).ops
-  }
-  bot.config = items[0]
-
-  $ = reload('./assets/functions')
-
-  bot.login(bot.env.TOKEN)
-})
+)
 
 bot.on('ready', async () => {
   bot.eventList = []
@@ -65,27 +71,31 @@ bot.on('ready', async () => {
   $.log(`Logged in as ${bot.user.tag}\n`)
 
   if (bot.env.message === 'updated') {
-    fs.readFile('updateid.txt', 'utf8', function (err, data) {
+    fs.readFile('updateid.txt', 'utf8', function(err, data) {
       if (err) return $.warn(err)
-      bot.channels.get(data).send($.embed()
-        .setFooter(bot.user.tag, bot.user.displayAvatarURL())
-        .setAuthor('GitLab Update', 'https://i.gifer.com/DgvQ.gif')
-        .setDescription('Updated!')
+      bot.channels.get(data).send(
+        $.embed()
+          .setFooter(bot.user.tag, bot.user.displayAvatarURL())
+          .setAuthor('GitLab Update', 'https://i.gifer.com/DgvQ.gif')
+          .setDescription('Updated!')
       )
-      fs.unlink('updateid.txt', function () {})
+      fs.unlink('updateid.txt', function() {})
     })
   }
 
   for (var i = 0; i < bot.guilds.size; i++) {
     var channelsize = bot.guilds.get(guilds[i]).channels.filter(s => s.type !== 'category').size
     var usersize = bot.guilds.get(guilds[i]).members.size
-    $.log(`Connected to "${bot.guilds.get(guilds[i]).name}" with ${channelsize} ${channelsize === 1 ? 'channel' : 'channels'} and ${usersize} ${usersize === 1 ? 'user' : 'users'}${i === bot.guilds.size - 1 ? '\n' : ''}`)
+    $.log(
+      `Connected to "${bot.guilds.get(guilds[i]).name}" with ${channelsize} ${
+        channelsize === 1 ? 'channel' : 'channels'
+      } and ${usersize} ${usersize === 1 ? 'user' : 'users'}${i === bot.guilds.size - 1 ? '\n' : ''}`
+    )
     var conf = $.getServerConfig(guilds[i])
     if (conf.channel.debug && bot.env.message && bot.env.message !== 'updated') {
       var temp = $.embed().setFooter(bot.user.tag, bot.user.displayAvatarURL())
       if (bot.env.message === 'crashed') {
-        temp.setAuthor('Error', 'https://i.imgur.com/1vOMHlr.png')
-          .setDescription('Server Crashed. Restarted.')
+        temp.setAuthor('Error', 'https://i.imgur.com/1vOMHlr.png').setDescription('Server Crashed. Restarted.')
       } else if (bot.env.message === 'restarted') {
         temp.setAuthor('Restarted!')
       }
@@ -122,18 +132,14 @@ bot.on('message', async message => {
   if (message.author.bot) return
   if (message.channel.type === 'dm') {
     if (message.content.trim() === 'invite') {
-      bot.generateInvite(['ADMINISTRATOR'])
-        .then(link => {
-          message.reply(`Generated bot invite link: ${link}`)
-        })
+      bot.generateInvite(['ADMINISTRATOR']).then(link => {
+        message.reply(`Generated bot invite link: ${link}`)
+      })
     }
     return
   }
-  if (!$.isOwner(message.author.id) && message.member.roles.filter(s => s.name !== '@everyone').size === 0 && server.strictmode) {
-    message.channel.send($.embed('You must have at least one role to command me.'))
-    return
-  }
 
+  console.log(message.content)
   if (message.content.startsWith(bot.user.toString().replace('@', '@!'))) {
     var content = message.content.replace(bot.user.toString().replace('@', '@!'), '').trim()
     if (content) {
@@ -152,6 +158,15 @@ bot.on('message', async message => {
   var args = messageArray.slice(1)
 
   if (cmd.startsWith('_')) return
+
+  if (
+    !$.isOwner(message.author.id) &&
+    message.member.roles.filter(s => s.name !== '@everyone').size === 0 &&
+    server.strictmode
+  ) {
+    message.channel.send($.embed('You must have at least one role to command me.'))
+    return
+  }
 
   switch (getModule(cmd)) {
     case 'admin':
@@ -181,7 +196,7 @@ bot.on('message', async message => {
       break
   }
 
-  function processBeforeCommand () {
+  function processBeforeCommand() {
     if (server.deleteoncmd) {
       message.delete().catch(() => {})
     }
@@ -189,7 +204,7 @@ bot.on('message', async message => {
     $.log('Command Executed ' + message.content.trim(), message)
   }
 
-  function alias (msg) {
+  function alias(msg) {
     return new Promise(resolve => {
       var alias = server.aliases.filter(x => x.name === msg)[0]
       if (alias) {
@@ -207,15 +222,15 @@ bot.on('message', async message => {
   }
 })
 
-bot.on('error', (err) => {
+bot.on('error', err => {
   $.warn('Bot Error: ' + err)
 })
 
-process.on('uncaughtException', (err) => {
+process.on('uncaughtException', err => {
   $.warn('Uncaught Exception: ' + (err.stack || err))
 })
 
-bot.loadModules = (renew) => {
+bot.loadModules = renew => {
   return new Promise(async resolve => {
     loaded = false
     time = new Date()
@@ -252,11 +267,11 @@ bot.loadModules = (renew) => {
     }
 
     bot.modules = {
-      'admin': getAllFuncs(new Administration()),
-      'music': getAllFuncs(new Music()),
-      'util': getAllFuncs(new Utilities()),
-      'search': getAllFuncs(new Searches()),
-      'games': getAllFuncs(new Games())
+      admin: getAllFuncs(new Administration()),
+      music: getAllFuncs(new Music()),
+      util: getAllFuncs(new Utilities()),
+      search: getAllFuncs(new Searches()),
+      games: getAllFuncs(new Games())
     }
 
     $.log(`Loaded All Modules in ${((Date.now() - time) / 1000).toFixed(2)} secs.\n`)
@@ -272,21 +287,21 @@ bot.loadEvents = () => {
   bot.on('presenceUpdate', (x, y) => {
     Events.presenceUpdate(x, y)
   })
-  bot.on('guildMemberAdd', (x) => {
+  bot.on('guildMemberAdd', x => {
     Events.guildMemberAdd(x)
   })
-  bot.on('guildMemberRemove', (x) => {
+  bot.on('guildMemberRemove', x => {
     Events.guildMemberRemove(x)
   })
-  bot.on('guildCreate', (x) => {
+  bot.on('guildCreate', x => {
     Events.guildCreate(x)
   })
-  bot.on('messageDelete', (x) => {
+  bot.on('messageDelete', x => {
     Events.messageDelete(x)
   })
 }
 
-function getModule (command) {
+function getModule(command) {
   var modules = bot.modules
   var modulekeys = Object.keys(modules)
   for (var i = 0; i < modulekeys.length; i++) {
@@ -299,12 +314,13 @@ function getModule (command) {
   }
 }
 
-function getAllFuncs (obj) {
-  return Object.getOwnPropertyNames(Object.getPrototypeOf(obj)).filter((x) => x !== 'constructor' && !x.startsWith('_'))
+function getAllFuncs(obj) {
+  return Object.getOwnPropertyNames(Object.getPrototypeOf(obj)).filter(x => x !== 'constructor' && !x.startsWith('_'))
 }
 
-function displayAscii () {
-  console.log(colors.rainbow(`
+function displayAscii() {
+  console.log(
+    colors.rainbow(`
  __    _  _______  _______  __    _  _______  _______  _______   
 |  |  | ||       ||       ||  |  | ||  _    ||       ||       |
 |   |_| ||    ___||   _   ||   |_| || |_|   ||   _   ||_     _|
@@ -312,7 +328,8 @@ function displayAscii () {
 |  _    ||    ___||  |_|  ||  _    ||  _   | |  |_|  |  |   |
 | | |   ||   |___ |       || | |   || |_|   ||       |  |   |
 |_|  |__||_______||_______||_|  |__||_______||_______|  |___|
-`))
+`)
+  )
 }
 
 module.exports = bot
