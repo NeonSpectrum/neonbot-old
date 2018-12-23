@@ -139,8 +139,6 @@ bot.on('message', async message => {
     return
   }
 
-  console.log(message.content)
-  console.log(bot.user.toString())
   if (message.content.startsWith(bot.user.toString().replace('@', '@!'))) {
     var content = message.content.replace(bot.user.toString().replace('@', '@!'), '').trim()
     if (content) {
