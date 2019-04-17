@@ -92,8 +92,12 @@
     "usage": "{0}reload"
   },
   "update": {
-    "info": "Updates the bot with GitHub.",
+    "info": "Updates the bot with GitLab.",
     "usage": "{0}update"
+  },
+  "choose": {
+    "info": "The bot will choose among those choices.",
+    "usage": "{0}choose <1>|<2>(|<3>)"
   },
   "pokemon": {
     "info": "Start, stop, and show score of the Pokemon Game.",

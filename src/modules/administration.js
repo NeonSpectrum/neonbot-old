@@ -25,9 +25,7 @@ Administration.prototype.addrole = async function(args) {
     return message.channel.send($.embed('Insufficient Permission.'))
   }
 
-  var user =
-    message.guild.member(message.mentions.users.first()) ||
-    message.guild.members.get(args[0])
+  var user = message.guild.member(message.mentions.users.first()) || message.guild.members.get(args[0])
 
   if (!user) return message.channel.send($.embed('User not found.'))
 
@@ -48,10 +46,7 @@ Administration.prototype.addrole = async function(args) {
   message.channel.send(
     $.embed()
       .setDescription('✔ Role Added')
-      .setField(
-        `${user.toString()}>`,
-        `they have been given the role ${role.name}`
-      )
+      .setField(`${user.toString()}>`, `they have been given the role ${role.name}`)
   )
 }
 
@@ -62,9 +57,7 @@ Administration.prototype.removerole = async function(args) {
     return message.channel.send($.embed('Insufficient Permission.'))
   }
 
-  var user =
-    message.guild.member(message.mentions.users.first()) ||
-    message.guild.members.get(args[0])
+  var user = message.guild.member(message.mentions.users.first()) || message.guild.members.get(args[0])
 
   if (!user) return message.channel.send($.embed("Couldn't find that user."))
 
@@ -96,9 +89,7 @@ Administration.prototype.ban = function(args) {
     return message.channel.send($.embed('Insufficient Permission.'))
   }
 
-  var user = message.guild.member(
-    message.mentions.users.first() || message.guild.members.get(args[0])
-  )
+  var user = message.guild.member(message.mentions.users.first() || message.guild.members.get(args[0]))
 
   if (!user) return message.channel.send($.embed('User not found'))
 
@@ -113,10 +104,7 @@ Administration.prototype.ban = function(args) {
       .setTitle('🚫 Ban')
       .setThumbnail(user.displayAvatarURL())
       .addField('Banned User', `${user} with ID ${user.id}`)
-      .addField(
-        'Banned By',
-        `${message.author.toString()} with ID ${message.author.id}`
-      )
+      .addField('Banned By', `${message.author.toString()} with ID ${message.author.id}`)
       .addField('Banned In', message.channel)
       .addField('Time', message.createdAt)
   )
@@ -133,16 +121,12 @@ Administration.prototype.prune = async function(args) {
     let count = +args[1] || 10
     let msg = await message.channel.send(
       $.embed(
-        `Please wait while I'm deleting ${count} ${
-          message.mentions.users.first().username
-        }'s ${count === 1 ? 'message' : 'messages'}...`
+        `Please wait while I'm deleting ${count} ${message.mentions.users.first().username}'s ${
+          count === 1 ? 'message' : 'messages'
+        }...`
       )
     )
-    await bulkDeleteMessagesFrom(
-      message.mentions.users.first().id,
-      message.channel,
-      count
-    )
+    await bulkDeleteMessagesFrom(message.mentions.users.first().id, message.channel, count)
     msg
       .edit(
         $.embed(
@@ -164,12 +148,14 @@ Administration.prototype.prune = async function(args) {
     }
     message.channel.bulkDelete(+args[0]).catch(() => {})
   } else {
-    let msg = await message.channel.send(
-      $.embed("Please wait while I'm deleting 10 bot messages...")
-    )
-    await bulkDeleteMessagesFrom(bot.user.id, message.channel, 10, {
-      filter: msg.id
-    })
+    let msg = await message.channel.send($.embed("Please wait while I'm deleting 10 bot messages..."))
+    try {
+      await bulkDeleteMessagesFrom(bot.user.id, message.channel, 10, {
+        filter: msg.id
+      })
+    } catch (err) {
+      console.log(err)
+    }
     msg
       .edit($.embed('Done deleting bot messages.'))
       .then(m =>
@@ -183,29 +169,28 @@ Administration.prototype.prune = async function(args) {
   }
 
   async function bulkDeleteMessagesFrom(user, channel, length, options) {
-    return new Promise(async (resolve, reject) => {
-      let count = 0
-      do {
-        try {
-          let temp = await channel.messages.fetch({
-            limit: 100
-          })
-          if (temp.size === 0) break
-          temp = temp.filter(
-            s =>
-              s.author.id === user &&
-              (options && options.filter ? s.id !== options.filter : true)
-          )
-          temp = Array.from(temp.keys()).slice(0, length - count)
-          await channel.bulkDelete(temp).catch(() => {})
-          count += temp.length
-        } catch (err) {
-          $.warn(err)
-          break
-        }
-      } while (count !== length && temp.length !== 0)
-      resolve(count)
-    })
+    let count = 0
+    let temp = null
+
+    do {
+      try {
+        temp = await channel.messages.fetch({
+          limit: 100
+        })
+        if (temp.size === 0) break
+        temp = temp.filter(
+          s => s.author.id === user && (options && options.filter ? s.id !== options.filter : true)
+        )
+        temp = Array.from(temp.keys()).slice(0, length - count)
+        await channel.bulkDelete(temp).catch(() => {})
+        count += temp.length
+      } catch (err) {
+        $.warn(err)
+        break
+      }
+    } while (count !== length && temp.length !== 0)
+
+    return count
   }
 }
 
@@ -216,9 +201,7 @@ Administration.prototype.kick = function(args) {
     return message.channel.send($.embed('Insufficient Permission.'))
   }
 
-  var user = message.guild.member(
-    message.mentions.users.first() || message.guild.members.get(args[0])
-  )
+  var user = message.guild.member(message.mentions.users.first() || message.guild.members.get(args[0]))
 
   if (!user) return message.channel.send($.embed('User not found.'))
 
@@ -229,10 +212,7 @@ Administration.prototype.kick = function(args) {
       .setDescription('🚫 Kick')
       .setThumbnail(user.displayAvatarURL())
       .addField('Kicked User', `${user} with ID ${user.id}`)
-      .addField(
-        'Kicked By',
-        `${message.author.toString()} with ID ${message.author.id}`
-      )
+      .addField('Kicked By', `${message.author.toString()} with ID ${message.author.id}`)
       .addField('Kicked In', message.channel)
       .addField('Time', message.createdAt)
   )
@@ -242,18 +222,11 @@ Administration.prototype.prefix = async function(args) {
   const message = this.message
   const server = this.server
 
-  if (
-    !$.isOwner(message.member.id) ||
-    !message.member.hasPermission('MANAGE_GUILD')
-  ) {
-    return message.channel.send(
-      $.embed("You don't have a permission to set prefix.")
-    )
+  if (!$.isOwner(message.member.id) || !message.member.hasPermission('MANAGE_GUILD')) {
+    return message.channel.send($.embed("You don't have a permission to set prefix."))
   }
   if (!args[0]) {
-    return message.channel.send(
-      $.embed(`Usage: ${server.config.prefix}prefix <desired prefix here>`)
-    )
+    return message.channel.send($.embed(`Usage: ${server.config.prefix}prefix <desired prefix here>`))
   }
 
   server.config = await $.updateServerConfig(message.guild.id, {
@@ -266,46 +239,28 @@ Administration.prototype.prefix = async function(args) {
 Administration.prototype.setnickname = function(args) {
   const message = this.message
 
-  var member =
-    message.guild.member(message.mentions.users.first()) ||
-    message.guild.member(message.author)
-  if (
-    member.user.id !== message.author.id &&
-    !message.member.hasPermission('MANAGE_NICKNAMES')
-  ) {
+  var member = message.guild.member(message.mentions.users.first()) || message.guild.member(message.author)
+  if (member.user.id !== message.author.id && !message.member.hasPermission('MANAGE_NICKNAMES')) {
     return message.channel.send(
-      $.embed(
-        "You don't have a permission to change the nickname of other members."
-      )
+      $.embed("You don't have a permission to change the nickname of other members.")
     )
   }
-  var name = message.mentions.users.first()
-    ? args.slice(1).join(' ')
-    : args.join(' ')
+  var name = message.mentions.users.first() ? args.slice(1).join(' ') : args.join(' ')
 
   member
     .setNickname(name)
     .then(() => {
       message.channel.send(
-        $.embed(
-          `${member.toString()}, Your nickname has been set to ${name ||
-            'default'}.`
-        )
+        $.embed(`${member.toString()}, Your nickname has been set to ${name || 'default'}.`)
       )
-      this.log(
-        `${member.user.tag}'s nickname has been set to ${name || 'default'}`
-      )
+      this.log(`${member.user.tag}'s nickname has been set to ${name || 'default'}`)
     })
     .catch(err => {
       $.warn(err)
       if (err.message.indexOf('Privilege is too low') > -1) {
-        message.channel.send(
-          $.embed("You don't have a permission to set nickname.")
-        )
+        message.channel.send($.embed("You don't have a permission to set nickname."))
       } else {
-        message.channel.send(
-          $.embed('There was an error changing the nickname.')
-        )
+        message.channel.send($.embed('There was an error changing the nickname.'))
       }
     })
 }
@@ -314,14 +269,10 @@ Administration.prototype.setname = function(args) {
   const message = this.message
 
   if (!$.isOwner(message.member.id)) {
-    return message.channel.send(
-      $.embed("You don't have a permission to set name.")
-    )
+    return message.channel.send($.embed("You don't have a permission to set name."))
   }
   if (args.join(' ').length > 32 || args.join(' ').length < 3) {
-    return message.channel.send(
-      $.embed('Username must be greater than 2 and less than 32')
-    )
+    return message.channel.send($.embed('Username must be greater than 2 and less than 32'))
   }
 
   bot.user
@@ -340,9 +291,7 @@ Administration.prototype.setstatus = function(args) {
   const message = this.message
 
   if (!$.isOwner(message.member.id)) {
-    return message.channel.send(
-      $.embed("You don't have a permission to set status.")
-    )
+    return message.channel.send($.embed("You don't have a permission to set status."))
   }
   if (
     !(
@@ -353,9 +302,7 @@ Administration.prototype.setstatus = function(args) {
     )
   ) {
     return message.channel.send(
-      $.embed(
-        'Invalid Parameters. Not a valid status. (online | dnd | idle | offline)'
-      )
+      $.embed('Invalid Parameters. Not a valid status. (online | dnd | idle | offline)')
     )
   }
 
@@ -380,9 +327,7 @@ Administration.prototype.setgame = function(args) {
   const message = this.message
 
   if (!$.isOwner(message.member.id)) {
-    return message.channel.send(
-      $.embed("You don't have a permission to set game.")
-    )
+    return message.channel.send($.embed("You don't have a permission to set game."))
   }
   if (
     !(
@@ -392,9 +337,7 @@ Administration.prototype.setgame = function(args) {
     )
   ) {
     return message.channel.send(
-      $.embed(
-        'Invalid Parameters. Not a valid game type. (PLAYING, WATCHING, LISTENING)'
-      )
+      $.embed('Invalid Parameters. Not a valid game type. (PLAYING, WATCHING, LISTENING)')
     )
   }
 
@@ -407,9 +350,7 @@ Administration.prototype.setgame = function(args) {
         'game.type': args[0].toUpperCase(),
         'game.name': args.slice(1).join(' ')
       })
-      message.channel.send(
-        $.embed(`Game set to ${args[0]}, ${args.slice(1).join(' ')}.`)
-      )
+      message.channel.send($.embed(`Game set to ${args[0]}, ${args.slice(1).join(' ')}.`))
       this.log(`Game set to ${args.slice(1).join(' ')}`)
     })
     .catch(err => {
@@ -422,15 +363,9 @@ Administration.prototype.setavatar = function(args) {
   var message = this.message
 
   if (!$.isOwner(message.member.id)) {
-    return message.channel.send(
-      $.embed("You don't have a permission to set avatar.")
-    )
+    return message.channel.send($.embed("You don't have a permission to set avatar."))
   }
-  if (
-    !args[0].match(
-      /[-a-zA-Z0-9@:%_+.~#?&//=]{2,256}\.[a-z]{2,4}\b(\/[-a-zA-Z0-9@:%_+.~#?&//=]*)?/gi
-    )
-  ) {
+  if (!args[0].match(/[-a-zA-Z0-9@:%_+.~#?&//=]{2,256}\.[a-z]{2,4}\b(\/[-a-zA-Z0-9@:%_+.~#?&//=]*)?/gi)) {
     return message.channel.send($.embed('Invalid URL.'))
   }
 
@@ -459,11 +394,7 @@ Administration.prototype.alias = async function(args) {
   if (args[1].startsWith(server.config.prefix)) {
     args[1].replace(server.config.prefix, '{0}')
   } else {
-    return message.channel.send(
-      $.embed(
-        `Invalid command. It must starts with \`${server.config.prefix}\``
-      )
-    )
+    return message.channel.send($.embed(`Invalid command. It must starts with \`${server.config.prefix}\``))
   }
 
   if (alias) {
@@ -477,11 +408,7 @@ Administration.prototype.alias = async function(args) {
   }
 
   message.channel.send(
-    $.embed(
-      `Message with exactly \`${args[0]}\` will now execute \`${args
-        .slice(1)
-        .join(' ')}\``
-    )
+    $.embed(`Message with exactly \`${args[0]}\` will now execute \`${args.slice(1).join(' ')}\``)
   )
 }
 
@@ -513,9 +440,10 @@ Administration.prototype.aliaslist = function() {
     for (var i = 0; i < aliases.length; i++) {
       var alias = aliases[i]
       temp.push(
-        `\`${i + 1}\`. \`${alias.name}\` \`(${
-          bot.users.get(alias.owner).tag
-        })\`: \`${alias.cmd.replace('{0}', server.config.prefix)}\``
+        `\`${i + 1}\`. \`${alias.name}\` \`(${bot.users.get(alias.owner).tag})\`: \`${alias.cmd.replace(
+          '{0}',
+          server.config.prefix
+        )}\``
       )
       if ((i !== 0 && (i + 1) % 10 === 0) || i === aliases.length - 1) {
         embeds.push($.embed().setDescription(temp.join('\n\n')))
@@ -543,17 +471,11 @@ Administration.prototype.strictmode = async function(args) {
   const server = this.server
 
   if (!$.isOwner(message.member.id)) {
-    return message.channel.send(
-      $.embed("You don't have a permission to set delete on cmd.")
-    )
+    return message.channel.send($.embed("You don't have a permission to set delete on cmd."))
   }
   if (!args[0] || (args[0] !== 'enable' && args[0] !== 'disable')) {
     return message.channel.send(
-      $.embed(
-        `Strict Mode is ${
-          server.config.strictmode ? 'enabled' : 'disabled'
-        } (enable | disable).`
-      )
+      $.embed(`Strict Mode is ${server.config.strictmode ? 'enabled' : 'disabled'} (enable | disable).`)
     )
   }
 
@@ -574,17 +496,11 @@ Administration.prototype.deleteoncmd = async function(args) {
   const server = this.server
 
   if (!$.isOwner(message.member.id)) {
-    return message.channel.send(
-      $.embed("You don't have a permission to set delete on cmd.")
-    )
+    return message.channel.send($.embed("You don't have a permission to set delete on cmd."))
   }
   if (!args[0] || (args[0] !== 'enable' && args[0] !== 'disable')) {
     return message.channel.send(
-      $.embed(
-        `Delete On Cmd is ${
-          server.config.deleteoncmd ? 'enabled' : 'disabled'
-        } (enable | disable).`
-      )
+      $.embed(`Delete On Cmd is ${server.config.deleteoncmd ? 'enabled' : 'disabled'} (enable | disable).`)
     )
   }
 
@@ -592,11 +508,7 @@ Administration.prototype.deleteoncmd = async function(args) {
     deleteoncmd: args[0] === 'enable'
   })
   message.channel.send(
-    $.embed(
-      'Delete On Cmd is now ' +
-        (server.config.deleteoncmd ? 'enabled' : 'disabled') +
-        '.'
-    )
+    $.embed('Delete On Cmd is now ' + (server.config.deleteoncmd ? 'enabled' : 'disabled') + '.')
   )
 }
 
@@ -605,9 +517,7 @@ Administration.prototype.vcrole = async function(args) {
   const server = this.server
 
   if (!$.isOwner(message.member.id)) {
-    return message.channel.send(
-      $.embed("You don't have a permission to set voice channel role.")
-    )
+    return message.channel.send($.embed("You don't have a permission to set voice channel role."))
   }
   if (args[0] && !message.guild.roles.exists('name', args[0])) {
     return message.channel.send($.embed('Invalid Role Name.'))
@@ -623,11 +533,7 @@ Administration.prototype.vcrole = async function(args) {
   })
   if (args[0]) {
     message.channel.send(
-      $.embed(
-        `Connecting to ${message.member.voiceChannel.name} will have a role ${
-          args[0]
-        }.`
-      )
+      $.embed(`Connecting to ${message.member.voiceChannel.name} will have a role ${args[0]}.`)
     )
   } else {
     message.channel.send($.embed(`Voice channel role has been removed.`))
@@ -639,16 +545,12 @@ Administration.prototype.voicetts = async function(args) {
   const server = this.server
 
   if (!$.isOwner(message.member.id)) {
-    return message.channel.send(
-      $.embed("You don't have a permission to set voice tts channel.")
-    )
+    return message.channel.send($.embed("You don't have a permission to set voice tts channel."))
   }
   if (!args[0] || (args[0] !== 'enable' && args[0] !== 'disable')) {
     return message.channel.send(
       $.embed(
-        `Voice TTS Channel is ${
-          server.config.channel.voicetts ? 'enabled' : 'disabled'
-        } (enable | disable).`
+        `Voice TTS Channel is ${server.config.channel.voicetts ? 'enabled' : 'disabled'} (enable | disable).`
       )
     )
   }
@@ -657,11 +559,7 @@ Administration.prototype.voicetts = async function(args) {
     'channel.voicetts': args[0] === 'enable' ? message.channel.id : null
   })
   message.channel.send(
-    $.embed(
-      `Voice TTS Channel is now ${
-        args[0] !== 'enable' ? 'disabled' : 'changed to this channel'
-      }.`
-    )
+    $.embed(`Voice TTS Channel is now ${args[0] !== 'enable' ? 'disabled' : 'changed to this channel'}.`)
   )
 }
 
@@ -670,17 +568,11 @@ Administration.prototype.logchannel = async function(args) {
   const server = this.server
 
   if (!$.isOwner(message.member.id)) {
-    return message.channel.send(
-      $.embed("You don't have a permission to set log channel.")
-    )
+    return message.channel.send($.embed("You don't have a permission to set log channel."))
   }
   if (!args[0] || (args[0] !== 'enable' && args[0] !== 'disable')) {
     return message.channel.send(
-      $.embed(
-        `Log Channel is ${
-          server.config.channel.log ? 'enabled' : 'disabled'
-        } (enable | disable).`
-      )
+      $.embed(`Log Channel is ${server.config.channel.log ? 'enabled' : 'disabled'} (enable | disable).`)
     )
   }
 
@@ -688,11 +580,7 @@ Administration.prototype.logchannel = async function(args) {
     'channel.log': args[0] === 'enable' ? message.channel.id : null
   })
   message.channel.send(
-    $.embed(
-      `Log Channel is now ${
-        args[0] !== 'enable' ? 'disabled' : 'changed to this channel'
-      }.`
-    )
+    $.embed(`Log Channel is now ${args[0] !== 'enable' ? 'disabled' : 'changed to this channel'}.`)
   )
 }
 
@@ -701,9 +589,7 @@ Administration.prototype.logmsgdelete = async function(args) {
   const server = this.server
 
   if (!$.isOwner(message.member.id)) {
-    return message.channel.send(
-      $.embed("You don't have a permission to set message deleted channel.")
-    )
+    return message.channel.send($.embed("You don't have a permission to set message deleted channel."))
   }
   if (!args[0] || (args[0] !== 'enable' && args[0] !== 'disable')) {
     return message.channel.send(
@@ -720,9 +606,7 @@ Administration.prototype.logmsgdelete = async function(args) {
   })
   message.channel.send(
     $.embed(
-      `Message Deleted Channel is now ${
-        args[0] !== 'enable' ? 'disabled' : 'changed to this channel'
-      }.`
+      `Message Deleted Channel is now ${args[0] !== 'enable' ? 'disabled' : 'changed to this channel'}.`
     )
   )
 }
@@ -732,17 +616,11 @@ Administration.prototype.debug = async function(args) {
   const server = this.server
 
   if (!$.isOwner(message.member.id)) {
-    return message.channel.send(
-      $.embed("You don't have a permission to set debug channel.")
-    )
+    return message.channel.send($.embed("You don't have a permission to set debug channel."))
   }
   if (!args[0] || (args[0] !== 'enable' && args[0] !== 'disable')) {
     return message.channel.send(
-      $.embed(
-        `Debug Channel is ${
-          server.config.channel.debug ? 'enabled' : 'disabled'
-        } (enable | disable).`
-      )
+      $.embed(`Debug Channel is ${server.config.channel.debug ? 'enabled' : 'disabled'} (enable | disable).`)
     )
   }
 
@@ -750,11 +628,7 @@ Administration.prototype.debug = async function(args) {
     'channel.debug': args[0] === 'enable' ? message.channel.id : null
   })
   message.channel.send(
-    $.embed(
-      `Debug Channel is now ${
-        args[0] !== 'enable' ? 'disabled' : 'changed to this channel'
-      }.`
-    )
+    $.embed(`Debug Channel is now ${args[0] !== 'enable' ? 'disabled' : 'changed to this channel'}.`)
   )
 }
 
@@ -762,9 +636,7 @@ Administration.prototype.restart = function() {
   var message = this.message
 
   if (!$.isOwner(message.member.id)) {
-    return message.channel.send(
-      $.embed("You don't have a permission to restart the bot.")
-    )
+    return message.channel.send($.embed("You don't have a permission to restart the bot."))
   }
   process.exit(0)
 }
@@ -773,20 +645,12 @@ Administration.prototype.reload = function() {
   var message = this.message
 
   if (!$.isOwner(message.member.id)) {
-    return message.channel.send(
-      $.embed("You don't have a permission to reload the modules of the bot.")
-    )
+    return message.channel.send($.embed("You don't have a permission to reload the modules of the bot."))
   }
   message.channel.send($.embed('Reloading all modules...')).then(async m => {
     var time = new Date()
     await bot.loadModules(true)
-    m.edit(
-      $.embed(
-        `Reloaded all modules in ${((Date.now() - time) / 1000).toFixed(
-          2
-        )} secs.`
-      )
-    )
+    m.edit($.embed(`Reloaded all modules in ${((Date.now() - time) / 1000).toFixed(2)} secs.`))
       .then(n =>
         n.delete({
           timeout: 5000
@@ -800,111 +664,96 @@ Administration.prototype.update = function() {
   var message = this.message
 
   if (!$.isOwner(message.member.id)) {
-    return message.channel.send(
-      $.embed("You don't have a permission to update the bot.")
-    )
+    return message.channel.send($.embed("You don't have a permission to update the bot."))
   }
   var embed = $.embed()
     .setFooter(bot.user.tag, bot.user.displayAvatarURL())
     .setAuthor('GitLab Update', 'https://i.gifer.com/DgvQ.gif')
 
-  exec(
-    `${bot.env.GIT_PATH}git remote show origin`,
-    async (err, stdout, stderr) => {
-      if (err) return $.warn(err)
-      if (stdout.indexOf('out of date') === -1) {
-        message.channel.send(
-          $.embed()
-            .setFooter(bot.user.tag, bot.user.displayAvatarURL())
-            .setAuthor('GitLab Update', 'https://i.gifer.com/DgvQ.gif')
-            .setDescription('Already up to date.')
+  exec(`${bot.env.GIT_PATH}git remote show origin`, async (err, stdout, stderr) => {
+    if (err) return $.warn(err)
+    if (stdout.indexOf('out of date') === -1) {
+      message.channel.send(
+        $.embed()
+          .setFooter(bot.user.tag, bot.user.displayAvatarURL())
+          .setAuthor('GitLab Update', 'https://i.gifer.com/DgvQ.gif')
+          .setDescription('Already up to date.')
+      )
+    } else {
+      var msg = await message.channel.send(
+        embed.setDescription('There is an update available. Update? (y | n)')
+      )
+      message.channel
+        .awaitMessages(
+          m =>
+            (m.content.toLowerCase() === 'y' || m.content.toLowerCase() === 'n') &&
+            m.author.id === message.author.id,
+          {
+            max: 1,
+            time: 15000,
+            errors: ['time']
+          }
         )
-      } else {
-        var msg = await message.channel.send(
-          embed.setDescription('There is an update available. Update? (y | n)')
-        )
-        message.channel
-          .awaitMessages(
-            m =>
-              (m.content.toLowerCase() === 'y' ||
-                m.content.toLowerCase() === 'n') &&
-              m.author.id === message.author.id,
-            {
-              max: 1,
-              time: 15000,
-              errors: ['time']
-            }
-          )
-          .then(async m => {
-            var ans = m.first().content.toLowerCase()
-            m.first()
-              .delete()
-              .catch(() => {})
-            if (ans === 'n') throw new Error('no')
-            await msg.edit(embed.setDescription('Updating...')).catch(() => {})
+        .then(async m => {
+          var ans = m.first().content.toLowerCase()
+          m.first()
+            .delete()
+            .catch(() => {})
+          if (ans === 'n') throw new Error('no')
+          await msg.edit(embed.setDescription('Updating...')).catch(() => {})
 
-            exec(`${bot.env.GIT_PATH}git pull`, async (err, stdout, stderr) => {
-              if (err) return $.warn(err)
-              await execute(`export PATH=$PATH:${bot.env.NODE_PATH} && npm i`)
-              await msg
-                .edit(
-                  embed.setDescription(
-                    'Would you like to restart the bot? (y | n)'
-                  )
-                )
-                .catch(() => {})
-              message.channel
-                .awaitMessages(
-                  m =>
-                    (m.content.toLowerCase() === 'y' ||
-                      m.content.toLowerCase() === 'n') &&
-                    m.author.id === message.author.id,
-                  {
-                    max: 1,
-                    time: 15000,
-                    errors: ['time']
-                  }
-                )
-                .then(async m => {
-                  ans = m.first().content.toLowerCase()
-                  m.first()
-                    .delete()
-                    .catch(() => {})
-                  if (ans === 'n') throw new Error('no')
-                  await msg
-                    .edit(embed.setDescription('Restarting the bot...'))
-                    .catch(() => {})
-                  fs.writeFile('updateid.txt', message.channel.id, function() {
-                    process.exit(2)
-                  })
-                })
-                .catch(async err => {
-                  await msg.delete().catch(() => {})
-                  if (err === 'no') {
-                    message.channel.send($.embed('Okay.')).then(m =>
-                      m.delete({
-                        timeout: 3000
-                      })
-                    )
-                  }
-                })
-            })
-
-            function execute(str) {
-              return new Promise((resolve, reject) => {
-                exec(str, (err, stdout, stderr) => {
-                  if (err) return $.warn(err)
-                  resolve()
+          exec(`${bot.env.GIT_PATH}git pull`, async (err, stdout, stderr) => {
+            if (err) return $.warn(err)
+            await execute(`export PATH=$PATH:${bot.env.NODE_PATH} && npm i`)
+            await msg.edit(embed.setDescription('Would you like to restart the bot? (y | n)')).catch(() => {})
+            message.channel
+              .awaitMessages(
+                m =>
+                  (m.content.toLowerCase() === 'y' || m.content.toLowerCase() === 'n') &&
+                  m.author.id === message.author.id,
+                {
+                  max: 1,
+                  time: 15000,
+                  errors: ['time']
+                }
+              )
+              .then(async m => {
+                ans = m.first().content.toLowerCase()
+                m.first()
+                  .delete()
+                  .catch(() => {})
+                if (ans === 'n') throw new Error('no')
+                await msg.edit(embed.setDescription('Restarting the bot...')).catch(() => {})
+                fs.writeFile('updateid.txt', message.channel.id, function() {
+                  process.exit(2)
                 })
               })
-            }
+              .catch(async err => {
+                await msg.delete().catch(() => {})
+                if (err === 'no') {
+                  message.channel.send($.embed('Okay.')).then(m =>
+                    m.delete({
+                      timeout: 3000
+                    })
+                  )
+                }
+              })
           })
-          .catch(() => {
-            msg.delete().catch(() => {})
-          })
-      }
+
+          function execute(str) {
+            return new Promise((resolve, reject) => {
+              exec(str, (err, stdout, stderr) => {
+                if (err) return $.warn(err)
+                resolve()
+              })
+            })
+          }
+        })
+        .catch(() => {
+          msg.delete().catch(() => {})
+        })
     }
-  )
+  })
 }
 
 module.exports = Administration

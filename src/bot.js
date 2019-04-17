@@ -12,6 +12,13 @@ var Administration, Utilities, Music, Searches, Games, Events
 var loaded = false
 var time = new Date()
 
+if (!fs.existsSync('./.env')) {
+  $.log('Creating .env file...')
+  fs.copyFileSync('.env.example', '.env')
+  $.log('Supply env file and restart the bot.')
+  process.exit(10)
+}
+
 bot.env = dotenv.parse(fs.readFileSync('./.env'))
 bot.package = reload('../package')
 
@@ -25,12 +32,17 @@ $.log(`Starting ${bot.package.name} v${bot.package.version}`)
 
 MongoClient.connect(
   `mongodb://${bot.env.DB_USER}:${bot.env.DB_PASS}@${bot.env.DB_HOST}/${bot.env.DB_NAME}`,
+  { useNewUrlParser: true },
   async (err, client) => {
     if (err) {
       $.warn(`${err}\nFailed to establish connection to ${bot.env.DB_HOST}`, false)
       process.exit(10)
     }
-    $.log(`MongoDB connection established on ${bot.env.DB_HOST} in ${((Date.now() - time) / 1000).toFixed(2)} secs.\n`)
+    $.log(
+      `MongoDB connection established on ${bot.env.DB_HOST} in ${((Date.now() - time) / 1000).toFixed(
+        2
+      )} secs.\n`
+    )
     var db = client.db(bot.env.DB_NAME)
     bot.db = db
 
@@ -57,7 +69,6 @@ MongoClient.connect(
 )
 
 bot.on('ready', async () => {
-  bot.eventList = []
   bot.commandExecuted = 0
 
   var guilds = Array.from(bot.guilds.keys())
@@ -95,7 +106,9 @@ bot.on('ready', async () => {
     if (conf.channel.debug && bot.env.message && bot.env.message !== 'updated') {
       var temp = $.embed().setFooter(bot.user.tag, bot.user.displayAvatarURL())
       if (bot.env.message === 'crashed') {
-        temp.setAuthor('Error', 'https://i.imgur.com/1vOMHlr.png').setDescription('Server Crashed. Restarted.')
+        temp
+          .setAuthor('Error', 'https://i.imgur.com/1vOMHlr.png')
+          .setDescription('Server Crashed. Restarted.')
       } else if (bot.env.message === 'restarted') {
         temp.setAuthor('Restarted!')
       }
@@ -139,12 +152,15 @@ bot.on('message', async message => {
     return
   }
 
-  if (message.content.startsWith(bot.user.toString().replace('@', '@!'))) {
+  if (message.content.startsWith(bot.user.toString())) {
     var content = message.content.replace(bot.user.toString().replace('@', '@!'), '').trim()
     if (content) {
-      const response = await fetch(`https://program-o.com/v3/chat.php?say=${content}`)
-      const json = await response.json()
-      message.channel.send($.embed(`${message.author.toString()} ${json.conversation.say.bot}`))
+      try {
+        const { data } = await $.fetch(`https://program-o.com/v3/chat.php?say=${content}`)
+        message.channel.send($.embed(`${message.author.toString()} ${data.conversation.say.bot}`))
+      } catch (err) {
+        $.warn(err)
+      }
     }
   }
 
@@ -229,54 +245,51 @@ process.on('uncaughtException', err => {
   $.warn('Uncaught Exception: ' + (err.stack || err))
 })
 
-bot.loadModules = renew => {
-  return new Promise(async resolve => {
-    loaded = false
-    time = new Date()
+bot.loadModules = async renew => {
+  loaded = false
+  time = new Date()
 
-    if (!renew) {
-      var modules = ['games', 'music', 'events']
-      for (var i = 0; i < modules.length; i++) {
-        bot[modules[i]] = {}
-      }
+  if (!renew) {
+    var modules = ['games', 'music', 'events']
+    for (var module of modules) {
+      bot[module] = {}
     }
+  }
 
-    try {
-      if (renew) {
-        bot.env = dotenv.parse(fs.readFileSync('./.env'))
-        bot.package = reload('../package')
-        $.log(`Loading Functions Module...`)
-        $ = reload('./assets/functions')
-        await $.refreshServerConfig()
-      }
-      $.log(`Loading Administration Module...`)
-      Administration = reload('./modules/administration')
-      $.log(`Loading Utilities Module...`)
-      Utilities = reload('./modules/utilities')
-      $.log(`Loading Music Module...`)
-      Music = reload('./modules/music')
-      $.log(`Loading Searches Module...`)
-      Searches = reload('./modules/searches')
-      $.log(`Loading Games Module...`)
-      Games = reload('./modules/games')
-      $.log(`Loading Events Module...\n`)
-      Events = reload('./modules/events')
-    } catch (err) {
-      $.warn(err)
+  try {
+    if (renew) {
+      bot.env = dotenv.parse(fs.readFileSync('./.env'))
+      bot.package = reload('../package')
+      $.log(`Loading Functions Module...`)
+      $ = reload('./assets/functions')
+      await $.refreshServerConfig()
     }
+    $.log(`Loading Administration Module...`)
+    Administration = reload('./modules/administration')
+    $.log(`Loading Utilities Module...`)
+    Utilities = reload('./modules/utilities')
+    $.log(`Loading Music Module...`)
+    Music = reload('./modules/music')
+    $.log(`Loading Searches Module...`)
+    Searches = reload('./modules/searches')
+    $.log(`Loading Games Module...`)
+    Games = reload('./modules/games')
+    $.log(`Loading Events Module...\n`)
+    Events = reload('./modules/events')
+  } catch (err) {
+    $.warn(err)
+  }
 
-    bot.modules = {
-      admin: getAllFuncs(new Administration()),
-      music: getAllFuncs(new Music()),
-      util: getAllFuncs(new Utilities()),
-      search: getAllFuncs(new Searches()),
-      games: getAllFuncs(new Games())
-    }
+  bot.modules = {
+    admin: getAllFuncs(new Administration()),
+    music: getAllFuncs(new Music()),
+    util: getAllFuncs(new Utilities()),
+    search: getAllFuncs(new Searches()),
+    games: getAllFuncs(new Games())
+  }
 
-    $.log(`Loaded All Modules in ${((Date.now() - time) / 1000).toFixed(2)} secs.\n`)
-    loaded = true
-    resolve()
-  })
+  $.log(`Loaded All Modules in ${((Date.now() - time) / 1000).toFixed(2)} secs.\n`)
+  loaded = true
 }
 
 bot.loadEvents = () => {
@@ -314,7 +327,9 @@ function getModule(command) {
 }
 
 function getAllFuncs(obj) {
-  return Object.getOwnPropertyNames(Object.getPrototypeOf(obj)).filter(x => x !== 'constructor' && !x.startsWith('_'))
+  return Object.getOwnPropertyNames(Object.getPrototypeOf(obj)).filter(
+    x => x !== 'constructor' && !x.startsWith('_')
+  )
 }
 
 function displayAscii() {

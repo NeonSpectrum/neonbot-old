@@ -1,6 +1,6 @@
 {
-  "name": "NeonBot",
-  "version": "2.3.5",
+  "name": "neonbot",
+  "version": "3.0.0",
   "description": "",
   "main": "src/bot.js",
   "scripts": {
@@ -11,6 +11,7 @@
   "author": "NeonSpectrum",
   "license": "MIT",
   "dependencies": {
+    "axios": "^0.18.0",
     "bufferutil": "^3.0.4",
     "cheerio": "^1.0.0-rc.2",
     "child_process": "^1.0.2",
@@ -27,6 +28,7 @@
     "https-proxy-agent": "^2.2.1",
     "jimp": "^0.2.28",
     "libsodium-wrappers": "^0.7.3",
+    "lodash": "^4.17.11",
     "moment": "^2.22.1",
     "mongodb": "^3.0.7",
     "node-fetch": "^2.1.2",
@@ -38,7 +40,7 @@
     "simple-youtube-api": "^5.0.1",
     "spotify-uri": "^1.0.0",
     "steamid": "^1.1.0",
-    "urban-dictionary": "^1.0.6",
+    "urban-dictionary": "^2.2.1",
     "uws": "^10.148.1",
     "ytdl-core": "^0.20.2"
   },

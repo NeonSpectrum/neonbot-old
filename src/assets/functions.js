@@ -4,8 +4,9 @@ const moment = require('moment')
 const bot = require('../bot')
 const fetch = require('node-fetch')
 const colors = require('colors/safe')
+const axios = require('axios')
 
-const db = bot.db
+const { db } = bot
 
 var spotify = {
   token: null,
@@ -17,29 +18,19 @@ var $ = {}
 
 $.log = (content, message) => {
   if (message) {
-    console.log(`${colors.yellow(
-      '------ ' + moment().format('YYYY-MM-DD hh:mm:ss A') + ' ------'
-    )}
+    console.log(`${colors.yellow('------ ' + moment().format('YYYY-MM-DD hh:mm:ss A') + ' ------')}
    ${colors.cyan('Guild')}: ${message.channel.guild.name}
    ${colors.cyan('Channel')}: ${message.channel.name}
    ${colors.cyan('User')}: ${message.author.tag}
    ${colors.cyan('Message')}: ${content}
 `)
   } else {
-    console.log(
-      `${colors.yellow(
-        moment().format('YYYY-MM-DD hh:mm:ss A')
-      )} | ${colors.cyan(content)}`
-    )
+    console.log(`${colors.yellow(moment().format('YYYY-MM-DD hh:mm:ss A'))} | ${colors.cyan(content)}`)
   }
 }
 
 $.warn = (message, send = true) => {
-  console.log(
-    `${colors.yellow(moment().format('YYYY-MM-DD hh:mm:ss A'))} | ${colors.red(
-      message
-    )}`
-  )
+  console.log(`${colors.yellow(moment().format('YYYY-MM-DD hh:mm:ss A'))} | ${colors.red(message)}`)
   if (send) {
     var guilds = Array.from(bot.guilds.keys())
     for (var i = 0; i < guilds.length; i++) {
@@ -101,8 +92,7 @@ $.processDatabase = guilds => {
 
 $.refreshConfig = () => {
   return new Promise((resolve, reject) => {
-    db
-      .collection('settings')
+    db.collection('settings')
       .find({})
       .toArray((err, items) => {
         if (err) return $.warn(err)
@@ -122,8 +112,7 @@ $.getServerConfig = id => {
 
 $.refreshServerConfig = () => {
   return new Promise((resolve, reject) => {
-    db
-      .collection('servers')
+    db.collection('servers')
       .find({})
       .toArray((err, items) => {
         if (err) return $.warn(err)
@@ -235,18 +224,14 @@ $.deleteAlias = (id, name) => {
 
 $.storeMusicPlaylist = (id, arr) => {
   var content = [id.voice, id.msg].concat(arr)
-  fs.outputFile(
-    `musiclist/${id.guild}.txt`,
-    content.join('\r\n'),
-    function () {}
-  )
+  fs.outputFile(`./src/musiclist/${id.guild}.txt`, content.join('\r\n'), function() {})
 }
 
 $.getMusicPlaylist = id => {
   return new Promise((resolve, reject) => {
     var file = `musiclist/${id}.txt`
     if (fs.existsSync(file)) {
-      fs.readFile(file, 'utf8', function (err, data) {
+      fs.readFile(file, 'utf8', function(err, data) {
         if (err) return $.warn(err)
         resolve(data.split('\r\n'))
       })
@@ -259,51 +244,39 @@ $.getMusicPlaylist = id => {
 $.removeMusicPlaylist = id => {
   var file = `musiclist/${id}.txt`
   if (fs.existsSync(file)) {
-    fs.unlink(file, function () {})
+    fs.unlink(file, function() {})
   }
 }
 
-$.fetchJSON = (url, obj) => {
-  return new Promise(async resolve => {
-    try {
-      var res = await fetch(url, obj)
-      resolve(await res.json())
-    } catch (err) {
-      $.warn(err)
-    }
-  })
+$.fetch = async (url, obj) => {
+  var data = null
+
+  try {
+    var { data } = await axios.get(url, { params: obj })
+  } catch (err) {
+    $.warn(err)
+  }
+
+  return data
 }
 
-$.fetchHTML = (url, obj) => {
-  return new Promise(async resolve => {
-    try {
-      var res = await fetch(url, obj)
-      resolve(await res.text())
-    } catch (err) {
-      $.warn(err)
-    }
-  })
-}
-
-$.getSpotifyToken = () => {
-  return new Promise(async resolve => {
-    if (moment() > spotify.expiration) {
-      var json = await $.fetchJSON('https://accounts.spotify.com/api/token', {
-        method: 'POST',
-        headers: {
-          Authorization: `Basic ${Buffer.from(
-            bot.env.SPOTIFY_CLIENT_ID + ':' + bot.env.SPOTIFY_CLIENT_SECRET
-          ).toString('base64')}`,
-          Accept: 'application/json',
-          'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: 'grant_type=client_credentials'
-      })
-      spotify.token = json.access_token
-      spotify.expiration = moment().add(json.expires_in - 600, 'seconds')
-    }
-    resolve(spotify.token)
-  })
+$.getSpotifyToken = async () => {
+  if (moment() > spotify.expiration) {
+    var json = await $.fetch('https://accounts.spotify.com/api/token', {
+      method: 'POST',
+      headers: {
+        Authorization: `Basic ${Buffer.from(
+          bot.env.SPOTIFY_CLIENT_ID + ':' + bot.env.SPOTIFY_CLIENT_SECRET
+        ).toString('base64')}`,
+        Accept: 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: 'grant_type=client_credentials'
+    })
+    spotify.token = json.access_token
+    spotify.expiration = moment().add(json.expires_in - 600, 'seconds')
+  }
+  return spotify.token
 }
 
 $.formatSeconds = (secs, format) => {
