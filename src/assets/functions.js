@@ -229,7 +229,7 @@ $.storeMusicPlaylist = (id, arr) => {
 
 $.getMusicPlaylist = id => {
   return new Promise((resolve, reject) => {
-    var file = `musiclist/${id}.txt`
+    var file = `./src/musiclist/${id}.txt`
     if (fs.existsSync(file)) {
       fs.readFile(file, 'utf8', function(err, data) {
         if (err) return $.warn(err)

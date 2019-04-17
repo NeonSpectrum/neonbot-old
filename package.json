@@ -30,7 +30,7 @@
     "libsodium-wrappers": "^0.7.3",
     "lodash": "^4.17.11",
     "moment": "^2.22.1",
-    "mongodb": "^3.0.7",
+    "mongodb": "^3.2.3",
     "node-fetch": "^2.1.2",
     "node-opus": "^0.3.0",
     "overwatch-js": "^1.7.0",
