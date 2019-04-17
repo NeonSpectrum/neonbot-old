@@ -706,6 +706,8 @@ Music.prototype.reset = async function() {
     this.stop()
 
     delete servers[message.guild.id]
+    $.removeMusicPlaylist(message.guild.id)
+
     message.channel.send($.embed('Player has been reset.')).then(m =>
       m
         .delete({
