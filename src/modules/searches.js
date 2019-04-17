@@ -4,7 +4,7 @@ const moment = require('moment')
 const _ = require('lodash')
 const emojiFlags = require('emoji-flags')
 const cheerio = require('cheerio')
-const HttpsProxyAgent = require('https-proxy-agent')
+const tunnel = require('tunnel')
 const langs = require('../assets/lang')
 const owjs = require('overwatch-js')
 const SteamID = require('steamid')
@@ -738,9 +738,11 @@ Searches.prototype.lyrics = async function(args) {
         var proxy = bot.env.PROXY.split(':')
         html = await $.fetch(lyricSearchList[index].url, {
           httpsAgent: proxy[0]
-            ? new HttpsProxyAgent({
-                host: proxy[0],
-                port: proxy[1]
+            ? new tunnel.httpsOverHttp({
+                proxy: {
+                  host: proxy[0],
+                  port: proxy[1]
+                }
               })
             : null
         })

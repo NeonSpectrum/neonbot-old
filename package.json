@@ -40,6 +40,7 @@
     "simple-youtube-api": "^5.0.1",
     "spotify-uri": "^1.0.0",
     "steamid": "^1.1.0",
+    "tunnel": "0.0.6",
     "urban-dictionary": "^2.2.1",
     "uws": "^10.148.1",
     "ytdl-core": "^0.20.2"
