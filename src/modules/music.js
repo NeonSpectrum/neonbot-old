@@ -818,13 +818,16 @@ Music.prototype._processFinish = async function(connection) {
   if (player.lastFinishedMessage) {
     player.lastFinishedMessage.delete().catch(() => {})
   }
-  player.lastFinishedMessage = await message.channel.send(
-    $.embed()
-      .setAuthor('Finished Playing #' + (player.currentQueue + 1), 'https://i.imgur.com/SBMH84I.png')
-      .setFooter(footer.join(' | '), requested.displayAvatarURL())
-      .setTitle(player.queue[player.currentQueue].title)
-      .setURL(player.queue[player.currentQueue].url)
-  )
+
+  if (player.status != 'reset') {
+    player.lastFinishedMessage = await message.channel.send(
+      $.embed()
+        .setAuthor('Finished Playing #' + (player.currentQueue + 1), 'https://i.imgur.com/SBMH84I.png')
+        .setFooter(footer.join(' | '), requested.displayAvatarURL())
+        .setTitle(player.queue[player.currentQueue].title)
+        .setURL(player.queue[player.currentQueue].url)
+    )
+  }
 
   if (!player.stopped) {
     this._processNext(connection)
