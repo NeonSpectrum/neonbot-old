@@ -926,7 +926,6 @@ Music.prototype._processAutoplay = function() {
 Music.prototype._processAutoResume = async function(id, playlist) {
   const message = this.message
   const player = this.player
-  const self = this
 
   var msg = await message.channel.send(
     $.embed('Bot Restarted. Would you like to add the previous playlist to queue? (y | n)')
@@ -950,7 +949,7 @@ Music.prototype._processAutoResume = async function(id, playlist) {
       var error = 0
       for (let i = 0; i < playlist.length; i++) {
         try {
-          self._addToQueue(await ytdl.getInfo(playlist[i]))
+          this._addToQueue(await ytdl.getInfo(playlist[i]))
           if (!message.guild.voiceConnection) {
             message.member.voiceChannel
               .join()
