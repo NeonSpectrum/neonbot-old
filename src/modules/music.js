@@ -824,11 +824,7 @@ Music.prototype._processFinish = async function(connection) {
       .setURL(player.queue[player.currentQueue].url)
   )
 
-  if (player.status === 'reset') {
-    await player.lastFinishedMessage.delete().catch(() => {})
-    delete servers[message.guild.id]
-    message.channel.send($.embed('Player has been reset.'))
-  } else if (!player.stopped) {
+  if (!player.stopped) {
     this._processNext(connection)
   } else {
     player.status = null
