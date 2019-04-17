@@ -737,11 +737,11 @@ Searches.prototype.lyrics = async function(args) {
         msg = await message.channel.send($.embed('Processing...'))
         var proxy = bot.env.PROXY.split(':')
         html = await $.fetch(lyricSearchList[index].url, {
-          agent: proxy[0]
-            ? new HttpsProxyAgent({
+          proxy: proxy[0]
+            ? {
                 host: proxy[0],
                 port: proxy[1]
-              })
+              }
             : null
         })
         msg.delete().catch(() => {})

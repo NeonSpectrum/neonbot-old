@@ -2,7 +2,6 @@ const fs = require('fs-extra')
 const Discord = require('discord.js')
 const moment = require('moment')
 const bot = require('../bot')
-const fetch = require('node-fetch')
 const colors = require('colors/safe')
 const axios = require('axios')
 
@@ -248,11 +247,11 @@ $.removeMusicPlaylist = id => {
   }
 }
 
-$.fetch = async (url, obj) => {
+$.fetch = async (url, obj = {}) => {
   var data = null
 
   try {
-    var { data } = await axios.get(url, { params: obj })
+    var { data } = await axios.get(url, obj)
   } catch (err) {
     $.warn(err)
   }
