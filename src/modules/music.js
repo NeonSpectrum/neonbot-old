@@ -43,6 +43,8 @@ class Music extends Helper {
         getCurrentQueue: () => this.player.queue[this.player.currentQueue]
       }
     )
+
+    console.log(this.player)
   }
 }
 
