@@ -113,7 +113,7 @@ Music.prototype.play = async function(args) {
 
     for (let i = 0; i < videos.length; i++) {
       this._addToQueue(await ytdl.getInfo(videos[i].id))
-      if (i === 0) connect()
+      if (i === 0) this._connect()
     }
     msg
       .edit($.embed(`Done! Loaded ${videos.length} ${videos.length === 1 ? 'song' : 'songs'}.`))
@@ -140,7 +140,7 @@ Music.prototype.play = async function(args) {
           .catch(() => {})
       )
     this._addToQueue(info)
-    connect()
+    this._connect()
   } else if (args[0].match(/^(spotify:|https:\/\/[a-z]+\.spotify\.com\/)/g)) {
     var uri = spotifyUri.parse(args[0])
     var token = await $.getSpotifyToken()
@@ -175,7 +175,7 @@ Music.prototype.play = async function(args) {
             this._addToQueue(await ytdl.getInfo(videos[0].url))
             if (!connected) {
               connected = true
-              connect()
+              this._connect()
             }
           }
           if (json.next) loop(offset + 100)
@@ -225,7 +225,7 @@ Music.prototype.play = async function(args) {
             .catch(() => {})
         )
       this._addToQueue(info)
-      connect()
+      this._connect()
     } else {
       message.channel.send($.embed("I can't play that spotify link."))
     }
@@ -284,7 +284,7 @@ Music.prototype.play = async function(args) {
               .catch(() => {})
           )
         this._addToQueue(await ytdl.getInfo(songSearchList[index].url))
-        connect()
+        this._connect()
       })
       .catch(() => {
         msg.delete().catch(() => {})
@@ -297,26 +297,29 @@ Music.prototype.play = async function(args) {
       }
     }
   }
+}
 
-  const connect = () => {
-    player.resendDeleteMessage()
-    if (!message.guild.voiceConnection) {
-      message.member.voice.channel
-        .join()
-        .then(connection => {
-          player.connection = connection
-          this.log('Connected to ' + message.member.voice.channel.name)
-          this._execute(connection)
-        })
-        .catch(err => {
-          this.log(err)
-          message.channel.send($.embed("I can't join the voice channel."))
-        })
-    } else if (player.stopped) {
-      player.stopped = false
-      player.currentQueue = player.queue.length - 1
-      this._execute(player.connection)
-    }
+Music.prototype._connect = function() {
+  const { message, player } = this
+
+  player.resendDeleteMessage()
+
+  if (!message.guild.voiceConnection) {
+    message.member.voice.channel
+      .join()
+      .then(connection => {
+        player.connection = connection
+        this.log('Connected to ' + message.member.voice.channel.name)
+        this._execute(connection)
+      })
+      .catch(err => {
+        $.warn(err)
+        message.channel.send($.embed("I can't join the voice channel."))
+      })
+  } else if (player.stopped) {
+    player.stopped = false
+    player.currentQueue = player.queue.length - 1
+    this._execute(player.connection)
   }
 }
 
@@ -958,7 +961,7 @@ Music.prototype._processAutoResume = async function(id, playlist) {
                 this._execute(connection)
               })
               .catch(() => {
-                message.channel.send("I can't join the voice channel.")
+                message.channel.send($.embed("I can't join the voice channel."))
               })
           }
         } catch (err) {
