@@ -23,6 +23,7 @@ class Music extends Helper {
     super(
       message,
       player || {
+        config: $.getServerConfig(message.guild.id),
         queue: [],
         autoplayid: [],
         shuffled: [],
