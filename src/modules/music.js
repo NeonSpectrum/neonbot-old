@@ -892,7 +892,7 @@ Music.prototype._savePlaylist = function() {
   $.storeMusicPlaylist(
     {
       guild: message.guild.id,
-      voice: message.member.voice.channelID.id,
+      voice: message.member.voice.channelID,
       msg: message.channel.id
     },
     player.queue.map(x => x.url)
