@@ -43,7 +43,7 @@
     "tunnel": "0.0.6",
     "urban-dictionary": "^2.2.1",
     "uws": "^10.148.1",
-    "ytdl-core": "^0.20.2"
+    "ytdl-core": "^0.29.1"
   },
   "engines": {
     "node": ">=8.0.0"
