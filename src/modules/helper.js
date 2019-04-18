@@ -2,7 +2,7 @@ const $ = require('../assets/functions')
 
 class Helper {
   constructor(message, defaults = {}) {
-    this.server = this.player = defaults
+    this.server = defaults
     this.message = message
     this.log = content => {
       $.log(content, message)

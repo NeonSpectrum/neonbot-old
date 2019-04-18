@@ -45,7 +45,7 @@ class Music extends Helper {
         })
     )
 
-    console.log('Player: ' + this.player)
+    this.player = this.server
   }
 }
 
