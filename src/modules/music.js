@@ -10,55 +10,42 @@ const yt = new Youtube(bot.env.GOOGLE_API)
 
 const spotifyUri = require('spotify-uri')
 
+const Helper = require('./helper')
+
 const servers = bot.music
 
-class Music {
+class Music extends Helper {
   constructor(message) {
-    if (typeof message === 'object') {
-      if (!servers[message.guild.id]) {
-        servers[message.guild.id] = {
-          queue: [],
-          autoplayid: [],
-          shuffled: [],
-          connection: null,
-          currentQueue: 0,
-          currentChannel: (message.channel && message.channel.id) || null,
-          previnfo: null,
-          config: $.getServerConfig(message.guild.id),
-          lastPlayingMessage: null,
-          lastFinishedMessage: null,
-          lastAutoMessage: null,
-          lastPauseMessage: null,
-          status: null,
-          requestIndex: null,
-          disableStart: false,
-          disableFinish: false,
-          stopped: false,
-          seek: 0,
-          isLast: () => servers[message.guild.id].queue.length - 1 === servers[message.guild.id].currentQueue,
-          resendDeleteMessage: async () => {
-            var player = servers[message.guild.id]
-            if (player.dispatcher && player.dispatcher.paused) {
-              if (player.lastPauseMessage) {
-                player.lastPauseMessage.delete().catch(() => {})
-              }
-              player.lastPauseMessage = await message.channel.send(
-                $.embed(`Player paused. \`${player.config.prefix}resume\` to resume.`)
-              )
-            }
-          }
-        }
-      } else {
-        servers[message.guild.id].currentChannel =
-          (message.channel && message.channel.id) || servers[message.guild.id].currentChannel
-        servers[message.guild.id].config = $.getServerConfig(message.guild.id)
+    if (!message) return super()
+
+    const player = servers[message.guild.id]
+
+    super(
+      message,
+      player || {
+        queue: [],
+        autoplayid: [],
+        shuffled: [],
+        connection: null,
+        currentQueue: 0,
+        currentChannel: (message && message.channel.id) || null,
+        previnfo: null,
+        lastPlayingMessage: null,
+        lastFinishedMessage: null,
+        lastAutoMessage: null,
+        lastPauseMessage: null,
+        status: null,
+        requestIndex: null,
+        disableStart: false,
+        disableFinish: false,
+        stopped: false,
+        seek: 0,
+        isLast: () => player.queue.length - 1 === player.currentQueue,
+        currentQueue: () => player.queue[player.currentQueue]
       }
-      this.player = servers[message.guild.id]
-      this.message = message
-      this.log = content => {
-        $.log(content, message)
-      }
-    }
+    )
+
+    this.player = this.server
   }
 }
 
@@ -66,25 +53,25 @@ Music.prototype.play = async function(args) {
   const { message, player } = this
 
   if (!message.member.voice.channel) {
-    return message.channel.send($.embed('You must be in a voice channel!'))
+    return this.send($.embed('You must be in a voice channel!'))
   }
   if (!args[0] && !player.stopped) {
-    return message.channel.send($.embed('Please provide a keyword or link.'))
+    return this.send($.embed('Please provide a keyword or link.'))
   }
 
   if (Number.isInteger(+args[0]) || (!args[0] && !player.stopped && player.queue.length !== 0)) {
     this.resume()
     var index = Number.isInteger(+args[0]) ? +args[0] : 1
     if (!player.queue[index - 1]) {
-      return message.channel.send($.embed(`Error! There are only ${player.queue.length} songs.`))
+      return this.send($.embed(`Error! There are only ${player.queue.length} songs.`))
     }
     if (
       !$.isOwner(message.author.id) &&
-      player.queue[player.currentQueue].requested.id !== message.author.id &&
-      !player.queue[player.currentQueue].requested.bot &&
+      player.currentQueue().requested.id !== message.author.id &&
+      !player.currentQueue().requested.bot &&
       !player.stopped
     ) {
-      return message.channel.send($.embed('Please respect the one who queued the song.'))
+      return this.send($.embed('Please respect the one who queued the song.'))
     }
     if (player.stopped) {
       player.stopped = false
@@ -100,14 +87,14 @@ Music.prototype.play = async function(args) {
     try {
       videos = await (await yt.getPlaylist(args[0])).getVideos()
     } catch (err) {
-      return message.channel.send($.embed(`Invalid Playlist URL`))
+      return this.send($.embed(`Invalid Playlist URL`))
     }
 
     if (videos.length === 0) {
-      return message.channel.send($.embed('No videos found in the playlist.'))
+      return this.send($.embed('No videos found in the playlist.'))
     }
 
-    let msg = await message.channel.send(
+    let msg = await this.send(
       $.embed(`Adding ${videos.length} ${videos.length === 1 ? 'song' : 'songs'} to the queue.`)
     )
 
@@ -160,7 +147,7 @@ Music.prototype.play = async function(args) {
         if (json.items) {
           msg =
             msg ||
-            (await message.channel.send(
+            (await this.send(
               $.embed(`Adding ${json.total} ${json.total === 1 ? 'song' : 'songs'} to the queue.`)
             ))
 
@@ -197,7 +184,7 @@ Music.prototype.play = async function(args) {
               .catch(() => {})
           }
         } else {
-          message.channel.send($.embed("I can't play this song."))
+          this.send($.embed("I can't play this song."))
         }
       }
       loop(0)
@@ -209,7 +196,7 @@ Music.prototype.play = async function(args) {
       })
       let videos = await yt.searchVideos(`${json.artists[0].name} ${json.name}`)
       if (videos.length === 0) {
-        return message.channel.send($.embed("I can't find a song from that spotify link."))
+        return this.send($.embed("I can't find a song from that spotify link."))
       }
       let info = await ytdl.getInfo(videos[0].url)
       message.channel
@@ -229,23 +216,17 @@ Music.prototype.play = async function(args) {
       this._addToQueue(info)
       this._connect()
     } else {
-      message.channel.send($.embed("I can't play that spotify link."))
+      this.send($.embed("I can't play that spotify link."))
     }
   } else {
     let videos = await yt.searchVideos(args.join(' '))
     if (videos.length === 0) {
-      return message.channel.send($.embed('Cannot find any videos')).then(m =>
-        m
-          .delete({
-            timeout: 5000
-          })
-          .catch(() => {})
-      )
+      return this.send($.embed('Cannot find any videos'), 5000)
     }
 
     var temp = $.embed().setAuthor('Choose 1-5 below.', 'https://i.imgur.com/SBMH84I.png')
     var songSearchList = []
-    for (let video of videos) {
+    for (let [i, video] of videos.entries()) {
       temp.addField(`${i + 1}. ${video.title}`, video.url)
       songSearchList.push({
         title: video.title,
@@ -255,7 +236,7 @@ Music.prototype.play = async function(args) {
     }
 
     var reactionlist = ['\u0031\u20E3', '\u0032\u20E3', '\u0033\u20E3', '\u0034\u20E3', '\u0035\u20E3', '🗑']
-    var msg = await message.channel.send(temp)
+    var msg = await this.send(temp)
     msg
       .awaitReactions(
         (reaction, user) => reactionlist.indexOf(reaction.emoji.name) > -1 && user.id === message.author.id,
@@ -301,28 +282,34 @@ Music.prototype.play = async function(args) {
   }
 }
 
-Music.prototype._connect = function() {
+Music.prototype._connect = async function() {
   const { message, player } = this
 
-  player.resendDeleteMessage()
+  if (player.dispatcher && player.dispatcher.paused) {
+    if (player.lastPauseMessage) {
+      player.lastPauseMessage.delete().catch(() => {})
+    }
+    player.lastPauseMessage = await this.send(
+      $.embed(`Player paused. \`${player.config.prefix}resume\` to resume.`)
+    )
+  }
 
   if (!message.guild.voiceConnection) {
-    message.member.voice.channel
-      .join()
-      .then(connection => {
-        player.connection = connection
-        this.log('Connected to ' + message.member.voice.channel.name)
-        this._execute(connection)
-      })
-      .catch(err => {
-        $.warn(err)
-        message.channel.send($.embed("I can't join the voice channel."))
-      })
+    try {
+      player.connection = await message.member.voice.channel.join()
+      this.log('Connected to ' + message.member.voice.channel.name)
+      this._execute(player.connection)
+    } catch (err) {
+      $.warn(err)
+      this.send($.embed("I can't join the voice channel."))
+    }
   } else if (player.stopped) {
     player.stopped = false
     player.currentQueue = player.queue.length - 1
     this._execute(player.connection)
   }
+
+  return player.connection
 }
 
 Music.prototype.stop = function() {
@@ -330,28 +317,21 @@ Music.prototype.stop = function() {
 
   if (player.dispatcher) {
     if (!message.member.voice.channel) {
-      return message.channel.send($.embed('You must be in the voice channel!'))
+      return this.send($.embed('You must be in the voice channel!'))
     }
     if (
       !$.isOwner(message.author.id) &&
-      player.queue[player.currentQueue].requested.id !== message.author.id &&
-      !player.queue[player.currentQueue].requested.bot
+      player.currentQueue().requested.id !== message.author.id &&
+      !player.currentQueue().requested.bot
     ) {
-      return message.channel.send($.embed('Please respect the one who queued the song.'))
+      return this.send($.embed('Please respect the one who queued the song.'))
     }
 
     player.stopped = true
     player.dispatcher.end()
 
     if (player.status != 'reset') {
-      message.channel
-        .send($.embed('Player stopped!'))
-        .then(m =>
-          m.delete({
-            timeout: 5000
-          })
-        )
-        .catch(() => {})
+      this.send($.embed('Player stopped!'), 5000)
       this.log('Player stopped!')
     }
   }
@@ -362,15 +342,15 @@ Music.prototype.skip = function() {
 
   if (player.dispatcher) {
     if (!message.member.voice.channel) {
-      return message.channel.send($.embed('You must be in the voice channel!'))
+      return this.send($.embed('You must be in the voice channel!'))
     }
 
     if (
       !$.isOwner(message.author.id) &&
-      player.queue[player.currentQueue].requested.id !== message.author.id &&
-      !player.queue[player.currentQueue].requested.bot
+      player.currentQueue().requested.id !== message.author.id &&
+      !player.currentQueue().requested.bot
     ) {
-      return message.channel.send($.embed('Please respect the one who queued the song.'))
+      return this.send($.embed('Please respect the one who queued the song.'))
     }
 
     this.resume()
@@ -387,18 +367,18 @@ Music.prototype.seek = function(args) {
   const seconds = $.convertToSeconds(args[0] || 0)
 
   if (!Number.isInteger(seconds) || seconds <= 10) {
-    return message.channel.send($.embed('Parameter must be more than 10 seconds.'))
+    return this.send($.embed('Parameter must be more than 10 seconds.'))
   }
   if (player.dispatcher) {
     if (!message.member.voice.channel) {
-      return message.channel.send($.embed('You must be in the voice channel!'))
+      return this.send($.embed('You must be in the voice channel!'))
     }
     if (
       !$.isOwner(message.author.id) &&
-      player.queue[player.currentQueue].requested.id !== message.author.id &&
-      !player.queue[player.currentQueue].requested.bot
+      player.currentQueue().requested.id !== message.author.id &&
+      !player.currentQueue().requested.bot
     ) {
-      return message.channel.send($.embed('Please respect the one who queued the song.'))
+      return this.send($.embed('Please respect the one who queued the song.'))
     }
 
     player.disableFinish = true
@@ -406,13 +386,7 @@ Music.prototype.seek = function(args) {
 
     this._execute(player.connection, seconds)
 
-    message.channel.send($.embed(`Seeking to ${seconds} seconds. Please wait.`)).then(m =>
-      m
-        .delete({
-          timeout: 3000
-        })
-        .catch(() => {})
-    )
+    this.send($.embed(`Seeking to ${seconds} seconds. Please wait.`), 3000)
   }
 }
 
@@ -421,15 +395,15 @@ Music.prototype.removesong = async function(args) {
 
   if (player.dispatcher) {
     if (!message.member.voice.channel) {
-      return message.channel.send($.embed('You must be in the voice channel!'))
+      return this.send($.embed('You must be in the voice channel!'))
     }
 
     if (!args[0] || !Number.isInteger(+args[0])) {
-      return message.channel.send($.embed('Invalid Parameters. <index>'))
+      return this.send($.embed('Invalid Parameters. <index>'))
     }
 
     if (+args[0] <= 0 || +args[0] > player.queue.length) {
-      return message.channel.send($.embed('There is no song in that index.'))
+      return this.send($.embed('There is no song in that index.'))
     }
 
     var index = +args[0] - 1
@@ -439,12 +413,10 @@ Music.prototype.removesong = async function(args) {
       player.queue[index].requested.id !== message.author.id &&
       !player.queue[index].requested.bot
     ) {
-      return message.channel.send(
-        $.embed("You cannot remove this song. You're not the one who requested it.")
-      )
+      return this.send($.embed("You cannot remove this song. You're not the one who requested it."))
     }
 
-    await message.channel.send(
+    await this.send(
       $.embed()
         .setAuthor('Removed Song #' + +args[0], 'https://i.imgur.com/SBMH84I.png')
         .setFooter(player.queue[index].requested.tag, player.queue[index].requested.displayAvatarURL())
@@ -467,7 +439,7 @@ Music.prototype.list = function() {
   const { music } = player.config
 
   if (player.queue.length === 0) {
-    message.channel.send($.embed('The playlist is empty'))
+    this.send($.embed('The playlist is empty'))
   } else {
     try {
       var embeds = []
@@ -494,7 +466,7 @@ Music.prototype.list = function() {
         `Autoplay: ${music.autoplay ? 'on' : 'off'}`
       ]
       if (Math.ceil(player.queue.length / 10) === 1 && embeds[0]) {
-        message.channel.send(
+        this.send(
           embeds[0]
             .setAuthor('Player Queue', 'https://i.imgur.com/SBMH84I.png')
             .setFooter(footer.join(' | '), bot.user.displayAvatarURL())
@@ -520,16 +492,16 @@ Music.prototype.volume = async function(args) {
 
   if (Number.isInteger(+args[0])) {
     if (+args[0] > 200) {
-      return message.channel.send($.embed('The volume must be less than or equal to 200.'))
+      return this.send($.embed('The volume must be less than or equal to 200.'))
     }
     if (player && player.dispatcher) player.dispatcher.setVolume(args / 100)
     player.config = await $.updateServerConfig(message.guild.id, {
       'music.volume': +args[0]
     })
-    message.channel.send($.embed(`Volume is now set to ${player.dispatcher.volume * 100}%`))
+    this.send($.embed(`Volume is now set to ${player.dispatcher.volume * 100}%`))
     this.log(`Volume is now set to ${player.dispatcher.volume * 100}%`)
   } else {
-    message.channel.send($.embed(`Volume is set to ${player.dispatcher.volume * 100}%`))
+    this.send($.embed(`Volume is set to ${player.dispatcher.volume * 100}%`))
   }
 }
 
@@ -542,14 +514,14 @@ Music.prototype.repeat = async function(args) {
     args[0].toLowerCase() !== 'single' &&
     args[0].toLowerCase() !== 'all'
   ) {
-    message.channel.send($.embed('Invalid parameters. (off | single | all)'))
+    this.send($.embed('Invalid parameters. (off | single | all)'))
   } else if (!args[0]) {
-    message.channel.send($.embed(`Repeat is set to ${player.config.music.repeat}.`))
+    this.send($.embed(`Repeat is set to ${player.config.music.repeat}.`))
   } else {
     player.config = await $.updateServerConfig(message.guild.id, {
       'music.repeat': args[0]
     })
-    message.channel.send($.embed(`Repeat is now set to ${player.config.music.repeat}.`))
+    this.send($.embed(`Repeat is now set to ${player.config.music.repeat}.`))
     this.log(`Repeat is now set to ${player.config.music.repeat}.`)
   }
 }
@@ -558,14 +530,14 @@ Music.prototype.shuffle = async function(args) {
   const { message, player } = this
 
   if (args[0] && args[0].toLowerCase() !== 'off' && args[0].toLowerCase() !== 'on') {
-    message.channel.send($.embed('Invalid parameters. (off | on)'))
+    this.send($.embed('Invalid parameters. (off | on)'))
   } else if (!args[0]) {
-    message.channel.send($.embed(`Shuffle is set to ${player.config.music.shuffle ? 'on' : 'off'}.`))
+    this.send($.embed(`Shuffle is set to ${player.config.music.shuffle ? 'on' : 'off'}.`))
   } else {
     player.config = await $.updateServerConfig(message.guild.id, {
       'music.shuffle': args[0] === 'on'
     })
-    message.channel.send($.embed(`Shuffle is now set to ${player.config.music.shuffle ? 'on' : 'off'}.`))
+    this.send($.embed(`Shuffle is now set to ${player.config.music.shuffle ? 'on' : 'off'}.`))
     this.log(`Shuffle is now set to ${player.config.music.shuffle ? 'on' : 'off'}.`)
   }
 }
@@ -581,11 +553,11 @@ Music.prototype.pause = async function() {
     !player.stopped
   ) {
     if (message.member && !message.member.voice.channel) {
-      return message.channel.send($.embed('You must be in the voice channel!'))
+      return this.send($.embed('You must be in the voice channel!'))
     }
     player.dispatcher.pause()
     if (message.channel) {
-      player.lastPauseMessage = await message.channel.send(
+      player.lastPauseMessage = await this.send(
         $.embed(`Player paused. \`${player.config.prefix}resume\` to resume.`)
       )
       this.log('Player paused!')
@@ -606,20 +578,14 @@ Music.prototype.resume = async function() {
 
   if (player && player.dispatcher && player.dispatcher.paused && player.queue.length > 0 && !player.stopped) {
     if (message.member && !message.member.voice.channel) {
-      return message.channel.send($.embed('You must be in the voice channel!'))
+      return this.send($.embed('You must be in the voice channel!'))
     }
     if (message.channel) {
       if (player.lastPauseMessage) {
         player.lastPauseMessage.delete()
         player.lastPauseMessage = null
       }
-      message.channel.send($.embed(`Player resumed.`)).then(s =>
-        s
-          .delete({
-            timeout: 5000
-          })
-          .catch(() => {})
-      )
+      this.send($.embed(`Player resumed.`), 5000)
       this.log('Player resumed!')
     } else {
       if (player.lastAutoMessage) {
@@ -645,17 +611,15 @@ Music.prototype.autoplay = async function(args) {
   const { message, player } = this
 
   if (!args[0]) {
-    return message.channel.send($.embed(`Autoplay is set to ${player.config.music.autoplay ? 'on' : 'off'}.`))
+    return this.send($.embed(`Autoplay is set to ${player.config.music.autoplay ? 'on' : 'off'}.`))
   }
   if (args[0] !== 'on' && args[0] !== 'off') {
-    return message.channel.send($.embed('Invalid Parameters (on | off).'))
+    return this.send($.embed('Invalid Parameters (on | off).'))
   }
   player.config = await $.updateServerConfig(message.guild.id, {
     'music.autoplay': args[0] === 'on'
   })
-  message.channel.send(
-    $.embed('Autoplay is now ' + (player.config.music.autoplay ? 'enabled' : 'disabled') + '.')
-  )
+  this.send($.embed('Autoplay is now ' + (player.config.music.autoplay ? 'enabled' : 'disabled') + '.'))
   this.log('Autoplay ' + (player.config.autoplay ? 'enabled' : 'disabled') + '.')
 }
 
@@ -664,8 +628,8 @@ Music.prototype.nowplaying = function() {
   const { music } = player.config
 
   var temp = $.embed('Nothing playing')
-  if (player && player.queue[player.currentQueue] && !player.stopped) {
-    var { requested, info, title } = player.queue[player.currentQueue]
+  if (player && player.currentQueue() && !player.stopped) {
+    var { requested, info, title } = player.currentQueue()
 
     var footer = [
       requested.tag,
@@ -687,14 +651,14 @@ Music.prototype.nowplaying = function() {
       .addField('Description', info.description)
       .setFooter(footer.join(' | '), requested.displayAvatarURL())
   }
-  message.channel.send(temp)
+  this.send(temp)
 }
 
 Music.prototype.reset = async function() {
   const { message, player } = this
 
   if (!message.member.voice.channel) {
-    return message.channel.send($.embed('You must be in the voice channel!'))
+    return this.send($.embed('You must be in the voice channel!'))
   }
   if (message.guild.voiceConnection) {
     if (player.lastPlayingMessage) {
@@ -711,13 +675,7 @@ Music.prototype.reset = async function() {
     delete servers[message.guild.id]
     $.removeMusicPlaylist(message.guild.id)
 
-    message.channel.send($.embed('Player has been reset.')).then(m =>
-      m
-        .delete({
-          timeout: 10000
-        })
-        .catch(() => {})
-    )
+    this.send($.embed('Player has been reset.'), 10000)
 
     message.guild.voiceConnection.disconnect()
   }
@@ -728,7 +686,7 @@ Music.prototype.restartsong = function() {
 
   if (message.guild.voiceConnection && player.dispatcher) {
     if (!message.member.voice.channel) {
-      return message.channel.send($.embed('You must be in the voice channel!'))
+      return this.send($.embed('You must be in the voice channel!'))
     }
     player.requestIndex = player.currentQueue
     player.dispatcher.end()
@@ -743,7 +701,7 @@ Music.prototype._execute = async function(connection, seconds = 0) {
 
   try {
     player.dispatcher = connection.play(
-      ytdl(player.queue[player.currentQueue].url, {
+      ytdl(player.currentQueue().url, {
         quality: 'highestaudio',
         begin: player.seek * 1000
       }),
@@ -769,7 +727,7 @@ Music.prototype._execute = async function(connection, seconds = 0) {
     })
   } catch (err) {
     $.warn(err)
-    message.channel.send($.embed(`I can't play this song.`))
+    this.send($.embed(`I can't play this song.`))
   }
 }
 
@@ -777,7 +735,7 @@ Music.prototype._processStart = async function() {
   const { message, player } = this
   const { music } = player.config
 
-  var { requested, info, title, url } = player.queue[player.currentQueue]
+  var { requested, info, title, url } = player.currentQueue()
 
   var footer = [
     requested.tag,
@@ -792,7 +750,7 @@ Music.prototype._processStart = async function() {
     player.lastPlayingMessage.delete().catch(() => {})
   }
 
-  player.lastPlayingMessage = await message.channel.send(
+  player.lastPlayingMessage = await this.send(
     $.embed()
       .setAuthor('Now Playing #' + (player.currentQueue + 1), 'https://i.imgur.com/SBMH84I.png')
       .setFooter(footer.join(' | '), requested.displayAvatarURL())
@@ -807,7 +765,7 @@ Music.prototype._processFinish = async function(connection) {
   const { message, player } = this
   const { music } = player.config
 
-  var { requested, info, title, url } = player.queue[player.currentQueue]
+  var { requested, info, title, url } = player.currentQueue()
   var footer = [
     requested.tag,
     $.formatSeconds(info.length_seconds),
@@ -822,7 +780,7 @@ Music.prototype._processFinish = async function(connection) {
   }
 
   if (player.status != 'reset') {
-    player.lastFinishedMessage = await message.channel.send(
+    player.lastFinishedMessage = await this.send(
       $.embed()
         .setAuthor('Finished Playing #' + (player.currentQueue + 1), 'https://i.imgur.com/SBMH84I.png')
         .setFooter(footer.join(' | '), requested.displayAvatarURL())
@@ -908,7 +866,7 @@ Music.prototype._savePlaylist = function() {
 Music.prototype._processAutoplay = async function() {
   const { player } = this
 
-  let { info } = player.queue[player.currentQueue]
+  let { info } = player.currentQueue()
 
   if (player.autoplayid.indexOf(info.video_id) === -1) {
     player.autoplayid.push(info.video_id)
@@ -930,7 +888,7 @@ Music.prototype._processAutoplay = async function() {
 Music.prototype._processAutoResume = async function(id, playlist) {
   const { message, player } = this
 
-  var msg = await message.channel.send(
+  var msg = await this.send(
     $.embed('Bot Restarted. Would you like to add the previous playlist to queue? (y | n)')
   )
   message.channel
@@ -954,15 +912,7 @@ Music.prototype._processAutoResume = async function(id, playlist) {
         try {
           this._addToQueue(await ytdl.getInfo(url))
           if (!message.guild.voiceConnection) {
-            message.member.voice.channel
-              .join()
-              .then(connection => {
-                player.connection = connection
-                this._execute(connection)
-              })
-              .catch(() => {
-                message.channel.send($.embed("I can't join the voice channel."))
-              })
+            this._connect()
           }
         } catch (err) {
           $.warn(err)
@@ -986,7 +936,7 @@ Music.prototype._processAutoResume = async function(id, playlist) {
     .catch(async err => {
       await msg.delete().catch(() => {})
       if (err === 'no') {
-        message.channel.send($.embed('Okay.')).then(m =>
+        this.send($.embed('Okay.')).then(m =>
           m
             .delete({
               timeout: 3000

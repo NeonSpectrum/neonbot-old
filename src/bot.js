@@ -28,7 +28,7 @@ if (!bot.env.TOKEN || !bot.env.PREFIX || !bot.env.OWNER_ID) {
 }
 
 displayAscii()
-$.log(`Starting ${bot.package.name} v${bot.package.version}`)
+$.log(`Starting ${bot.package.displayName} v${bot.package.version}`)
 
 MongoClient.connect(
   `mongodb://${bot.env.DB_USER}:${bot.env.DB_PASS}@${bot.env.DB_HOST}/${bot.env.DB_NAME}`,
