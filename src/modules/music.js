@@ -850,7 +850,7 @@ Music.prototype._processShuffle = function() {
 Music.prototype._savePlaylist = function() {
   const { message, player } = this
 
-  if (message.member.voice) {
+  if (message.member.voice.channelID) {
     $.storeMusicPlaylist(
       {
         guild: message.guild.id,
