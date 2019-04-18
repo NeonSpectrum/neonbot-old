@@ -301,11 +301,11 @@ Music.prototype.play = async function(args) {
   const connect = () => {
     player.resendDeleteMessage()
     if (!message.guild.voiceConnection) {
-      message.member.voice.channelID
+      message.member.voice.channel
         .join()
         .then(connection => {
           player.connection = connection
-          this.log('Connected to ' + message.member.voice.channelID.name)
+          this.log('Connected to ' + message.member.voice.channel.name)
           this._execute(connection)
         })
         .catch(() => {
