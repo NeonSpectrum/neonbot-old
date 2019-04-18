@@ -18,11 +18,9 @@ class Music extends Helper {
   constructor(message) {
     if (!message) return super()
 
-    const player = servers[message.guild.id]
-
     super(
       message,
-      player || {
+      servers[message.guild.id] || {
         config: $.getServerConfig(message.guild.id),
         queue: [],
         autoplayid: [],
