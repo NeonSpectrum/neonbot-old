@@ -749,7 +749,7 @@ Music.prototype._execute = async function(connection, seconds = 0) {
       }),
       {
         volume: music.volume / 100,
-        highWaterMark: 1,
+        // highWaterMark: 1,
         bitrate: 'auto'
       }
     )
