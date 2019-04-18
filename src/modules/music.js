@@ -724,6 +724,10 @@ Music.prototype._execute = async function(connection, seconds = 0) {
         this._processFinish(connection)
       } else player.disableFinish = false
     })
+
+    player.dispatcher.on('error', err => {
+      $.warn(err)
+    })
   } catch (err) {
     $.warn(err)
     this.send($.embed(`I can't play this song.`))
