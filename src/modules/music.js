@@ -65,7 +65,7 @@ class Music {
 Music.prototype.play = async function(args) {
   const { message, player } = this
 
-  if (!message.member.voice) {
+  if (!message.member.voice.channel) {
     return message.channel.send($.embed('You must be in a voice channel!'))
   }
   if (!args[0] && !player.stopped) {
@@ -308,7 +308,8 @@ Music.prototype.play = async function(args) {
           this.log('Connected to ' + message.member.voice.channel.name)
           this._execute(connection)
         })
-        .catch(() => {
+        .catch(err => {
+          this.log(err)
           message.channel.send($.embed("I can't join the voice channel."))
         })
     } else if (player.stopped) {
@@ -323,7 +324,7 @@ Music.prototype.stop = function() {
   const { message, player } = this
 
   if (player.dispatcher) {
-    if (!message.member.voice) {
+    if (!message.member.voice.channel) {
       return message.channel.send($.embed('You must be in the voice channel!'))
     }
     if (
@@ -355,7 +356,7 @@ Music.prototype.skip = function() {
   const { message, player } = this
 
   if (player.dispatcher) {
-    if (!message.member.voice) {
+    if (!message.member.voice.channel) {
       return message.channel.send($.embed('You must be in the voice channel!'))
     }
 
@@ -384,7 +385,7 @@ Music.prototype.seek = function(args) {
     return message.channel.send($.embed('Parameter must be more than 10 seconds.'))
   }
   if (player.dispatcher) {
-    if (!message.member.voice) {
+    if (!message.member.voice.channel) {
       return message.channel.send($.embed('You must be in the voice channel!'))
     }
     if (
@@ -414,7 +415,7 @@ Music.prototype.removesong = async function(args) {
   const { message, player } = this
 
   if (player.dispatcher) {
-    if (!message.member.voice) {
+    if (!message.member.voice.channel) {
       return message.channel.send($.embed('You must be in the voice channel!'))
     }
 
@@ -576,7 +577,7 @@ Music.prototype.pause = async function() {
     player.queue.length > 0 &&
     !player.stopped
   ) {
-    if (message.member && !message.member.voice) {
+    if (message.member && !message.member.voice.channel) {
       return message.channel.send($.embed('You must be in the voice channel!'))
     }
     player.dispatcher.pause()
@@ -601,7 +602,7 @@ Music.prototype.resume = async function() {
   const { message, player } = this
 
   if (player && player.dispatcher && player.dispatcher.paused && player.queue.length > 0 && !player.stopped) {
-    if (message.member && !message.member.voice) {
+    if (message.member && !message.member.voice.channel) {
       return message.channel.send($.embed('You must be in the voice channel!'))
     }
     if (message.channel) {
@@ -689,7 +690,7 @@ Music.prototype.nowplaying = function() {
 Music.prototype.reset = async function() {
   const { message, player } = this
 
-  if (!message.member.voice) {
+  if (!message.member.voice.channel) {
     return message.channel.send($.embed('You must be in the voice channel!'))
   }
   if (message.guild.voiceConnection) {
@@ -723,7 +724,7 @@ Music.prototype.restartsong = function() {
   const { message, player } = this
 
   if (message.guild.voiceConnection && player.dispatcher) {
-    if (!message.member.voice) {
+    if (!message.member.voice.channel) {
       return message.channel.send($.embed('You must be in the voice channel!'))
     }
     player.requestIndex = player.currentQueue
