@@ -111,8 +111,8 @@ Music.prototype.play = async function(args) {
       $.embed(`Adding ${videos.length} ${videos.length === 1 ? 'song' : 'songs'} to the queue.`)
     )
 
-    for (let i = 0; i < videos.length; i++) {
-      this._addToQueue(await ytdl.getInfo(videos[i].id))
+    for (let video of videos) {
+      this._addToQueue(await ytdl.getInfo(video.id))
       if (i === 0) this._connect()
     }
     msg
@@ -163,11 +163,12 @@ Music.prototype.play = async function(args) {
             (await message.channel.send(
               $.embed(`Adding ${json.total} ${json.total === 1 ? 'song' : 'songs'} to the queue.`)
             ))
+
           var error = 0
-          for (let i = 0, connected = false; i < json.items.length; i++) {
-            let videos = await yt.searchVideos(
-              `${json.items[i].track.artists[0].name} ${json.items[i].track.name}`
-            )
+          var connected = false
+
+          for (let item of json.items) {
+            let videos = await yt.searchVideos(`${item.track.artists[0].name} ${item.track.name}`)
             if (videos.length === 0) {
               error++
               continue
@@ -178,6 +179,7 @@ Music.prototype.play = async function(args) {
               this._connect()
             }
           }
+
           if (json.next) loop(offset + 100)
           else {
             msg
@@ -243,11 +245,11 @@ Music.prototype.play = async function(args) {
 
     var temp = $.embed().setAuthor('Choose 1-5 below.', 'https://i.imgur.com/SBMH84I.png')
     var songSearchList = []
-    for (let i = 0, j = 1; i < videos.length; i++, j++) {
-      temp.addField(`${j}. ${videos[i].title}`, videos[i].url)
+    for (let video of videos) {
+      temp.addField(`${i + 1}. ${video.title}`, video.url)
       songSearchList.push({
-        title: videos[i].title,
-        url: videos[i].url,
+        title: video.title,
+        url: video.url,
         requested: message.author
       })
     }
@@ -289,9 +291,9 @@ Music.prototype.play = async function(args) {
       .catch(() => {
         msg.delete().catch(() => {})
       })
-    for (let i = 0; i < reactionlist.length; i++) {
+    for (let reaction of reactionlist) {
       try {
-        await msg.react(reactionlist[i])
+        await msg.react(reaction)
       } catch (err) {
         break
       }
@@ -471,15 +473,13 @@ Music.prototype.list = function() {
       var embeds = []
       var temp = []
       var totalseconds = 0
-      for (let i = 0; i < player.queue.length && player.queue[i].info; i++) {
+      for (let queue of player.queue) {
         temp.push(
-          `\`${player.currentQueue === i ? '*' : ''}${i + 1}.\` [${player.queue[i].title}](${
-            player.queue[i].url
-          })\n\t  \`${$.formatSeconds(player.queue[i].info.length_seconds)} | ${
-            player.queue[i].requested.tag
-          }\``
+          `\`${player.currentQueue === i ? '*' : ''}${i + 1}.\` [${queue.title}](${
+            queue.url
+          })\n\t  \`${$.formatSeconds(queue.info.length_seconds)} | ${queue.requested.tag}\``
         )
-        totalseconds += +player.queue[i].info.length_seconds
+        totalseconds += +queue.info.length_seconds
         if ((i !== 0 && (i + 1) % 10 === 0) || i === player.queue.length - 1) {
           embeds.push($.embed().setDescription(temp.join('\n')))
           temp = []
@@ -807,10 +807,10 @@ Music.prototype._processFinish = async function(connection) {
   const { message, player } = this
   const { music } = player.config
 
-  var requested = player.queue[player.currentQueue].requested
+  var { requested, info, title, url } = player.queue[player.currentQueue]
   var footer = [
     requested.tag,
-    $.formatSeconds(player.queue[player.currentQueue].info.length_seconds),
+    $.formatSeconds(info.length_seconds),
     `Volume: ${music.volume}%`,
     `Repeat: ${music.repeat}`,
     `Shuffle: ${music.shuffle ? 'on' : 'off'}`,
@@ -826,8 +826,8 @@ Music.prototype._processFinish = async function(connection) {
       $.embed()
         .setAuthor('Finished Playing #' + (player.currentQueue + 1), 'https://i.imgur.com/SBMH84I.png')
         .setFooter(footer.join(' | '), requested.displayAvatarURL())
-        .setTitle(player.queue[player.currentQueue].title)
-        .setURL(player.queue[player.currentQueue].url)
+        .setTitle(title)
+        .setURL(url)
     )
   }
 
@@ -914,8 +914,8 @@ Music.prototype._processAutoplay = async function() {
     player.autoplayid.push(info.video_id)
   }
 
-  for (let i = 0; i < info.related_videos.length; i++) {
-    var id = info.related_videos[i].id || info.related_videos[i].video_id
+  for (let related_videos of info.related_videos) {
+    var id = related_videos.id || related_videos.video_id
     if (player.autoplayid.indexOf(id) === -1) {
       player.autoplayid.push(id)
       this._addToQueue(await ytdl.getInfo(id), true)
@@ -950,9 +950,9 @@ Music.prototype._processAutoResume = async function(id, playlist) {
         .edit($.embed(`Adding ${playlist.length} ${playlist.length === 1 ? 'song' : 'songs'} to the queue.`))
         .catch(() => {})
       var error = 0
-      for (let i = 0; i < playlist.length; i++) {
+      for (let url of playlist) {
         try {
-          this._addToQueue(await ytdl.getInfo(playlist[i]))
+          this._addToQueue(await ytdl.getInfo(url))
           if (!message.guild.voiceConnection) {
             message.member.voice.channel
               .join()
