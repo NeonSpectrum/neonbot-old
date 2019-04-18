@@ -42,7 +42,7 @@ class Music extends Helper {
         stopped: false,
         seek: 0,
         isLast: () => player.queue.length - 1 === player.currentQueue,
-        currentQueue: () => (player ? player.queue[player.currentQueue] : 0)
+        getCurrentQueue: () => (player ? player.queue[player.currentQueue] : 0)
       }
     )
 
@@ -68,8 +68,8 @@ Music.prototype.play = async function(args) {
     }
     if (
       !$.isOwner(message.author.id) &&
-      player.currentQueue().requested.id !== message.author.id &&
-      !player.currentQueue().requested.bot &&
+      player.getCurrentQueue().requested.id !== message.author.id &&
+      !player.getCurrentQueue().requested.bot &&
       !player.stopped
     ) {
       return this.send($.embed('Please respect the one who queued the song.'))
@@ -322,8 +322,8 @@ Music.prototype.stop = function() {
     }
     if (
       !$.isOwner(message.author.id) &&
-      player.currentQueue().requested.id !== message.author.id &&
-      !player.currentQueue().requested.bot
+      player.getCurrentQueue().requested.id !== message.author.id &&
+      !player.getCurrentQueue().requested.bot
     ) {
       return this.send($.embed('Please respect the one who queued the song.'))
     }
@@ -348,8 +348,8 @@ Music.prototype.skip = function() {
 
     if (
       !$.isOwner(message.author.id) &&
-      player.currentQueue().requested.id !== message.author.id &&
-      !player.currentQueue().requested.bot
+      player.getCurrentQueue().requested.id !== message.author.id &&
+      !player.getCurrentQueue().requested.bot
     ) {
       return this.send($.embed('Please respect the one who queued the song.'))
     }
@@ -376,8 +376,8 @@ Music.prototype.seek = function(args) {
     }
     if (
       !$.isOwner(message.author.id) &&
-      player.currentQueue().requested.id !== message.author.id &&
-      !player.currentQueue().requested.bot
+      player.getCurrentQueue().requested.id !== message.author.id &&
+      !player.getCurrentQueue().requested.bot
     ) {
       return this.send($.embed('Please respect the one who queued the song.'))
     }
@@ -629,8 +629,8 @@ Music.prototype.nowplaying = function() {
   const { music } = player.config
 
   var temp = $.embed('Nothing playing')
-  if (player && player.currentQueue() && !player.stopped) {
-    var { requested, info, title } = player.currentQueue()
+  if (player && player.getCurrentQueue() && !player.stopped) {
+    var { requested, info, title } = player.getCurrentQueue()
 
     var footer = [
       requested.tag,
@@ -702,7 +702,7 @@ Music.prototype._execute = async function(connection, seconds = 0) {
 
   try {
     player.dispatcher = connection.play(
-      ytdl(player.currentQueue().url, {
+      ytdl(player.getCurrentQueue().url, {
         quality: 'highestaudio',
         begin: player.seek * 1000
       }),
@@ -736,7 +736,7 @@ Music.prototype._processStart = async function() {
   const { message, player } = this
   const { music } = player.config
 
-  var { requested, info, title, url } = player.currentQueue()
+  var { requested, info, title, url } = player.getCurrentQueue()
 
   var footer = [
     requested.tag,
@@ -766,7 +766,7 @@ Music.prototype._processFinish = async function(connection) {
   const { message, player } = this
   const { music } = player.config
 
-  var { requested, info, title, url } = player.currentQueue()
+  var { requested, info, title, url } = player.getCurrentQueue()
   var footer = [
     requested.tag,
     $.formatSeconds(info.length_seconds),
@@ -867,7 +867,7 @@ Music.prototype._savePlaylist = function() {
 Music.prototype._processAutoplay = async function() {
   const { player } = this
 
-  let { info } = player.currentQueue()
+  let { info } = player.getCurrentQueue()
 
   if (player.autoplayid.indexOf(info.video_id) === -1) {
     player.autoplayid.push(info.video_id)
