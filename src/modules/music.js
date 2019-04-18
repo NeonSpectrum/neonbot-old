@@ -42,7 +42,7 @@ class Music extends Helper {
         stopped: false,
         seek: 0,
         isLast: () => player.queue.length - 1 === player.currentQueue,
-        currentQueue: () => player.queue[player.currentQueue]
+        currentQueue: () => (player ? player.queue[player.currentQueue] : 0)
       }
     )
 
