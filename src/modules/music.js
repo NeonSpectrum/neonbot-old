@@ -65,7 +65,7 @@ class Music {
 Music.prototype.play = async function(args) {
   const { message, player } = this
 
-  if (!message.member.voice.channelID) {
+  if (!message.member.voice) {
     return message.channel.send($.embed('You must be in a voice channel!'))
   }
   if (!args[0] && !player.stopped) {
@@ -323,7 +323,7 @@ Music.prototype.stop = function() {
   const { message, player } = this
 
   if (player.dispatcher) {
-    if (!message.member.voice.channelID) {
+    if (!message.member.voice) {
       return message.channel.send($.embed('You must be in the voice channel!'))
     }
     if (
@@ -355,7 +355,7 @@ Music.prototype.skip = function() {
   const { message, player } = this
 
   if (player.dispatcher) {
-    if (!message.member.voice.channelID) {
+    if (!message.member.voice) {
       return message.channel.send($.embed('You must be in the voice channel!'))
     }
 
@@ -384,7 +384,7 @@ Music.prototype.seek = function(args) {
     return message.channel.send($.embed('Parameter must be more than 10 seconds.'))
   }
   if (player.dispatcher) {
-    if (!message.member.voice.channelID) {
+    if (!message.member.voice) {
       return message.channel.send($.embed('You must be in the voice channel!'))
     }
     if (
@@ -414,7 +414,7 @@ Music.prototype.removesong = async function(args) {
   const { message, player } = this
 
   if (player.dispatcher) {
-    if (!message.member.voice.channelID) {
+    if (!message.member.voice) {
       return message.channel.send($.embed('You must be in the voice channel!'))
     }
 
@@ -576,7 +576,7 @@ Music.prototype.pause = async function() {
     player.queue.length > 0 &&
     !player.stopped
   ) {
-    if (message.member && !message.member.voice.channelID) {
+    if (message.member && !message.member.voice) {
       return message.channel.send($.embed('You must be in the voice channel!'))
     }
     player.dispatcher.pause()
@@ -601,7 +601,7 @@ Music.prototype.resume = async function() {
   const { message, player } = this
 
   if (player && player.dispatcher && player.dispatcher.paused && player.queue.length > 0 && !player.stopped) {
-    if (message.member && !message.member.voice.channelID) {
+    if (message.member && !message.member.voice) {
       return message.channel.send($.embed('You must be in the voice channel!'))
     }
     if (message.channel) {
@@ -689,7 +689,7 @@ Music.prototype.nowplaying = function() {
 Music.prototype.reset = async function() {
   const { message, player } = this
 
-  if (!message.member.voice.channelID) {
+  if (!message.member.voice) {
     return message.channel.send($.embed('You must be in the voice channel!'))
   }
   if (message.guild.voiceConnection) {
@@ -723,7 +723,7 @@ Music.prototype.restartsong = function() {
   const { message, player } = this
 
   if (message.guild.voiceConnection && player.dispatcher) {
-    if (!message.member.voice.channelID) {
+    if (!message.member.voice) {
       return message.channel.send($.embed('You must be in the voice channel!'))
     }
     player.requestIndex = player.currentQueue
@@ -889,14 +889,16 @@ Music.prototype._processShuffle = function() {
 Music.prototype._savePlaylist = function() {
   const { message, player } = this
 
-  $.storeMusicPlaylist(
-    {
-      guild: message.guild.id,
-      voice: message.member.voice ? message.member.voice.channelID : null,
-      msg: message.channel.id
-    },
-    player.queue.map(x => x.url)
-  )
+  if (message.member.voice) {
+    $.storeMusicPlaylist(
+      {
+        guild: message.guild.id,
+        voice: message.member.voice.channelID,
+        msg: message.channel.id
+      },
+      player.queue.map(x => x.url)
+    )
+  }
 }
 
 Music.prototype._processAutoplay = async function() {
@@ -948,7 +950,7 @@ Music.prototype._processAutoResume = async function(id, playlist) {
         try {
           this._addToQueue(await ytdl.getInfo(playlist[i]))
           if (!message.guild.voiceConnection) {
-            message.member.voice.channelID
+            message.member.voice.channel
               .join()
               .then(connection => {
                 player.connection = connection

@@ -122,7 +122,7 @@ bot.on('ready', async () => {
       channel: bot.channels.get(playlist[1]),
       author: bot.user,
       member: {
-        voiceChannel: bot.channels.get(voiceChannel)
+        voice: { channel: bot.channels.get(voiceChannel) }
       }
     })
     music._processAutoResume(guilds[i], playlist.slice(2))

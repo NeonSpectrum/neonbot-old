@@ -8,53 +8,53 @@ const members = bot.events
 
 var Events = {}
 
-Events.voiceStateUpdate = async (oldMember, newMember) => {
-  if (newMember.user.bot || newMember.user.id == '348126827186749440') return
-  if (!members[newMember.user.id]) {
-    members[newMember.user.id] = {
+Events.voiceStateUpdate = async (oldState, newState) => {
+  const newUser = newState.member.user
+
+  if (newUser.bot || newUser.id == '348126827186749440') return
+  if (!members[newUser.id]) {
+    members[newUser.id] = {
       roleid: null
     }
   }
-  const config = $.getServerConfig(newMember.guild.id)
-  const member = members[newMember.user.id]
+  const config = $.getServerConfig(newState.guild.id)
+  const member = members[newUser.id]
 
   var msg
 
-  if (oldMember.voiceChannelID !== null && newMember.voiceChannelID === null) {
-    let music = new Music(oldMember)
+  if (oldState.channelID !== null && newState.channelID === null) {
+    let music = new Music(oldState)
 
-    msg = `**${oldMember.user.username}** has disconnected from **${
-      bot.channels.get(oldMember.voiceChannelID).name
+    msg = `**${oldState.user.username}** has disconnected from **${
+      bot.channels.get(oldState.channelID).name
     }**`
 
-    if (bot.channels.get(oldMember.voiceChannelID).members.filter(s => !s.user.bot).size === 0) {
+    if (bot.channels.get(oldState.channelID).members.filter(s => !s.user.bot).size === 0) {
       music.pause()
     }
 
     if (member.roleid) {
-      oldMember.roles
+      oldState.member.roles
         .remove(member.roleid)
         .then(() => {
           member.roleid = null
         })
         .catch(() => {})
     }
-  } else if (oldMember.voiceChannelID === null && newMember.voiceChannelID !== null) {
-    let music = new Music(newMember)
+  } else if (oldState.channelID === null && newState.channelID !== null) {
+    let music = new Music(newState)
 
-    msg = `**${newMember.user.username}** has connected to **${
-      bot.channels.get(newMember.voiceChannelID).name
-    }**`
+    msg = `**${newState.user.username}** has connected to **${bot.channels.get(newState.channelID).name}**`
 
-    if (bot.channels.get(newMember.voiceChannelID).members.filter(s => !s.user.bot).size === 1) {
+    if (bot.channels.get(newState.channelID).members.filter(s => !s.user.bot).size === 1) {
       music.resume()
     }
 
-    if (config.music.roles[newMember.voiceChannelID]) {
-      newMember.roles
-        .add(config.music.roles[newMember.voiceChannelID])
+    if (config.music.roles[newState.channelID]) {
+      newState.member.roles
+        .add(config.music.roles[newState.channelID])
         .then(() => {
-          member.roleid = config.music.roles[newMember.voiceChannelID]
+          member.roleid = config.music.roles[newState.channelID]
         })
         .catch(() => {})
     }
