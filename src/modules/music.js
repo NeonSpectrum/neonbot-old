@@ -20,31 +20,32 @@ class Music extends Helper {
 
     super(
       message,
-      servers[message.guild.id] || {
-        config: $.getServerConfig(message.guild.id),
-        queue: [],
-        autoplayid: [],
-        shuffled: [],
-        connection: null,
-        currentQueue: 0,
-        currentChannel: (message && message.channel.id) || null,
-        previnfo: null,
-        lastPlayingMessage: null,
-        lastFinishedMessage: null,
-        lastAutoMessage: null,
-        lastPauseMessage: null,
-        status: null,
-        requestIndex: null,
-        disableStart: false,
-        disableFinish: false,
-        stopped: false,
-        seek: 0,
-        isLast: () => this.player.queue.length - 1 === this.player.currentQueue,
-        getCurrentQueue: () => this.player.queue[this.player.currentQueue]
-      }
+      servers[message.guild.id] ||
+        (servers[message.guild.id] = {
+          config: $.getServerConfig(message.guild.id),
+          queue: [],
+          autoplayid: [],
+          shuffled: [],
+          connection: null,
+          currentQueue: 0,
+          currentChannel: (message && message.channel.id) || null,
+          previnfo: null,
+          lastPlayingMessage: null,
+          lastFinishedMessage: null,
+          lastAutoMessage: null,
+          lastPauseMessage: null,
+          status: null,
+          requestIndex: null,
+          disableStart: false,
+          disableFinish: false,
+          stopped: false,
+          seek: 0,
+          isLast: () => this.player.queue.length - 1 === this.player.currentQueue,
+          getCurrentQueue: () => this.player.queue[this.player.currentQueue]
+        })
     )
 
-    console.log(this.player)
+    console.log('Player: ' + this.player)
   }
 }
 
