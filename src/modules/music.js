@@ -699,7 +699,7 @@ Music.prototype._execute = async function(connection, seconds = 0) {
   player.seek = seconds
 
   try {
-    player.dispatcher = connection.play(
+    this.player.dispatcher = connection.play(
       ytdl(player.getCurrentQueue().url, {
         quality: 'highestaudio',
         begin: player.seek * 1000
