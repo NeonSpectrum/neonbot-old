@@ -9,6 +9,7 @@ const members = bot.events
 var Events = {}
 
 Events.voiceStateUpdate = async (oldState, newState) => {
+  const oldUser = oldState.member.user
   const newUser = newState.member.user
 
   if (newUser.bot || newUser.id == '348126827186749440') return
@@ -25,9 +26,7 @@ Events.voiceStateUpdate = async (oldState, newState) => {
   if (oldState.channelID !== null && newState.channelID === null) {
     let music = new Music(oldState)
 
-    msg = `**${oldState.user.username}** has disconnected from **${
-      bot.channels.get(oldState.channelID).name
-    }**`
+    msg = `**${oldUser.username}** has disconnected from **${bot.channels.get(oldState.channelID).name}**`
 
     if (bot.channels.get(oldState.channelID).members.filter(s => !s.user.bot).size === 0) {
       music.pause()
@@ -44,7 +43,7 @@ Events.voiceStateUpdate = async (oldState, newState) => {
   } else if (oldState.channelID === null && newState.channelID !== null) {
     let music = new Music(newState)
 
-    msg = `**${newState.user.username}** has connected to **${bot.channels.get(newState.channelID).name}**`
+    msg = `**${newUser.username}** has connected to **${bot.channels.get(newState.channelID).name}**`
 
     if (bot.channels.get(newState.channelID).members.filter(s => !s.user.bot).size === 1) {
       music.resume()
