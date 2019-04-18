@@ -445,7 +445,7 @@ Music.prototype.list = function() {
       var embeds = []
       var temp = []
       var totalseconds = 0
-      for (let queue of player.queue) {
+      for (let [i, queue] of player.queue.entries()) {
         temp.push(
           `\`${player.currentQueue === i ? '*' : ''}${i + 1}.\` [${queue.title}](${
             queue.url
