@@ -66,7 +66,7 @@ $.processDatabase = guilds => {
       .toArray()
     for (var i = 0; i < guilds.length; i++) {
       if (!items.find(x => x.server_id === guilds[i])) {
-        await db.collection('servers').insert({
+        await db.collection('servers').insertOne({
           server_id: guilds[i],
           prefix: bot.env.PREFIX,
           deleteoncmd: false,
@@ -123,7 +123,7 @@ $.refreshServerConfig = () => {
 
 $.updateConfig = options => {
   return new Promise((resolve, reject) => {
-    db.collection('settings').update(
+    db.collection('settings').updateOne(
       {},
       {
         $set: options
@@ -138,7 +138,7 @@ $.updateConfig = options => {
 
 $.updateServerConfig = (id, options) => {
   return new Promise((resolve, reject) => {
-    db.collection('servers').update(
+    db.collection('servers').updateOne(
       {
         server_id: id
       },
@@ -156,7 +156,7 @@ $.updateServerConfig = (id, options) => {
 
 $.addAlias = (id, owner, args) => {
   return new Promise((resolve, reject) => {
-    db.collection('servers').update(
+    db.collection('servers').updateOne(
       {
         server_id: id
       },
@@ -180,7 +180,7 @@ $.addAlias = (id, owner, args) => {
 
 $.editAlias = (id, alias) => {
   return new Promise((resolve, reject) => {
-    db.collection('servers').update(
+    db.collection('servers').updateOne(
       {
         server_id: id,
         'aliases.name': alias.name
@@ -201,7 +201,7 @@ $.editAlias = (id, alias) => {
 
 $.deleteAlias = (id, name) => {
   return new Promise((resolve, reject) => {
-    db.collection('servers').update(
+    db.collection('servers').updateOne(
       {
         server_id: id
       },
