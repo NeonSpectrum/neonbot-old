@@ -1,3 +1,5 @@
+const $ = require('../assets/functions')
+
 class Helper {
   constructor(message, defaults = {}) {
     this.server = defaults
