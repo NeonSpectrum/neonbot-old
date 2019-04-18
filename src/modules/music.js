@@ -24,7 +24,6 @@ class Music extends Helper {
         (servers[message.guild.id] = {
           config: $.getServerConfig(message.guild.id),
           queue: [],
-          autoplayid: [],
           shuffled: [],
           connection: null,
           currentQueue: 0,
@@ -868,21 +867,23 @@ Music.prototype._processAutoplay = async function() {
 
   let { info } = player.getCurrentQueue()
 
-  if (player.autoplayid.indexOf(info.video_id) === -1) {
-    player.autoplayid.push(info.video_id)
-  }
+  // if (player.autoplayid.indexOf(info.video_id) === -1) {
+  //   player.autoplayid.push(info.video_id)
+  // }
 
-  for (let related_videos of info.related_videos) {
-    var id = related_videos.id || related_videos.video_id
-    if (player.autoplayid.indexOf(id) === -1) {
-      player.autoplayid.push(id)
-      this._addToQueue(await ytdl.getInfo(id), true)
-      break
-    } else if (i === info.related_videos.length - 1) {
-      player.autoplayid = []
-      i = -1
-    }
-  }
+  // for (let related_videos of info.related_videos) {
+  //   var id = related_videos.id || related_videos.video_id
+  //   if (player.autoplayid.indexOf(id) === -1) {
+  //     player.autoplayid.push(id)
+  //     this._addToQueue(await ytdl.getInfo(id), true)
+  //     break
+  //   } else if (i === info.related_videos.length - 1) {
+  //     player.autoplayid = []
+  //     i = -1
+  //   }
+  // }
+
+  this._addToQueue(await ytdl.getInfo(info.related_videos[0].id || info.related_videos[0].video_id), true)
 }
 
 Music.prototype._processAutoResume = async function(id, playlist) {
