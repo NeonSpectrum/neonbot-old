@@ -43,8 +43,6 @@ class Music extends Helper {
         getCurrentQueue: () => this.player.queue[this.player.currentQueue]
       }
     )
-
-    this.player = this.server
   }
 }
 
@@ -699,7 +697,7 @@ Music.prototype._execute = async function(connection, seconds = 0) {
   player.seek = seconds
 
   try {
-    this.player.dispatcher = connection.play(
+    player.dispatcher = connection.play(
       ytdl(player.getCurrentQueue().url, {
         quality: 'highestaudio',
         begin: player.seek * 1000
