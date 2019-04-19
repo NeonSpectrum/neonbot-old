@@ -236,13 +236,28 @@ Searches.prototype.lol = async function(args) {
       icon: `http:${c('.ProfileIcon>img.ProfileImage').attr('src')}`,
       name: c('.Profile>.Information>.SummonerName').text(),
       rank: {
-        title: c('.TierRankInfo>.TierRank').text() || 'N/A',
+        title:
+          c('.LeaguesContainer .Tier')
+            .eq(0)
+            .text() || 'N/A',
         icon: `http:${c('.Medal>img').attr('src')}`,
         info: {
-          points: c('.TierRankInfo>.TierInfo>.LeaguePoints').text() || 'N/A',
-          win: c('.TierRankInfo>.TierInfo>.WinLose>.wins').text() || 'N/A',
-          lose: c('.TierRankInfo>.TierInfo>.WinLose>.losses').text() || 'N/A',
-          ratio: c('.TierRankInfo>.TierInfo>.WinLose>.winratio').text() || 'N/A'
+          points:
+            c('.LeaguesContainer .LP')
+              .eq(0)
+              .text() || 'N/A',
+          win:
+            c('.LeaguesContainer .WinLose>.Wins')
+              .eq(0)
+              .text() || 'N/A',
+          lose:
+            c('.LeaguesContainer .WinLose>.Losses')
+              .eq(0)
+              .text() || 'N/A',
+          ratio:
+            c('.LeaguesContainer .WinLose>.Ratio')
+              .eq(0)
+              .text() || 'N/A'
         }
       },
       mostPlayed: mostPlayed,
