@@ -103,10 +103,10 @@ Events.presenceUpdate = (oldPresence, newPresence) => {
       msg = `**${
         newPresence.user.username
       }** is now ${newPresence.presence.activity.type.toLowerCase()} **${newActivityName}**`
-    } else {
+    } else if (oldActivityName) {
       msg = `**${
         newPresence.user.username
-      }** is done **${oldPresence.frozenPresence.activity.type.toLowerCase()}**`
+      }** is done ${oldPresence.frozenPresence.activity.type.toLowerCase()} **${oldActivityName}**`
     }
   }
   if (msg && bot.channels.get(config.channel.log)) {
