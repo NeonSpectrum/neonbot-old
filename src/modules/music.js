@@ -699,17 +699,21 @@ Music.prototype._execute = async function(connection, seconds = 0) {
   player.seek = seconds
 
   try {
-    player.dispatcher = connection.play(
-      ytdl(player.getCurrentQueue().url, {
-        quality: 'highestaudio',
-        begin: player.seek * 1000
-      }),
-      {
-        volume: music.volume / 100,
-        highWaterMark: 48,
-        bitrate: 'auto'
-      }
-    )
+    const stream = ytdl(player.getCurrentQueue().url, {
+      quality: 'highestaudio',
+      begin: player.seek * 1000
+    })
+
+    stream.on('progress', (chunkLength, downloaded, total) => {
+      console.log(chunkLength)
+      console.log(`(${(downloaded / 1024 / 1024).toFixed(2)}MB of ${(total / 1024 / 1024).toFixed(2)}MB)`)
+    })
+
+    player.dispatcher = connection.play(stream, {
+      volume: music.volume / 100,
+      highWaterMark: 48,
+      bitrate: 'auto'
+    })
 
     if (player.seek) player.disableStart = true
 
@@ -728,7 +732,7 @@ Music.prototype._execute = async function(connection, seconds = 0) {
     player.dispatcher.on('error', err => {
       $.warn(err)
     })
-    
+
     player.dispatcher.on('debug', info => {
       $.log(info)
     })
