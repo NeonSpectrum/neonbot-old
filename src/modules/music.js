@@ -701,7 +701,8 @@ Music.prototype._execute = async function(connection, seconds = 0) {
   try {
     const stream = ytdl(player.getCurrentQueue().url, {
       quality: 'highestaudio',
-      begin: player.seek * 1000
+      begin: player.seek * 1000,
+      highWaterMark: 64 * 1024
     })
 
     stream.on('progress', (chunkLength, downloaded, total) => {
@@ -711,7 +712,6 @@ Music.prototype._execute = async function(connection, seconds = 0) {
 
     player.dispatcher = connection.play(stream, {
       volume: music.volume / 100,
-      highWaterMark: 48,
       bitrate: 'auto'
     })
 
