@@ -95,6 +95,8 @@ Events.presenceUpdate = (oldPresence, newPresence) => {
 
   const config = $.getServerConfig(newPresence.guild.id)
 
+  console.log(oldActivityName + ', ' + newActivityName)
+
   var msg
   if (oldPresence.status !== newPresence.status) {
     msg = `**${newPresence.user.username}** is now **${newPresence.status}**`
