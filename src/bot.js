@@ -84,12 +84,20 @@ bot.on('ready', async () => {
   if (bot.env.message === 'updated') {
     fs.readFile('updateid.txt', 'utf8', function(err, data) {
       if (err) return $.warn(err)
-      bot.channels.get(data).send(
-        $.embed()
-          .setFooter(bot.user.tag, bot.user.displayAvatarURL())
-          .setAuthor('GitLab Update', 'https://i.gifer.com/DgvQ.gif')
-          .setDescription('Updated!')
-      )
+
+      let ids = data.split('\n')
+
+      bot.channels
+        .get(ids[0])
+        .messages.get(ids[1])
+        .edit(
+          $.embed()
+            .setFooter(bot.user.tag, bot.user.displayAvatarURL())
+            .setAuthor('GitLab Update', 'https://i.gifer.com/DgvQ.gif')
+            .setDescription('Updated!')
+        )
+        .then(m => m.delete({ timeout: 10000 }))
+        .catch(() => {})
       fs.unlink('updateid.txt', function() {})
     })
   }
