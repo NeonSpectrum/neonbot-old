@@ -95,8 +95,8 @@ Events.presenceUpdate = (oldPresence, newPresence) => {
 
   const config = $.getServerConfig(newPresence.guild.id)
 
-  console.log(oldPresence)
-  console.log(newPresence)
+  console.log(oldPresence.frozenPresence)
+  console.log(newPresence.frozenPresence)
 
   var msg
   if (oldPresence.status !== newPresence.status) {
