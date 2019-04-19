@@ -76,7 +76,7 @@ Music.prototype.play = async function(args) {
     if (player.stopped) {
       player.stopped = false
       player.currentQueue = index - 1
-      this._execute(player.connection)
+      this._execute()
     } else {
       player.requestIndex = index - 1
       player.dispatcher.end()
@@ -298,7 +298,7 @@ Music.prototype._connect = async function() {
     try {
       player.connection = await message.member.voice.channel.join()
       this.log('Connected to ' + message.member.voice.channel.name)
-      this._execute(player.connection)
+      this._execute()
     } catch (err) {
       $.warn(err)
       this.send($.embed("I can't join the voice channel."))
@@ -306,7 +306,7 @@ Music.prototype._connect = async function() {
   } else if (player.stopped) {
     player.stopped = false
     player.currentQueue = player.queue.length - 1
-    this._execute(player.connection)
+    this._execute()
   }
 
   return player.connection
@@ -384,7 +384,7 @@ Music.prototype.seek = function(args) {
     player.disableFinish = true
     player.dispatcher.end()
 
-    this._execute(player.connection, seconds)
+    this._execute(seconds)
 
     this.send($.embed(`Seeking to ${seconds} seconds. Please wait.`), 3000)
   }
@@ -428,7 +428,7 @@ Music.prototype.removesong = async function(args) {
     player.queue.splice(index, 1)
 
     if (index < player.currentQueue) player.currentQueue -= 1
-    else if (index === player.currentQueue) this._execute(player.connection)
+    else if (index === player.currentQueue) this._execute()
 
     this._savePlaylist()
   }
@@ -693,7 +693,7 @@ Music.prototype.restartsong = function() {
   }
 }
 
-Music.prototype._execute = async function(connection, seconds = 0) {
+Music.prototype._execute = async function(seconds = 0) {
   const { message, player } = this
   const { music } = player.config
 
@@ -713,7 +713,7 @@ Music.prototype._execute = async function(connection, seconds = 0) {
     //   console.log(`(${(downloaded / 1024 / 1024).toFixed(2)}MB of ${(total / 1024 / 1024).toFixed(2)}MB)`)
     // })
 
-    player.dispatcher = connection.play(player.stream, {
+    player.dispatcher = player.connection.play(player.stream, {
       volume: music.volume / 100,
       bitrate: 'auto'
     })
@@ -727,7 +727,7 @@ Music.prototype._execute = async function(connection, seconds = 0) {
       if (!player.disableFinish) {
         player.stream.destroy()
         player.dispatcher.destroy()
-        this._processFinish(connection)
+        this._processFinish()
       } else player.disableFinish = false
     })
 
@@ -774,7 +774,7 @@ Music.prototype._processStart = async function() {
   this.log('Now playing ' + title)
 }
 
-Music.prototype._processFinish = async function(connection) {
+Music.prototype._processFinish = async function() {
   const { message, player } = this
   const { music } = player.config
 
@@ -803,7 +803,7 @@ Music.prototype._processFinish = async function(connection) {
   }
 
   if (!player.stopped) {
-    this._processNext(connection)
+    this._processNext()
   } else {
     player.status = null
     player.requestIndex = null
@@ -812,7 +812,7 @@ Music.prototype._processFinish = async function(connection) {
   }
 }
 
-Music.prototype._processNext = async function(connection) {
+Music.prototype._processNext = async function() {
   const { player } = this
   const { music } = player.config
 
@@ -844,7 +844,7 @@ Music.prototype._processNext = async function(connection) {
       : player.currentQueue + (music.repeat !== 'single' ? 1 : 0)
   player.status = null
   player.requestIndex = null
-  this._execute(connection)
+  this._execute()
 }
 
 Music.prototype._processShuffle = function() {
