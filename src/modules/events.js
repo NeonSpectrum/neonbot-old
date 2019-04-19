@@ -99,9 +99,15 @@ Events.presenceUpdate = (oldPresence, newPresence) => {
   if (oldPresence.status !== newPresence.status) {
     msg = `**${newPresence.user.username}** is now **${newPresence.status}**`
   } else if (oldActivityName !== newActivityName) {
-    msg = `**${newPresence.user.username}** is now ${
-      newActivityName ? newPresence.presence.activity.type.toLowerCase() : 'playing'
-    } **${newActivityName || 'nothing'}**`
+    if (newActivityName) {
+      msg = `**${
+        newPresence.user.username
+      }** is now ${newPresence.presence.activity.type.toLowerCase()} **${newActivityName}**`
+    } else {
+      msg = `**${
+        newPresence.user.username
+      }** is done **${oldPresence.frozenPresence.activity.type.toLowerCase()}**`
+    }
   }
   if (msg && bot.channels.get(config.channel.log)) {
     bot.channels.get(config.channel.log).send(
