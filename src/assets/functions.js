@@ -12,7 +12,7 @@ var spotify = {
   expiration: null
 }
 
-var servers
+var servers = []
 var $ = {}
 
 $.log = (content, message) => {
@@ -58,47 +58,41 @@ $.isOwner = id => {
   return bot.env.OWNER_ID.split(',').indexOf(id) > -1
 }
 
-$.processDatabase = guilds => {
-  return new Promise(async (resolve, reject) => {
-    var items = await db
-      .collection('servers')
-      .find({})
-      .toArray()
-    for (var i = 0; i < guilds.length; i++) {
-      if (!items.find(x => x.server_id === guilds[i])) {
-        await db.collection('servers').insertOne({
-          server_id: guilds[i],
-          prefix: bot.env.PREFIX,
-          deleteoncmd: false,
-          strictmode: false,
-          aliases: [],
-          channel: {},
-          music: {
-            volume: 100,
-            autoplay: false,
-            repeat: 'off',
-            autoresume: false,
-            roles: {}
-          }
-        })
-      }
+$.processDatabase = async guilds => {
+  const items = await db
+    .collection('servers')
+    .find({})
+    .toArray()
+
+  for (let guild of guilds) {
+    if (!items.find(x => x.server_id === guild)) {
+      await db.collection('servers').insertOne({
+        server_id: guilds[i],
+        prefix: bot.env.PREFIX,
+        deleteoncmd: false,
+        strictmode: false,
+        aliases: [],
+        channel: {},
+        music: {
+          volume: 100,
+          autoplay: false,
+          repeat: 'off',
+          autoresume: false,
+          roles: {}
+        }
+      })
     }
-    $.refreshServerConfig().then(() => {
-      resolve()
-    })
-  })
+  }
+
+  await $.refreshServerConfig()
 }
 
-$.refreshConfig = () => {
-  return new Promise((resolve, reject) => {
-    db.collection('settings')
-      .find({})
-      .toArray((err, items) => {
-        if (err) return $.warn(err)
-        bot.config = items[0]
-        resolve()
-      })
-  })
+$.refreshConfig = async () => {
+  try {
+    bot.config = await db.collection('settings').findOne()
+  } catch (err) {
+    $.warn(err)
+  }
 }
 
 $.getServerConfig = id => {
@@ -109,54 +103,50 @@ $.getServerConfig = id => {
   }
 }
 
-$.refreshServerConfig = () => {
-  return new Promise((resolve, reject) => {
-    db.collection('servers')
+$.refreshServerConfig = async () => {
+  try {
+    servers = await db
+      .collection('servers')
       .find({})
-      .toArray((err, items) => {
-        if (err) return $.warn(err)
-        servers = items
-        resolve()
-      })
-  })
+      .toArray()
+  } catch (err) {
+    $.warn(err)
+  }
 }
 
-$.updateConfig = options => {
-  return new Promise((resolve, reject) => {
-    db.collection('settings').updateOne(
+$.updateConfig = async options => {
+  try {
+    await db.collection('settings').updateOne(
       {},
       {
         $set: options
-      },
-      async (err, res) => {
-        if (err) $.warn(err)
-        resolve()
       }
     )
-  })
+  } catch (err) {
+    $.warn(err)
+  }
 }
 
-$.updateServerConfig = (id, options) => {
-  return new Promise((resolve, reject) => {
-    db.collection('servers').updateOne(
+$.updateServerConfig = async (id, options) => {
+  try {
+    await db.collection('servers').updateOne(
       {
         server_id: id
       },
       {
         $set: options
-      },
-      async (err, res) => {
-        if (err) $.warn(err)
-        await $.refreshServerConfig()
-        resolve($.getServerConfig(id))
       }
     )
-  })
+    await $.refreshServerConfig()
+  } catch (err) {
+    $.warn(err)
+  }
+  return $.getServerConfig(id)
 }
 
-$.addAlias = (id, owner, args) => {
-  return new Promise((resolve, reject) => {
-    db.collection('servers').updateOne(
+$.addAlias = async (id, owner, args) => {
+  try {
+    await db.collection('servers').updateOne(
       {
         server_id: id
       },
@@ -168,19 +158,18 @@ $.addAlias = (id, owner, args) => {
             owner: owner
           }
         }
-      },
-      async (err, res) => {
-        if (err) $.log(err)
-        await $.refreshServerConfig()
-        resolve($.getServerConfig(id))
       }
     )
-  })
+    await $.refreshServerConfig()
+  } catch (err) {
+    $.warn(err)
+  }
+  return $.getServerConfig(id)
 }
 
-$.editAlias = (id, alias) => {
-  return new Promise((resolve, reject) => {
-    db.collection('servers').updateOne(
+$.editAlias = async (id, alias) => {
+  try {
+    await db.collection('servers').updateOne(
       {
         server_id: id,
         'aliases.name': alias.name
@@ -189,19 +178,19 @@ $.editAlias = (id, alias) => {
         $set: {
           'aliases.$': alias
         }
-      },
-      async (err, res) => {
-        if (err) return $.warn(err)
-        await $.refreshServerConfig()
-        resolve($.getServerConfig(id))
       }
     )
-  })
+
+    await $.refreshServerConfig()
+  } catch (err) {
+    $.warn(err)
+  }
+  return $.getServerConfig(id)
 }
 
-$.deleteAlias = (id, name) => {
-  return new Promise((resolve, reject) => {
-    db.collection('servers').updateOne(
+$.deleteAlias = async (id, name) => {
+  try {
+    await db.collection('servers').updateOne(
       {
         server_id: id
       },
@@ -214,37 +203,32 @@ $.deleteAlias = (id, name) => {
       },
       async (err, res) => {
         if (err) return $.warn(err)
-        await $.refreshServerConfig()
-        resolve($.getServerConfig(id))
       }
     )
-  })
+    await $.refreshServerConfig()
+  } catch (err) {
+    $.warn(err)
+  }
+  return $.getServerConfig(id)
 }
 
 $.storeMusicPlaylist = (id, arr) => {
-  var content = [id.voice, id.msg].concat(arr)
-  fs.outputFile(`./src/musiclist/${id.guild}.txt`, content.join('\r\n'), function() {})
+  var dir = './tmp/'
+  var content = {
+    playlist: arr
+  }
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir)
+  }
+  fs.writeFileSync(`./tmp/${id}.json`, JSON.stringify(content, null, 2))
 }
 
 $.getMusicPlaylist = id => {
-  return new Promise((resolve, reject) => {
-    var file = `./src/musiclist/${id}.txt`
-    if (fs.existsSync(file)) {
-      fs.readFile(file, 'utf8', function(err, data) {
-        if (err) return $.warn(err)
-        resolve(data.split('\r\n'))
-      })
-    } else {
-      resolve(null)
-    }
-  })
+  return fs.existsSync(`./tmp/${id}.json`) ? require(`../../tmp/${id}.json`).playlist : null
 }
 
-$.removeMusicPlaylist = id => {
-  var file = `musiclist/${id}.txt`
-  if (fs.existsSync(file)) {
-    fs.unlink(file, function() {})
-  }
+$.clearMusicPlaylist = id => {
+  fs.writeFileSync(`./tmp/${id}.json`, JSON.stringify({ playlist: [] }, null, 2))
 }
 
 $.fetch = async (url, obj = {}) => {

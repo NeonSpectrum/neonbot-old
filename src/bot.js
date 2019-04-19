@@ -52,7 +52,7 @@ MongoClient.connect(
       .find({})
       .toArray()
     if (items.length === 0) {
-      items = (await db.collection('settings').insert({
+      items = (await db.collection('settings').insertOne({
         status: 'online',
         game: {
           type: '',
@@ -122,18 +122,6 @@ bot.on('ready', async () => {
       }
       bot.channels.get(conf.channel.debug).send(temp)
     }
-    var playlist = await $.getMusicPlaylist(guilds[i])
-    if (!playlist) continue
-    var voiceChannel = playlist[0]
-    var music = new Music({
-      guild: bot.guilds.get(guilds[i]),
-      channel: bot.channels.get(playlist[1]),
-      author: bot.user,
-      member: {
-        voice: { channel: bot.channels.get(voiceChannel) }
-      }
-    })
-    music._processAutoResume(guilds[i], playlist.slice(2))
   }
 
   bot.user.setPresence({

@@ -865,14 +865,7 @@ Music.prototype._savePlaylist = function() {
   const { message, player } = this
 
   if (message.member.voice.channelID) {
-    $.storeMusicPlaylist(
-      {
-        guild: message.guild.id,
-        voice: message.member.voice.channelID,
-        msg: message.channel.id
-      },
-      player.queue.map(x => x.url)
-    )
+    $.storeMusicPlaylist(message.guild.id, player.queue.map(x => x.url))
   }
 }
 
@@ -902,67 +895,42 @@ Music.prototype._processAutoplay = async function() {
   } while (!found)
 }
 
-Music.prototype._processAutoResume = async function(id, playlist) {
-  const { message, player } = this
+Music.prototype.load = async function() {
+  const { message } = this
 
+  const playlist = $.getMusicPlaylist(message.guild.id)
+
+  if (!playlist) return this.send($.embed('Empty playlist.'))
+
+  $.log(`Adding ${playlist.length} ${playlist.length === 1 ? 'song' : 'songs'} to the queue.`, message)
   var msg = await this.send(
-    $.embed('Bot Restarted. Would you like to add the previous playlist to queue? (y | n)')
+    $.embed(`Adding ${playlist.length} ${playlist.length === 1 ? 'song' : 'songs'} to the queue.`)
   )
-  message.channel
-    .awaitMessages(m => m.content.toLowerCase() === 'y' || m.content.toLowerCase() === 'n', {
-      max: 1,
-      time: 60000,
-      errors: ['time']
-    })
-    .then(async m => {
-      var ans = m.first().content.toLowerCase()
-      m.first()
-        .delete()
-        .catch(() => {})
-      if (ans === 'n') throw new Error('no')
-      $.log(`Adding ${playlist.length} ${playlist.length === 1 ? 'song' : 'songs'} to the queue.`, message)
-      msg
-        .edit($.embed(`Adding ${playlist.length} ${playlist.length === 1 ? 'song' : 'songs'} to the queue.`))
-        .catch(() => {})
-      var error = 0
-      for (let url of playlist) {
-        try {
-          this._addToQueue(await ytdl.getInfo(url))
-          if (!message.guild.voiceConnection) {
-            this._connect()
-          }
-        } catch (err) {
-          $.warn(err)
-          error++
-        }
+  var error = 0
+  for (let url of playlist) {
+    try {
+      this._addToQueue(await ytdl.getInfo(url))
+      if (!message.guild.voiceConnection) {
+        this._connect()
       }
-      msg
-        .edit(
-          $.embed(
-            `Done! Loaded ${playlist.length} ${playlist.length === 1 ? 'song' : 'songs'}.` +
-              (error > 0 ? ` ${error} failed to load.` : '')
-          )
-        )
-        .then(m =>
-          m.delete({
-            timeout: 30000
-          })
-        )
-        .catch(() => {})
-    })
-    .catch(async err => {
-      await msg.delete().catch(() => {})
-      if (err === 'no') {
-        this.send($.embed('Okay.')).then(m =>
-          m
-            .delete({
-              timeout: 3000
-            })
-            .catch(() => {})
-        )
-      }
-      $.removeMusicPlaylist(message.guild.id)
-    })
+    } catch (err) {
+      $.warn(err)
+      error++
+    }
+  }
+  msg
+    .edit(
+      $.embed(
+        `Done! Loaded ${playlist.length} ${playlist.length === 1 ? 'song' : 'songs'}.` +
+          (error > 0 ? ` ${error} failed to load.` : '')
+      )
+    )
+    .then(m =>
+      m.delete({
+        timeout: 30000
+      })
+    )
+    .catch(() => {})
 }
 
 Music.prototype._addToQueue = function(info, isBot) {
