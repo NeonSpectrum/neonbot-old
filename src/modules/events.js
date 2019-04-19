@@ -87,13 +87,16 @@ Events.voiceStateUpdate = async (oldState, newState) => {
   }
 }
 
-Events.presenceUpdate = (oldPresence, newPresence) => {
+Events.presenceUpdate = (oldMember, newMember) => {
   if (newPresence.user.bot) return
 
-  const oldActivityName = oldPresence.frozenPresence.activity && oldPresence.frozenPresence.activity.name
-  const newActivityName = newPresence.presence.activity && newPresence.presence.activity.name
+  const oldPresence = oldMember.frozenPresence
+  const newPresence = newMember.presence
 
-  const config = $.getServerConfig(newPresence.guild.id)
+  const oldActivityName = oldPresence.activity && oldPresence.activity.name
+  const newActivityName = newPresence.activity && newPresence.presence.activity.name
+
+  const config = $.getServerConfig(newMember.guild.id)
 
   var msg
   if (oldPresence.status !== newPresence.status) {
@@ -101,12 +104,12 @@ Events.presenceUpdate = (oldPresence, newPresence) => {
   } else if (oldActivityName !== newActivityName) {
     if (newActivityName) {
       msg = `**${
-        newPresence.user.username
-      }** is now ${newPresence.presence.activity.type.toLowerCase()} **${newActivityName}**`
+        newMember.user.username
+      }** is now ${newPresence.activity.type.toLowerCase()} **${newActivityName}**`
     } else if (oldActivityName) {
       msg = `**${
-        newPresence.user.username
-      }** is done ${oldPresence.frozenPresence.activity.type.toLowerCase()} **${oldActivityName}**`
+        newMember.user.username
+      }** is done ${oldPresence.activity.type.toLowerCase()} **${oldActivityName}**`
     }
   }
   if (msg && bot.channels.get(config.channel.log)) {
