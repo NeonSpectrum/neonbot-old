@@ -234,10 +234,10 @@ Searches.prototype.lol = async function(args) {
 
     var data = {
       icon: `http:${c('.ProfileIcon>img.ProfileImage').attr('src')}`,
-      name: c('.Profile>.Information>.Name').text(),
+      name: c('.Profile>.Information>.SummonerName').text(),
       rank: {
         title: c('.TierRankInfo>.TierRank').text() || 'N/A',
-        icon: `http:${c('.Medal>img.Image').attr('src')}`,
+        icon: `http:${c('.Medal>img').attr('src')}`,
         info: {
           points: c('.TierRankInfo>.TierInfo>.LeaguePoints').text() || 'N/A',
           win: c('.TierRankInfo>.TierInfo>.WinLose>.wins').text() || 'N/A',

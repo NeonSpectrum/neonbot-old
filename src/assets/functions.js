@@ -232,15 +232,12 @@ $.clearMusicPlaylist = id => {
 }
 
 $.fetch = async (url, obj = {}) => {
-  var data = null
-
   try {
     var { data } = await axios.get(url, obj)
+    return data
   } catch (err) {
     $.warn(err)
   }
-
-  return data
 }
 
 $.getSpotifyToken = async () => {
