@@ -85,16 +85,13 @@ bot.on('ready', async () => {
     fs.readFile('./updateid.txt', 'utf8', function(err, data) {
       if (err) return $.warn(err)
 
-      let ids = data.split('\n')
-
       bot.channels
-        .get(ids[0])
-        .messages.get(ids[1])
-        .edit(
+        .get(data)
+        .send(
           $.embed()
             .setFooter(bot.user.tag, bot.user.displayAvatarURL())
             .setAuthor('GitLab Update', 'https://i.gifer.com/DgvQ.gif')
-            .setDescription('Updated!')
+            .setDescription('Restarted!')
         )
         .then(m => m.delete({ timeout: 10000 }))
         .catch(() => {})

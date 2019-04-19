@@ -723,8 +723,7 @@ Administration.prototype.update = function() {
                   .delete()
                   .catch(() => {})
                 if (ans === 'n') throw new Error('no')
-                await msg.edit(embed.setDescription('Restarting the bot...')).catch(() => {})
-                fs.writeFile('updateid.txt', `${message.channel.id}\n${msg.id}`, function() {
+                fs.writeFile('updateid.txt', `${message.channel.id}`, function() {
                   process.exit(2)
                 })
               })
