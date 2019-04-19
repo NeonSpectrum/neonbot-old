@@ -25,6 +25,7 @@ class Music extends Helper {
           config: $.getServerConfig(message.guild.id),
           queue: [],
           shuffled: [],
+          autoplayid: [],
           connection: null,
           currentQueue: 0,
           currentChannel: (message && message.channel.id) || null,
@@ -699,11 +700,7 @@ Music.prototype._execute = async function(connection, seconds = 0) {
   player.seek = seconds
 
   try {
-    if (player.seek) {
-      player.disableStart = true
-    } else if (player.stream) {
-      player.stream.destroy()
-    }
+    player.disableStart = player.seek > 0
 
     player.stream = ytdl(player.getCurrentQueue().url, {
       quality: 'highestaudio',
@@ -711,10 +708,10 @@ Music.prototype._execute = async function(connection, seconds = 0) {
       highWaterMark: 10 * 1024 * 1024
     })
 
-    player.stream.on('progress', (chunkLength, downloaded, total) => {
-      console.log(chunkLength)
-      console.log(`(${(downloaded / 1024 / 1024).toFixed(2)}MB of ${(total / 1024 / 1024).toFixed(2)}MB)`)
-    })
+    // player.stream.on('progress', (chunkLength, downloaded, total) => {
+    //   console.log(chunkLength)
+    //   console.log(`(${(downloaded / 1024 / 1024).toFixed(2)}MB of ${(total / 1024 / 1024).toFixed(2)}MB)`)
+    // })
 
     player.dispatcher = connection.play(player.stream, {
       volume: music.volume / 100,
@@ -728,6 +725,7 @@ Music.prototype._execute = async function(connection, seconds = 0) {
 
     player.dispatcher.on('finish', () => {
       if (!player.disableFinish) {
+        player.stream.destroy()
         player.dispatcher.destroy()
         this._processFinish(connection)
       } else player.disableFinish = false
@@ -883,23 +881,25 @@ Music.prototype._processAutoplay = async function() {
 
   let { info } = player.getCurrentQueue()
 
-  // if (player.autoplayid.indexOf(info.video_id) === -1) {
-  //   player.autoplayid.push(info.video_id)
-  // }
+  if (player.autoplayid.indexOf(info.video_id) === -1) {
+    player.autoplayid.push(info.video_id)
+  }
 
-  // for (let related_videos of info.related_videos) {
-  //   var id = related_videos.id || related_videos.video_id
-  //   if (player.autoplayid.indexOf(id) === -1) {
-  //     player.autoplayid.push(id)
-  //     this._addToQueue(await ytdl.getInfo(id), true)
-  //     break
-  //   } else if (i === info.related_videos.length - 1) {
-  //     player.autoplayid = []
-  //     i = -1
-  //   }
-  // }
+  let found = false
 
-  this._addToQueue(await ytdl.getInfo(info.related_videos[0].id || info.related_videos[0].video_id), true)
+  do {
+    for (let [i, related_videos] of info.related_videos.entries()) {
+      var id = related_videos.id || related_videos.video_id
+      if (player.autoplayid.indexOf(id) === -1) {
+        player.autoplayid.push(id)
+        this._addToQueue(await ytdl.getInfo(id), true)
+        found = true
+        break
+      } else if (i === info.related_videos.length - 1) {
+        player.autoplayid = []
+      }
+    }
+  } while (!found)
 }
 
 Music.prototype._processAutoResume = async function(id, playlist) {
