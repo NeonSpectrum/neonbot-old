@@ -88,13 +88,13 @@ Events.voiceStateUpdate = async (oldState, newState) => {
 }
 
 Events.presenceUpdate = (oldMember, newMember) => {
-  if (newPresence.user.bot) return
+  if (newMember.user.bot) return
 
   const oldPresence = oldMember.frozenPresence
   const newPresence = newMember.presence
 
   const oldActivityName = oldPresence.activity && oldPresence.activity.name
-  const newActivityName = newPresence.activity && newPresence.presence.activity.name
+  const newActivityName = newPresence.activity && newPresence.activity.name
 
   const config = $.getServerConfig(newMember.guild.id)
 
