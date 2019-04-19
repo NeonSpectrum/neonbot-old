@@ -89,27 +89,19 @@ Events.voiceStateUpdate = async (oldState, newState) => {
 
 Events.presenceUpdate = (oldMember, newMember) => {
   if (newMember.user.bot) return
-  if (!members[newMember.user.id]) {
-    members[newMember.user.id] = {
-      activity: null
-    }
-  }
+
+  const oldActivityName = oldMember.presence.activity && oldMember.presence.activity.name
+  const newActivityName = newMember.presence.activity && newMember.presence.activity.name
 
   const config = $.getServerConfig(newMember.guild.id)
 
   var msg
   if (oldMember.presence.status !== newMember.presence.status) {
     msg = `**${newMember.user.username}** is now **${newMember.presence.status}**`
-  } else if (oldMember.presence.activity !== newMember.presence.activity) {
-    if (members[newMember.user.id].activity != newMember.presence.activity) {
-      msg = `**${newMember.user.username}** is now ${
-        newMember.presence.activity ? newMember.presence.activity.type.toLowerCase() : 'playing'
-      } **${!newMember.presence.activity ? 'nothing' : newMember.presence.activity.name}**`
-
-      members[newMember.user.id].activity = !newMember.presence.activity
-        ? 'nothing'
-        : newMember.presence.activity.name
-    }
+  } else if (oldActivityName !== newActivityName) {
+    msg = `**${newMember.user.username}** is now ${
+      newActivityName ? newMember.presence.activity.type.toLowerCase() : 'playing'
+    } **${newActivityName || 'nothing'}**`
   }
   if (msg && bot.channels.get(config.channel.log)) {
     bot.channels.get(config.channel.log).send(
