@@ -30,6 +30,7 @@ var env = process.env
     }
     console.log(code)
     console.log(env.message)
+    console.log(1)
     run()
   })
 })()
