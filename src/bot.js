@@ -82,7 +82,9 @@ bot.on('ready', async () => {
   $.log(`Logged in as ${bot.user.tag}\n`)
 
   if (bot.env.message === 'updated') {
+    console.log('Reading file')
     fs.readFile('./updateid.txt', 'utf8', function(err, data) {
+      console.log(data)
       if (err) return $.warn(err)
 
       let ids = data.split('\n')

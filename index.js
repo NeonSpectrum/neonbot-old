@@ -28,9 +28,6 @@ var env = process.env
       case 0:
         env.message = 'restarted'
     }
-    console.log(code)
-    console.log(env.message)
-    console.log(1)
     run()
   })
 })()
