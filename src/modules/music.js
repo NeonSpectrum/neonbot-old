@@ -701,7 +701,7 @@ Music.prototype._execute = async function(connection, seconds = 0) {
   try {
     if (player.seek) {
       player.disableStart = true
-    } else {
+    } else if (player.stream) {
       player.stream.destroy()
     }
 
