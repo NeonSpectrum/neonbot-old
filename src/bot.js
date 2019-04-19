@@ -81,7 +81,7 @@ bot.on('ready', async () => {
 
   $.log(`Logged in as ${bot.user.tag}\n`)
 
-  if (process.env.message === 'updated') {
+  if (process.env.message === 'updated' && fs.existsSync('./updateid.txt')) {
     fs.readFile('./updateid.txt', 'utf8', function(err, data) {
       if (err) return $.warn(err)
 
@@ -95,7 +95,7 @@ bot.on('ready', async () => {
         )
         .then(m => m.delete({ timeout: 10000 }))
         .catch(() => {})
-      fs.unlinkSync('updateid.txt')
+      fs.unlinkSync('./updateid.txt')
     })
   }
 
