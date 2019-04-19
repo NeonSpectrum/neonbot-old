@@ -4,10 +4,8 @@ var { spawn } = require('child_process')
 
 var env = process.env
 
-function run() {
-  var child = spawn(`node`, ['src/bot'], {
-    env: env
-  })
+;(function run() {
+  var child = spawn(`node`, ['src/bot'], { env })
 
   child.stdout.on('data', function(data) {
     process.stdout.write(data.toString())
@@ -30,7 +28,8 @@ function run() {
       case 0:
         env.message = 'restarted'
     }
+    console.log(code)
+    console.log(env.message)
     run()
   })
-}
-run()
+})()

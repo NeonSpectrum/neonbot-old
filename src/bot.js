@@ -82,7 +82,7 @@ bot.on('ready', async () => {
   $.log(`Logged in as ${bot.user.tag}\n`)
 
   if (bot.env.message === 'updated') {
-    fs.readFile('updateid.txt', 'utf8', function(err, data) {
+    fs.readFile('./updateid.txt', 'utf8', function(err, data) {
       if (err) return $.warn(err)
 
       let ids = data.split('\n')
@@ -98,7 +98,7 @@ bot.on('ready', async () => {
         )
         .then(m => m.delete({ timeout: 10000 }))
         .catch(() => {})
-      fs.unlink('updateid.txt', function() {})
+      fs.unlinkSync('updateid.txt')
     })
   }
 
