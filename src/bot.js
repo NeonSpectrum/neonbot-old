@@ -81,10 +81,8 @@ bot.on('ready', async () => {
 
   $.log(`Logged in as ${bot.user.tag}\n`)
 
-  if (bot.env.message === 'updated') {
-    console.log('Reading file')
+  if (process.env.message === 'updated') {
     fs.readFile('./updateid.txt', 'utf8', function(err, data) {
-      console.log(data)
       if (err) return $.warn(err)
 
       let ids = data.split('\n')
@@ -113,13 +111,13 @@ bot.on('ready', async () => {
       } and ${usersize} ${usersize === 1 ? 'user' : 'users'}${i === bot.guilds.size - 1 ? '\n' : ''}`
     )
     var conf = $.getServerConfig(guilds[i])
-    if (conf.channel.debug && bot.env.message && bot.env.message !== 'updated') {
+    if (conf.channel.debug && bot.env.message && process.env.message !== 'updated') {
       var temp = $.embed().setFooter(bot.user.tag, bot.user.displayAvatarURL())
-      if (bot.env.message === 'crashed') {
+      if (process.env.message === 'crashed') {
         temp
           .setAuthor('Error', 'https://i.imgur.com/1vOMHlr.png')
           .setDescription('Server Crashed. Restarted.')
-      } else if (bot.env.message === 'restarted') {
+      } else if (process.env.message === 'restarted') {
         temp.setAuthor('Restarted!')
       }
       bot.channels.get(conf.channel.debug).send(temp)
