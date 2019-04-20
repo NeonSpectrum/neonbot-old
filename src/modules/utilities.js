@@ -145,7 +145,7 @@ Utilities.prototype.sms = async function(args) {
 
   try {
     await twilio.messages.create({
-      body: body + `\n\nSent by ${message.author.username} using ${bot.package.displayName}`,
+      body: body + `\n\nSent by ${message.author.tag} using ${bot.package.displayName}`,
       from: bot.env.TWILIO_NUMBER,
       to
     })
