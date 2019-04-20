@@ -212,21 +212,16 @@ bot.on('message', async message => {
     $.log('Command Executed ' + message.content.trim(), message)
   }
 
-  function alias(msg) {
-    return new Promise(resolve => {
-      var alias = server.aliases.filter(x => x.name === msg)[0]
-      if (alias) {
-        alias.cmd = alias.cmd.replace('{0}', server.prefix)
-        message.channel.send($.embed(`Executing \`${alias.cmd}\``)).then(m => {
-          m.delete({
-            timeout: 3000
-          }).catch(() => {})
-          resolve(alias.cmd)
-        })
-      } else {
-        resolve(msg)
-      }
-    })
+  async function alias(msg) {
+    var alias = server.aliases.filter(x => x.name === msg)[0]
+    if (alias) {
+      alias.cmd = alias.cmd.replace('{0}', server.prefix)
+      var m = await message.channel.send($.embed(`Executing \`${alias.cmd}\``))
+      m.delete({ timeout: 3000 }).catch(() => {})
+      return alias.cmd
+    } else {
+      return msg
+    }
   }
 })
 

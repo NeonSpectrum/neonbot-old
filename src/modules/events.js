@@ -87,7 +87,7 @@ Events.voiceStateUpdate = async (oldState, newState) => {
   }
 }
 
-Events.presenceUpdate = (oldMember, newMember) => {
+Events.presenceUpdate = async (oldMember, newMember) => {
   if (newMember.user.bot) return
 
   const oldPresence = oldMember.frozenPresence
@@ -98,29 +98,36 @@ Events.presenceUpdate = (oldMember, newMember) => {
 
   const config = $.getServerConfig(newMember.guild.id)
 
-  var msg
+  var msgs = []
   if (oldPresence.status !== newPresence.status) {
-    msg = `**${newPresence.user.username}** is now **${newPresence.status}**`
+    msgs.push(`**${newPresence.user.username}** is now **${newPresence.status}**`)
   } else if (oldActivityName !== newActivityName) {
+    if (oldActivityName) {
+      msgs.push(
+        `**${
+          newMember.user.username
+        }** is done ${oldPresence.activity.type.toLowerCase()} **${oldActivityName}**`
+      )
+    }
     if (newActivityName) {
-      msg = `**${
-        newMember.user.username
-      }** is now ${newPresence.activity.type.toLowerCase()} **${newActivityName}**`
-    } else if (oldActivityName) {
-      msg = `**${
-        newMember.user.username
-      }** is done ${oldPresence.activity.type.toLowerCase()} **${oldActivityName}**`
+      msgs.push(
+        `**${
+          newMember.user.username
+        }** is now ${newPresence.activity.type.toLowerCase()} **${newActivityName}**`
+      )
     }
   }
-  if (msg && bot.channels.get(config.channel.log)) {
-    bot.channels.get(config.channel.log).send(
-      $.embed()
-        .setAuthor(
-          'User Presence Update',
-          `https://cdn.discordapp.com/avatars/${bot.user.id}/${bot.user.avatar}.png?size=16`
-        )
-        .setDescription(`\`${moment().format('YYYY-MM-DD hh:mm:ss A')}\`:bust_in_silhouette:${msg}.`)
-    )
+  if (msgs.length > 0 && bot.channels.get(config.channel.log)) {
+    for (let msg of msgs) {
+      await bot.channels.get(config.channel.log).send(
+        $.embed()
+          .setAuthor(
+            'User Presence Update',
+            `https://cdn.discordapp.com/avatars/${bot.user.id}/${bot.user.avatar}.png?size=16`
+          )
+          .setDescription(`\`${moment().format('YYYY-MM-DD hh:mm:ss A')}\`:bust_in_silhouette:${msg}.`)
+      )
+    }
   }
 }
 
