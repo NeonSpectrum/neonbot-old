@@ -300,7 +300,7 @@ Music.prototype._connect = async function() {
       this.log('Connected to ' + message.member.voice.channel.name)
       this._execute()
     } catch (err) {
-      $.warn(err)
+      $.warn('Connect function', err)
       this.send($.embed("I can't join the voice channel."))
     }
   } else if (player.stopped) {
@@ -482,7 +482,7 @@ Music.prototype.list = function() {
           .build()
       }
     } catch (err) {
-      $.warn(err)
+      $.warn('List function', err)
     }
   }
 }
@@ -705,7 +705,7 @@ Music.prototype._execute = async function(seconds = 0) {
     player.stream = ytdl(player.getCurrentQueue().url, {
       quality: 'highestaudio',
       begin: player.seek * 1000,
-      highWaterMark: 10 * 1024 * 1024
+      highWaterMark: 32 * 1024 * 1024
     })
 
     // player.stream.on('progress', (chunkLength, downloaded, total) => {
@@ -725,21 +725,20 @@ Music.prototype._execute = async function(seconds = 0) {
 
     player.dispatcher.on('finish', () => {
       if (!player.disableFinish) {
-        player.stream.destroy()
         player.dispatcher.destroy()
         this._processFinish()
       } else player.disableFinish = false
     })
 
     player.dispatcher.on('error', err => {
-      $.warn(err)
+      $.warn('Dispatcher error event', err)
     })
 
     player.dispatcher.on('debug', info => {
       $.log(info)
     })
   } catch (err) {
-    $.warn(err)
+    $.warn('Execute function', err)
     this.send($.embed(`I can't play this song.`))
   }
 }
@@ -914,7 +913,7 @@ Music.prototype.load = async function() {
         this._connect()
       }
     } catch (err) {
-      $.warn(err)
+      $.warn('Load add to queue', err)
       error++
     }
   }

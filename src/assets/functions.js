@@ -28,8 +28,9 @@ $.log = (content, message) => {
   }
 }
 
-$.warn = (message, send = true) => {
-  console.log(`${colors.yellow(moment().format('YYYY-MM-DD hh:mm:ss A'))} | ${colors.red(message)}`)
+$.warn = (title = '', message, send = true) => {
+  console.log(`${colors.yellow(moment().format('YYYY-MM-DD hh:mm:ss A'))} | ${colors.red(title)}
+   ${colors.red(message)}`)
   if (send) {
     var guilds = Array.from(bot.guilds.keys())
     for (var i = 0; i < guilds.length; i++) {

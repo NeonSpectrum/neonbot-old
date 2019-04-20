@@ -44,7 +44,7 @@ Searches.prototype.google = async function(args) {
       num: 5
     },
     function(err, res) {
-      if (err) return $.warn(err)
+      if (err) return $.warn('Google search', err)
       var items = res.items
       var temp = []
       for (let i = 0; i < items.length; i++) {
@@ -136,7 +136,7 @@ Searches.prototype.ud = async function(args) {
   var msg = await message.channel.send($.embed('Searching...'))
 
   ud.term(args.join(' '), function(err, entries, tags, sounds) {
-    if (err) return $.warn(err)
+    if (err) return $.warn('Urban Dictionary', err)
     msg.delete().catch(() => {})
     message.channel.send(
       $.embed()
@@ -781,7 +781,7 @@ Searches.prototype.lyrics = async function(args) {
         }
       })
       .catch(err => {
-        $.warn(err)
+        $.warn('Lyrics search', err)
         msg.delete().catch(() => {})
       })
     for (let i = 0; i < reactionlist.length; i++) {

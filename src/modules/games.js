@@ -87,7 +87,7 @@ Games.prototype.pokemon = async function(args) {
 
   var real
   image.getBuffer(jimp.MIME_PNG, function(err, buffer) {
-    if (err) return $.warn(err)
+    if (err) return $.warn('Pokemon first image buffer', err)
     real = buffer
   })
 
@@ -99,7 +99,7 @@ Games.prototype.pokemon = async function(args) {
   ])
 
   shadow.getBuffer(jimp.MIME_PNG, async function(err, buffer) {
-    if (err) return $.warn(err)
+    if (err) return $.warn('Pokemon second image buffer', err)
     var msg = await this.send(
       $.embed()
         .attachFiles([buffer])
@@ -123,7 +123,7 @@ Games.prototype.pokemon = async function(args) {
         throw new Error('done')
       })
       .catch(async err => {
-        if (err) return $.warn(err)
+        if (err) return $.warn('Pokemon await message', err)
         msg.delete().catch(() => {})
         await this.send(
           $.embed()

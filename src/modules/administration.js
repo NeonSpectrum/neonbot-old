@@ -185,7 +185,7 @@ Administration.prototype.prune = async function(args) {
         await channel.bulkDelete(temp).catch(() => {})
         count += temp.length
       } catch (err) {
-        $.warn(err)
+        $.warn('Bulk Delete Function', err)
         break
       }
     } while (count !== length && temp.length !== 0)
@@ -256,7 +256,7 @@ Administration.prototype.setnickname = function(args) {
       this.log(`${member.user.tag}'s nickname has been set to ${name || 'default'}`)
     })
     .catch(err => {
-      $.warn(err)
+      $.warn('Set Nickname', err)
       if (err.message.indexOf('Privilege is too low') > -1) {
         message.channel.send($.embed("You don't have a permission to set nickname."))
       } else {
@@ -282,7 +282,7 @@ Administration.prototype.setname = function(args) {
       this.log(`Username set to ${args.join(' ')}`)
     })
     .catch(err => {
-      $.warn(err)
+      $.warn('Set Name', err)
       message.channel.send($.embed('There was an error changing the username.'))
     })
 }
@@ -318,7 +318,7 @@ Administration.prototype.setstatus = function(args) {
       this.log(`Bot Status set to ${args[0]}`)
     })
     .catch(err => {
-      $.warn(err)
+      $.warn('Set Status', err)
       message.channel.send($.embed('There was an error changing the status.'))
     })
 }
@@ -354,7 +354,7 @@ Administration.prototype.setgame = function(args) {
       this.log(`Game set to ${args.slice(1).join(' ')}`)
     })
     .catch(err => {
-      $.warn(err)
+      $.warn('Set Activity', err)
       message.channel.send($.embed('There was an error setting the game.'))
     })
 }
@@ -380,7 +380,7 @@ Administration.prototype.setavatar = function(args) {
       )
     })
     .catch(err => {
-      $.warn(err)
+      $.warn('Set Avatar', err)
       message.channel.send($.embed('There was an error changing the avatar.'))
     })
 }
@@ -671,7 +671,7 @@ Administration.prototype.update = function() {
     .setAuthor('GitLab Update', 'https://i.gifer.com/DgvQ.gif')
 
   exec(`${bot.env.GIT_PATH}git remote show origin`, async (err, stdout, stderr) => {
-    if (err) return $.warn(err)
+    if (err) return $.warn('Update first exec', err)
     if (stdout.indexOf('out of date') === -1) {
       message.channel.send(
         $.embed()
@@ -703,7 +703,7 @@ Administration.prototype.update = function() {
           await msg.edit(embed.setDescription('Updating...')).catch(() => {})
 
           exec(`${bot.env.GIT_PATH}git pull`, async (err, stdout, stderr) => {
-            if (err) return $.warn(err)
+            if (err) return $.warn('Update second exec', err)
             await execute(`export PATH=$PATH:${bot.env.NODE_PATH} && npm i`)
             await msg.edit(embed.setDescription('Would you like to restart the bot? (y | n)')).catch(() => {})
             message.channel
@@ -743,7 +743,7 @@ Administration.prototype.update = function() {
           function execute(str) {
             return new Promise((resolve, reject) => {
               exec(str, (err, stdout, stderr) => {
-                if (err) return $.warn(err)
+                if (err) return $.warn('Execute function',err)
                 resolve()
               })
             })
