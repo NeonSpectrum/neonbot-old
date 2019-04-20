@@ -85,16 +85,12 @@ bot.on('ready', async () => {
     fs.readFile('./updateid.txt', 'utf8', function(err, data) {
       if (err) return $.warn(err)
 
-      bot.channels
-        .get(data)
-        .send(
-          $.embed()
-            .setFooter(bot.user.tag, bot.user.displayAvatarURL())
-            .setAuthor('GitLab Update', 'https://i.gifer.com/DgvQ.gif')
-            .setDescription('Restarted!')
-        )
-        .then(m => m.delete({ timeout: 10000 }))
-        .catch(() => {})
+      bot.channels.get(data).send(
+        $.embed()
+          .setFooter(bot.user.tag, bot.user.displayAvatarURL())
+          .setAuthor('GitLab Update', 'https://i.gifer.com/DgvQ.gif')
+          .setDescription('Restarted!')
+      )
       fs.unlinkSync('./updateid.txt')
     })
   }
