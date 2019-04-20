@@ -239,6 +239,10 @@
     "info": "Make the bot says the message.",
     "usage": "{0}say <message>"
   },
+  "sms": {
+    "info": "Make the bot send the message through SMS.",
+    "usage": "{0}sms <number> <message>"
+  },
   "serverinfo": {
     "info": "Shows the server information.",
     "usage": "{0}serverinfo"

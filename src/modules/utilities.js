@@ -127,7 +127,7 @@ Utilities.prototype.speak = function(args) {
   })
 }
 
-Utilities.prototype.send = async function(args) {
+Utilities.prototype.sms = async function(args) {
   const { message } = this
 
   const to = args[0]
