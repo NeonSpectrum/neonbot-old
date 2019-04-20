@@ -725,7 +725,6 @@ Music.prototype._execute = async function(seconds = 0) {
 
     player.dispatcher.on('finish', () => {
       if (!player.disableFinish) {
-        player.dispatcher.destroy()
         this._processFinish()
       } else player.disableFinish = false
     })
