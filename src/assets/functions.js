@@ -252,7 +252,7 @@ $.getSpotifyToken = async () => {
         Accept: 'application/json',
         'Content-Type': 'application/x-www-form-urlencoded'
       },
-      data: { grant_type: client_credentials }
+      data: { grant_type: 'client_credentials' }
     })
     spotify.token = json.access_token
     spotify.expiration = moment().add(json.expires_in - 600, 'seconds')
