@@ -157,7 +157,7 @@ Utilities.prototype.sms = async function(args) {
   } catch (err) {
     if (err.code == 21211) {
       msg.edit(embed().addField('Status:', 'Invalid phone number.'))
-    } else 
+    } else {
       msg.edit(embed().addField('Status:', 'Sending failed.'))
       $.warn('SMS', err)
     }
