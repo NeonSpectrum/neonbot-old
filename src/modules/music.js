@@ -474,7 +474,7 @@ Music.prototype.list = function() {
       } else {
         new EmbedsMode()
           .setArray(embeds)
-          .setAuthorizedUser(message.author)
+          .setAuthorizedUsers([message.author.id])
           .setChannel(message.channel)
           .setAuthor('Player Queue', 'https://i.imgur.com/SBMH84I.png')
           .setColor('#59ABE3')
