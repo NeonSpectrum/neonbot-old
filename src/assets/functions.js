@@ -39,6 +39,7 @@ $.warn = (title = '', message, send = true) => {
         bot.channels.get(conf.channel.debug).send(
           $.embed()
             .setAuthor('Error', 'https://i.imgur.com/1vOMHlr.png')
+            .setTitle(title)
             .setDescription(message)
             .setFooter(bot.user.tag, bot.user.displayAvatarURL())
         )
