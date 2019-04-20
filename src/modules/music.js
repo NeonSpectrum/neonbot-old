@@ -673,7 +673,7 @@ Music.prototype.reset = async function() {
     this.stop()
 
     delete servers[message.guild.id]
-    $.removeMusicPlaylist(message.guild.id)
+    $.clearMusicPlaylist(message.guild.id)
 
     this.send($.embed('Player has been reset.'), 10000)
 
