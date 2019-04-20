@@ -244,8 +244,7 @@ $.fetch = async (url, obj = {}) => {
 
 $.getSpotifyToken = async () => {
   if (moment() > spotify.expiration) {
-    var json = await $.fetch('https://accounts.spotify.com/api/token', {
-      method: 'POST',
+    var json = await axios.post('https://accounts.spotify.com/api/token', {
       headers: {
         Authorization: `Basic ${Buffer.from(
           bot.env.SPOTIFY_CLIENT_ID + ':' + bot.env.SPOTIFY_CLIENT_SECRET
@@ -253,7 +252,7 @@ $.getSpotifyToken = async () => {
         Accept: 'application/json',
         'Content-Type': 'application/x-www-form-urlencoded'
       },
-      body: 'grant_type=client_credentials'
+      data: { grant_type: client_credentials }
     })
     spotify.token = json.access_token
     spotify.expiration = moment().add(json.expires_in - 600, 'seconds')
