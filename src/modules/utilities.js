@@ -3,6 +3,7 @@ const bot = require('../bot')
 const reload = require('require-reload')(require)
 const help = reload('../assets/help')
 const $ = require('../assets/functions')
+const twilio = require('twilio')(bot.env.TWILIO_ACCOUNT_SID, bot.env.TWILIO_AUTH_TOKEN)
 
 class Utilities {
   constructor(message) {
@@ -20,8 +21,7 @@ class Utilities {
 }
 
 Utilities.prototype.help = function(args) {
-  const message = this.message
-  const server = this.server
+  const { message, server } = this
 
   if (help[args[0]]) {
     message.channel.send(
@@ -36,8 +36,7 @@ Utilities.prototype.help = function(args) {
 }
 
 Utilities.prototype.cmds = function(args) {
-  const message = this.message
-  const server = this.server
+  const { message, server } = this
 
   if (!bot.modules[args[0]]) {
     return message.channel.send($.embed(`Invalid Module. (${Object.keys(bot.modules).join(' | ')})`))
@@ -74,7 +73,7 @@ Utilities.prototype.cmds = function(args) {
 }
 
 Utilities.prototype.ping = function() {
-  const message = this.message
+  const { message } = this
 
   message.channel.send(
     $.embed()
@@ -84,7 +83,7 @@ Utilities.prototype.ping = function() {
 }
 
 Utilities.prototype.stats = function() {
-  const message = this.message
+  const { message } = this
 
   var guilds = Array.from(bot.guilds.keys())
   var channelsize = 0
@@ -115,21 +114,59 @@ Utilities.prototype.stats = function() {
 }
 
 Utilities.prototype.say = function(args) {
-  const message = this.message
+  const { message } = this
 
   message.channel.send(args.join(' '))
 }
 
 Utilities.prototype.speak = function(args) {
-  const message = this.message
+  const { message } = this
 
   message.channel.send(args.join(' '), {
     tts: true
   })
 }
 
+Utilities.prototype.send = async function(args) {
+  const { message } = this
+
+  const to = args[0]
+  const body = args.slice(1).join(' ')
+
+  var embed = () =>
+    $.embed()
+      .setTitle('✉ SMS')
+      .setFooter(
+        'Powered by Twilio',
+        'https://assets.twilio.com/public_assets/console-js/2.9.0/images/favicons/Twilio_72.png'
+      )
+      .addField('To:', to)
+      .addField('Body:', body)
+
+  var msg = await message.channel.send(embed().addField('Status:', 'Sending...'))
+
+  try {
+    await twilio.messages.create({
+      body,
+      from: bot.env.TWILIO_NUMBER,
+      to
+    })
+    msg.edit(
+      embed()
+        .addField('Status:', 'Sent.')
+        .addField('Date sent:', moment().format('YYYY-MM-DD hh:mm:ss A'))
+    )
+  } catch (err) {
+    if (err.code == 21211) {
+      msg.edit(embed().addField('Status:', 'Invalid phone number.'))
+    } else {
+      $.warn(err)
+    }
+  }
+}
+
 Utilities.prototype.serverinfo = function() {
-  const message = this.message
+  const { message } = this
 
   message.channel.send(
     $.embed()

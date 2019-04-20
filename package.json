@@ -41,6 +41,7 @@
     "spotify-uri": "^1.0.0",
     "steamid": "^1.1.0",
     "tunnel": "0.0.6",
+    "twilio": "^3.30.1",
     "urban-dictionary": "^2.2.1",
     "uws": "^10.148.2",
     "ytdl-core": "^0.29.1"
