@@ -817,7 +817,7 @@ Music.prototype._processNext = async function() {
   if (
     music.repeat === 'off' &&
     !music.autoplay &&
-    (!player.shuffle || player.queue.length === 1) &&
+    (!music.shuffle || player.queue.length === 1) &&
     player.isLast() &&
     player.status !== 'skip' &&
     !Number.isInteger(player.requestIndex)
