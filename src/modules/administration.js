@@ -712,9 +712,7 @@ Administration.prototype.update = function() {
                   (m.content.toLowerCase() === 'y' || m.content.toLowerCase() === 'n') &&
                   m.author.id === message.author.id,
                 {
-                  max: 1,
-                  time: 15000,
-                  errors: ['time']
+                  max: 1
                 }
               )
               .then(async m => {
@@ -743,7 +741,7 @@ Administration.prototype.update = function() {
           function execute(str) {
             return new Promise((resolve, reject) => {
               exec(str, (err, stdout, stderr) => {
-                if (err) return $.warn('Execute function',err)
+                if (err) return $.warn('Execute function', err)
                 resolve()
               })
             })
