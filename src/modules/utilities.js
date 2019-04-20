@@ -131,7 +131,7 @@ Utilities.prototype.sms = async function(args) {
   const { message } = this
 
   const to = args[0]
-  const body = args.slice(1).join(' ')
+  const body = args.slice(1).join(' ') + `\n\nSent by ${message.author.username} using ${bot.package.displayName}`
 
   var embed = () =>
     $.embed()
