@@ -121,7 +121,6 @@ Utilities.prototype.say = function(args) {
 
 Utilities.prototype.speak = function(args) {
   const { message } = this
-
   message.channel.send(args.join(' '), {
     tts: true
   })
@@ -132,7 +131,6 @@ Utilities.prototype.sms = async function(args) {
 
   const to = args[0]
   const body = args.slice(1).join(' ')
-
   var embed = () =>
     $.embed()
       .setTitle('✉ SMS')
@@ -147,7 +145,7 @@ Utilities.prototype.sms = async function(args) {
 
   try {
     await twilio.messages.create({
-      body,
+      body: body + `\n\nSent by ${message.author.tag} using ${bot.package.displayName}`,
       from: bot.env.TWILIO_NUMBER,
       to
     })
@@ -160,7 +158,8 @@ Utilities.prototype.sms = async function(args) {
     if (err.code == 21211) {
       msg.edit(embed().addField('Status:', 'Invalid phone number.'))
     } else {
-      $.warn(err)
+      msg.edit(embed().addField('Status:', 'Sending failed.'))
+      $.warn('SMS', err)
     }
   }
 }
