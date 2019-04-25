@@ -66,7 +66,7 @@ $.processDatabase = async guilds => {
     .find({})
     .toArray()
 
-  for (let guild of guilds) {
+  for (let [i, guild] of guilds.entries()) {
     if (!items.find(x => x.server_id === guild)) {
       await db.collection('servers').insertOne({
         server_id: guilds[i],

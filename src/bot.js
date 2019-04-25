@@ -104,7 +104,7 @@ bot.on('ready', async () => {
       } and ${usersize} ${usersize === 1 ? 'user' : 'users'}${i === bot.guilds.size - 1 ? '\n' : ''}`
     )
     var conf = $.getServerConfig(guilds[i])
-    if (conf.channel.debug && bot.env.message && process.env.message !== 'updated') {
+    if (conf.channel.debug && process.env.message && process.env.message !== 'updated') {
       var temp = $.embed().setFooter(bot.user.tag, bot.user.displayAvatarURL())
       if (process.env.message === 'crashed') {
         temp
