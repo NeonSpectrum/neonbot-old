@@ -44,7 +44,7 @@
     "twilio": "^3.30.1",
     "urban-dictionary": "^2.2.1",
     "uws": "^10.148.2",
-    "ytdl-core-discord": "^1.0.3"
+    "ytdl-core": "^0.24.0"
   },
   "engines": {
     "node": ">=8.0.0"
