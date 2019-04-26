@@ -1,7 +1,7 @@
 const bot = require('../bot')
 const { Embeds: EmbedsMode } = require('discord-paginationembed')
 
-const ytdl = require('ytdl-core-discord')
+const ytdl = require('ytdl-core')
 
 const $ = require('../assets/functions')
 
