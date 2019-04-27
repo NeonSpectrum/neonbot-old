@@ -2,12 +2,16 @@
   "name": "neonbot",
   "displayName": "NeonBot",
   "version": "3.0.0",
-  "description": "",
+  "description": "A Discord Bot using Discord.js",
   "main": "src/bot.js",
   "scripts": {
     "start": "node src/bot.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "ffmpeg": "npm i ffmpeg-binaries --no-save"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://gitlab.com/NeonSpectrum/neonbot.git"
   },
   "author": "NeonSpectrum",
   "license": "MIT",
@@ -40,7 +44,6 @@
     "simple-youtube-api": "^5.1.1",
     "spotify-uri": "^1.0.0",
     "steamid": "^1.1.0",
-    "tunnel": "0.0.6",
     "twilio": "^3.30.1",
     "urban-dictionary": "^2.2.1",
     "uws": "^10.148.2",
