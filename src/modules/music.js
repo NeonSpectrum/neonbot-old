@@ -555,24 +555,29 @@ Music.prototype.pause = async function() {
     player.queue.length > 0 &&
     !player.stopped
   ) {
-    if (message.member && !message.member.voice.channel) {
-      return this.send($.embed('You must be in the voice channel!'))
-    }
-    player.dispatcher.pause()
-    if (message.channel) {
-      player.lastPauseMessage = await this.send(
-        $.embed(`Player paused. \`${player.config.prefix}resume\` to resume.`)
-      )
-      this.log('Player paused!')
-    } else {
+    if (message.channel.members.filter(s => !s.user.bot).size === 0) {
       if (player.lastAutoMessage) {
         player.lastAutoMessage.delete().catch(() => {})
       }
+
       player.lastAutoMessage = await bot.channels
         .get(player.currentChannel)
         .send($.embed(`Player has automatically paused because there are no users connected.`))
+
       $.log('Player has automatically paused because there are no users connected.', player.lastAutoMessage)
+    } else {
+      if (message.member && !message.member.voice.channel) {
+        return this.send($.embed('You must be in the voice channel!'))
+      }
+
+      player.lastPauseMessage = await this.send(
+        $.embed(`Player paused. \`${player.config.prefix}resume\` to resume.`)
+      )
+
+      this.log('Player paused!')
     }
+
+    player.dispatcher.pause()
   }
 }
 
@@ -580,32 +585,32 @@ Music.prototype.resume = async function() {
   const { message, player } = this
 
   if (player && player.dispatcher && player.dispatcher.paused && player.queue.length > 0 && !player.stopped) {
-    if (message.member && !message.member.voice.channel) {
-      return this.send($.embed('You must be in the voice channel!'))
-    }
-    if (message.channel) {
+    if (message.channel.members.filter(s => !s.user.bot).size === 1) {
+      if (player.lastAutoMessage) {
+        player.lastAutoMessage.delete().catch(() => {})
+      }
+
+      player.lastAutoMessage = await bot.channels
+        .get(player.currentChannel)
+        .send($.embed(`Player has automatically resumed.`))
+
+      player.lastAutoMessage.delete({ timeout: 5000 }).catch(() => {})
+
+      $.log('Player has automatically resumed.', player.lastAutoMessage)
+    } else {
+      if (message.member && !message.member.voice.channel) {
+        return this.send($.embed('You must be in the voice channel!'))
+      }
+
       if (player.lastPauseMessage) {
         player.lastPauseMessage.delete()
         player.lastPauseMessage = null
       }
+
       this.send($.embed(`Player resumed.`), 5000)
       this.log('Player resumed!')
-    } else {
-      if (player.lastAutoMessage) {
-        player.lastAutoMessage.delete().catch(() => {})
-      }
-      player.lastAutoMessage = await bot.channels
-        .get(player.currentChannel)
-        .send($.embed(`Player has automatically resumed.`))
-        .then(s =>
-          s
-            .delete({
-              timeout: 5000
-            })
-            .catch(() => {})
-        )
-      $.log('Player has automatically resumed.', player.lastAutoMessage)
     }
+
     player.dispatcher.resume()
   }
 }

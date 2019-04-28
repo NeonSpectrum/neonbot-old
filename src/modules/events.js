@@ -24,7 +24,7 @@ Events.voiceStateUpdate = async (oldState, newState) => {
   var msg
 
   if (oldState.channelID !== null && newState.channelID === null) {
-    let music = new Music()
+    let music = new Music(oldState)
     let channel = bot.channels.get(oldState.channelID)
 
     msg = `**${oldUser.username}** has disconnected from **${channel.name}**`
