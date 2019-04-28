@@ -42,7 +42,7 @@ Events.voiceStateUpdate = async (oldState, newState) => {
         .catch(() => {})
     }
   } else if (oldState.channelID === null && newState.channelID !== null) {
-    let music = new Music()
+    let music = new Music(newState)
     let channel = bot.channels.get(newState.channelID)
 
     msg = `**${newUser.username}** has connected to **${channel.name}**`
