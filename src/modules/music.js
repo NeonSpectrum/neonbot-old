@@ -60,11 +60,11 @@ Music.prototype.play = async function(args) {
   }
 
   if (
-    Number.isInteger(args.join(' ').trim()) ||
+    Number.isInteger(+args.join(' ').trim()) ||
     (!args[0] && !player.stopped && player.queue.length !== 0)
   ) {
     this.resume()
-    var index = Number.isInteger(args.join(' ').trim()) ? +args[0] : 1
+    var index = Number.isInteger(+args.join(' ').trim()) ? +args[0] : 1
     if (!player.queue[index - 1]) {
       return this.send($.embed(`Error! There are only ${player.queue.length} songs.`))
     }
