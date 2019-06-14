@@ -129,7 +129,6 @@ bot.once('ready', async () => {
 })
 
 bot.on('message', async message => {
-  var server = $.getServerConfig(message.guild.id)
   if (!loaded) return
   if (message.author.bot) return
   if (message.channel.type === 'dm') {
@@ -154,6 +153,8 @@ bot.on('message', async message => {
   }
 
   message.content = await alias(message.content)
+
+  const server = $.getServerConfig(message.guild.id)
 
   if (!message.content.startsWith(server.prefix)) return
 
