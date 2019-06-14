@@ -68,7 +68,7 @@ MongoClient.connect(
   }
 )
 
-bot.on('ready', async () => {
+bot.once('ready', async () => {
   bot.commandExecuted = 0
 
   var guilds = Array.from(bot.guilds.keys())
