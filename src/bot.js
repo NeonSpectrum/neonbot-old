@@ -117,6 +117,10 @@ bot.once('ready', async () => {
     }
   }
 
+  loaded = true
+})
+
+bot.on('ready', function() {
   bot.user.setPresence({
     activity: {
       name: bot.config.game.name,
@@ -124,8 +128,6 @@ bot.once('ready', async () => {
     },
     status: bot.config.status
   })
-
-  loaded = true
 })
 
 bot.on('message', async message => {
