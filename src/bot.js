@@ -146,7 +146,7 @@ bot.on('message', async message => {
     var content = message.content.replace(bot.user.toString().replace('@', '@!'), '').trim()
     if (content) {
       try {
-        const { data } = await $.fetch(`https://program-o.com/v3/chat.php?say=${content}`)
+        const data = await $.fetch(`https://program-o.com/v3/chat.php?say=${content}`)
         message.channel.send($.embed(`${message.author.toString()} ${data.conversation.say.bot}`))
       } catch (err) {
         $.warn(err)
@@ -154,9 +154,9 @@ bot.on('message', async message => {
     }
   }
 
-  message.content = await alias(message.content)
-
   const server = $.getServerConfig(message.guild.id)
+
+  message.content = await alias(message.content)
 
   if (!message.content.startsWith(server.prefix)) return
 
@@ -213,6 +213,7 @@ bot.on('message', async message => {
 
   async function alias(msg) {
     var alias = server.aliases.filter(x => x.name === msg)[0]
+
     if (alias) {
       alias.cmd = alias.cmd.replace('{0}', server.prefix)
       var m = await message.channel.send($.embed(`Executing \`${alias.cmd}\``))
