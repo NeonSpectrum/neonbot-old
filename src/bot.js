@@ -12,14 +12,19 @@ var Administration, Utilities, Music, Searches, Games, Events
 var loaded = false
 var time = new Date()
 
-if (!fs.existsSync('./.env')) {
-  $.log('Creating .env file...')
-  fs.copyFileSync('.env.example', '.env')
-  $.log('Supply env file and restart the bot.')
-  process.exit(10)
+if (process.env.HEROKU) {
+  bot.env = process.env
+} else {
+  if (!fs.existsSync('./.env')) {
+    $.log('Creating .env file...')
+    fs.copyFileSync('.env.example', '.env')
+    $.log('Supply env file and restart the bot.')
+    process.exit(10)
+  }
+
+  bot.env = dotenv.parse(fs.readFileSync('./.env'))
 }
 
-bot.env = dotenv.parse(fs.readFileSync('./.env'))
 bot.package = reload('../package')
 
 if (!bot.env.TOKEN || !bot.env.PREFIX || !bot.env.OWNER_ID) {
