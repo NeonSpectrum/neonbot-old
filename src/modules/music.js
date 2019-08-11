@@ -555,7 +555,7 @@ Music.prototype.pause = async function() {
     player.queue.length > 0 &&
     !player.stopped
   ) {
-    if (message.channel.type === "voice") {
+    if (message.channel.type === 'voice') {
       if (player.lastAutoMessage) {
         player.lastAutoMessage.delete().catch(() => {})
       }
@@ -585,7 +585,7 @@ Music.prototype.resume = async function() {
   const { message, player } = this
 
   if (player && player.dispatcher && player.dispatcher.paused && player.queue.length > 0 && !player.stopped) {
-    if (message.channel.type === "voice") {
+    if (message.channel.type === 'voice') {
       if (player.lastAutoMessage) {
         player.lastAutoMessage.delete().catch(() => {})
       }
