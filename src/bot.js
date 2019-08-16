@@ -234,6 +234,10 @@ bot.on('error', err => {
   $.warn('Bot Error: ' + err)
 })
 
+bot.on('debug', msg => {
+  $.log('Debug: ' + msg)
+})
+
 process.on('uncaughtException', err => {
   $.warn('Uncaught Exception: ' + (err.stack || err))
 })
