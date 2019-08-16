@@ -37,7 +37,7 @@ $.log(`Starting ${bot.package.displayName} v${bot.package.version}`)
 
 MongoClient.connect(
   `mongodb://${bot.env.DB_USER}:${bot.env.DB_PASS}@${bot.env.DB_HOST}/${bot.env.DB_NAME}`,
-  { useNewUrlParser: true },
+  { useNewUrlParser: true, useUnifiedTopology: true },
   async (err, client) => {
     if (err) {
       $.warn(`${err}\nFailed to establish connection to ${bot.env.DB_HOST}`, false)
