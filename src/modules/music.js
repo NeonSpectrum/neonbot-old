@@ -297,7 +297,7 @@ Music.prototype._connect = async function() {
     )
   }
 
-  if (!message.guild.voiceConnection) {
+  if (!message.guild.voice.connection) {
     try {
       player.connection = await message.member.voice.channel.join()
       this.log('Connected to ' + message.member.voice.channel.name)
@@ -668,31 +668,32 @@ Music.prototype.reset = async function() {
   if (!message.member.voice.channel) {
     return this.send($.embed('You must be in the voice channel!'))
   }
-  if (player.lastPlayingMessage) {
-    player.lastPlayingMessage.delete().catch(() => {})
-  }
-  if (player.lastFinishedMessage) {
-    player.lastFinishedMessage.delete().catch(() => {})
-  }
+  
+  if (message.guild.voice.connection) {
+    if (player.lastPlayingMessage) {
+      player.lastPlayingMessage.delete().catch(() => {})
+    }
+    if (player.lastFinishedMessage) {
+      player.lastFinishedMessage.delete().catch(() => {})
+    }
 
-  player.status = 'reset'
+    player.status = 'reset'
 
-  this.stop()
+    this.stop()
 
-  delete servers[message.guild.id]
-  $.clearMusicPlaylist(message.guild.id)
+    delete servers[message.guild.id]
+    $.clearMusicPlaylist(message.guild.id)
 
-  this.send($.embed('Player has been reset.'), 10000)
+    this.send($.embed('Player has been reset.'), 10000)
 
-  if (message.guild.voiceConnection) {
-    message.guild.voiceConnection.disconnect()
+    message.guild.voice.connection.disconnect()
   }
 }
 
 Music.prototype.restartsong = function() {
   const { message, player } = this
 
-  if (message.guild.voiceConnection && player.dispatcher) {
+  if (message.guild.voice.connection && player.dispatcher) {
     if (!message.member.voice.channel) {
       return this.send($.embed('You must be in the voice channel!'))
     }
@@ -916,7 +917,7 @@ Music.prototype.load = async function() {
   for (let url of playlist) {
     try {
       this._addToQueue(await ytdl.getInfo(url))
-      if (!message.guild.voiceConnection) {
+      if (!message.guild.voice.connection) {
         this._connect()
       }
     } catch (err) {
