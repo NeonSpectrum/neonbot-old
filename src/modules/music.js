@@ -668,23 +668,23 @@ Music.prototype.reset = async function() {
   if (!message.member.voice.channel) {
     return this.send($.embed('You must be in the voice channel!'))
   }
+  if (player.lastPlayingMessage) {
+    player.lastPlayingMessage.delete().catch(() => {})
+  }
+  if (player.lastFinishedMessage) {
+    player.lastFinishedMessage.delete().catch(() => {})
+  }
+
+  player.status = 'reset'
+
+  this.stop()
+
+  delete servers[message.guild.id]
+  $.clearMusicPlaylist(message.guild.id)
+
+  this.send($.embed('Player has been reset.'), 10000)
+
   if (message.guild.voiceConnection) {
-    if (player.lastPlayingMessage) {
-      player.lastPlayingMessage.delete().catch(() => {})
-    }
-    if (player.lastFinishedMessage) {
-      player.lastFinishedMessage.delete().catch(() => {})
-    }
-
-    player.status = 'reset'
-
-    this.stop()
-
-    delete servers[message.guild.id]
-    $.clearMusicPlaylist(message.guild.id)
-
-    this.send($.embed('Player has been reset.'), 10000)
-
     message.guild.voiceConnection.disconnect()
   }
 }
