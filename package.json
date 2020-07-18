@@ -34,7 +34,7 @@
     "https-proxy-agent": "^2.2.1",
     "jimp": "^0.6.4",
     "libsodium-wrappers": "^0.7.4",
-    "lodash": "^4.17.11",
+    "lodash": "^4.17.19",
     "moment": "^2.24.0",
     "mongodb": "^3.2.3",
     "node-opus": "^0.3.2",
